@@ -1,12 +1,26 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AuthService } from './servicios/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  template: '<router-outlet />'
 })
-export class App {
-  protected readonly title = signal('sitran-frontend');
+export class App implements OnInit {
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    // Al iniciar la app verificar si el token sigue válido
+    if (!this.authService.estaAutenticado()) {
+      this.authService.logout();
+      this.router.navigate(['/login']);
+    }
+  }
 }

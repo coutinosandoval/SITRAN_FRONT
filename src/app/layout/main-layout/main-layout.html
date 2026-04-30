@@ -1,0 +1,20 @@
+<div class="app-container">
+
+  <!-- SIDEBAR FIJO -->
+  <app-sidebar></app-sidebar>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="main-wrapper">
+
+    <!-- BARRA SUPERIOR -->
+    <app-topbar></app-topbar>
+
+    <!-- ÁREA DE CONTENIDO DINÁMICO -->
+    <!-- Aquí se cargan los componentes según la ruta activa -->
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+</div>

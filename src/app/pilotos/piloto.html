@@ -1,0 +1,454 @@
+<!-- LISTA DE PILOTOS -->
+<div *ngIf="mostrarLista">
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-person-badge"></i> Pilotos
+    </h4>
+    <button class="btn btn-primary btn-sm" (click)="mostrarAgregar()">
+      <i class="bi bi-plus-circle"></i> Agregar Piloto
+    </button>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+
+  <!-- Búsqueda y paginación -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="input-group input-group-sm">
+            <input type="text" class="form-control"
+              placeholder="Buscar por nombre, apellidos, DPI o licencia..."
+              [(ngModel)]="textoBusqueda"
+              (input)="buscarEnTiempoReal()"
+              (keyup.enter)="buscar()">
+            <button class="btn btn-outline-primary" (click)="buscar()">
+              <i class="bi bi-search"></i>
+            </button>
+            <button class="btn btn-outline-secondary" (click)="limpiarBusqueda()"
+              *ngIf="textoBusqueda">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
+          <label class="mb-0 text-muted small">Mostrar:</label>
+          <select class="form-select form-select-sm w-auto"
+            (change)="cambiarTamanioPagina(+$any($event.target).value)">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+          <span class="text-muted small">{{ totalRegistros }} registros</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Nombre</th>
+              <th>DPI</th>
+              <th>Licencia</th>
+              <th>Vence</th>
+              <th>Unidad</th>
+              <th>Teléfonos</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="7" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                Cargando pilotos...
+              </td>
+            </tr>
+            <tr *ngIf="!cargando && pilotos.length === 0">
+              <td colspan="7" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                No se encontraron pilotos.
+              </td>
+            </tr>
+            <tr *ngFor="let p of pilotos">
+              <td>
+                <strong>{{ p.apellidos }}</strong>, {{ p.nombre }}
+              </td>
+              <td>{{ p.dpi }}</td>
+              <td>{{ p.noLicencia }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="{
+                    'bg-danger': estaVencida(p.fechaVencimiento),
+                    'bg-warning text-dark': estaPorVencer(p.fechaVencimiento),
+                    'bg-success': !estaVencida(p.fechaVencimiento) && !estaPorVencer(p.fechaVencimiento)
+                  }">
+                  {{ p.fechaVencimiento | date:'dd/MM/yyyy' }}
+                </span>
+              </td>
+              <td>{{ p.nombreUnidad }}</td>
+              <td>{{ p.telefonos || 'Sin teléfono' }}</td>
+              <td class="text-center">
+                <button class="btn btn-info btn-sm me-1" title="Ver detalle"
+                  (click)="verDetalle(p)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-warning btn-sm me-1" title="Editar"
+                  (click)="mostrarEditar(p)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" title="Eliminar"
+                  (click)="eliminar(p.id)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div class="card-footer d-flex justify-content-between align-items-center"
+      *ngIf="totalPaginas > 1">
+      <span class="text-muted small">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="paginaActual === 1">
+            <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          <li class="page-item" *ngFor="let p of paginas"
+            [class.active]="p === paginaActual">
+            <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+            <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULARIO AGREGAR / EDITAR -->
+<div *ngIf="mostrarFormulario">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-person-badge"></i>
+      {{ modoEdicion ? 'Editar Piloto' : 'Agregar Piloto' }}
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeExito" class="alert alert-success">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+
+    <!-- Información personal -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-person"></i> Información Personal</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="nombre"
+              [class.is-invalid]="tieneError('nombre')"
+              placeholder="Nombre del piloto">
+            <div class="invalid-feedback">El nombre es requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Apellidos <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="apellidos"
+              [class.is-invalid]="tieneError('apellidos')"
+              placeholder="Apellidos del piloto">
+            <div class="invalid-feedback">Los apellidos son requeridos.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">DPI <span class="text-danger">*</span></label>
+            <input type="text" class="form-control"
+              formControlName="dpi"
+              [class.is-invalid]="tieneError('dpi')"
+              placeholder="Número de DPI">
+            <div class="invalid-feedback">El DPI es requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">NIT</label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="nit"
+              placeholder="Número de NIT">
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Correo</label>
+            <input type="email" class="form-control"
+              formControlName="correo"
+              [class.is-invalid]="tieneError('correo')"
+              placeholder="correo@ejemplo.com">
+            <div class="invalid-feedback">Ingrese un correo válido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha de Nacimiento</label>
+            <input type="date" class="form-control"
+              formControlName="fechaNacimiento">
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Sexo <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idSexo"
+              [class.is-invalid]="tieneError('idSexo')">
+              <option value="">Seleccione</option>
+              <option *ngFor="let s of catalogos.sexos" [value]="s.id">{{ s.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">El sexo es requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Tipo de Sangre <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idTipoSangre"
+              [class.is-invalid]="tieneError('idTipoSangre')">
+              <option value="">Seleccione</option>
+              <option *ngFor="let s of catalogos.tiposSangre" [value]="s.id">{{ s.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">El tipo de sangre es requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Dirección</label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="direccion"
+              placeholder="Dirección del piloto">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Información de licencia -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-card-list"></i> Licencia e Institución</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">No. Licencia <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="noLicencia"
+              [class.is-invalid]="tieneError('noLicencia')"
+              placeholder="Número de licencia">
+            <div class="invalid-feedback">La licencia es requerida.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Tipo de Licencia <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idTipoLicencia"
+              [class.is-invalid]="tieneError('idTipoLicencia')">
+              <option value="">Seleccione</option>
+              <option *ngFor="let t of catalogos.tiposLicencia" [value]="t.id">{{ t.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">El tipo de licencia es requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha Vencimiento <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaVencimiento"
+              [class.is-invalid]="tieneError('fechaVencimiento')">
+            <div class="invalid-feedback">La fecha de vencimiento es requerida.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Unidad <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idUnidad"
+              [class.is-invalid]="tieneError('idUnidad')">
+              <option value="">Seleccione</option>
+              <option *ngFor="let u of catalogos.unidades" [value]="u.id">{{ u.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">La unidad es requerida.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha Ingreso</label>
+            <input type="date" class="form-control"
+              formControlName="fechaIngreso">
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Teléfonos (solo en edición) -->
+    <div class="card shadow-sm mb-3" *ngIf="modoEdicion">
+      <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="bi bi-telephone"></i> Teléfonos</h6>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-5">
+            <input type="text" class="form-control form-control-sm"
+              [formControl]="$any(formularioTelefono.get('numero'))"
+              [class.is-invalid]="tieneErrorTelefono('numero')"
+              placeholder="Número de teléfono">
+            <div class="invalid-feedback">El número es requerido.</div>
+          </div>
+          <div class="col-md-5">
+            <select class="form-select form-select-sm"
+              [formControl]="$any(formularioTelefono.get('idTipoTelefono'))"
+              [class.is-invalid]="tieneErrorTelefono('idTipoTelefono')">
+              <option value="">Tipo de teléfono</option>
+              <option *ngFor="let t of catalogos.tiposTelefono" [value]="t.id">{{ t.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">El tipo es requerido.</div>
+          </div>
+          <div class="col-md-2">
+            <button type="button" class="btn btn-success btn-sm w-100"
+              (click)="agregarTelefono()">
+              <i class="bi bi-plus"></i> Agregar
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de teléfonos -->
+        <table class="table table-sm table-striped mb-0" *ngIf="telefonos.length > 0">
+          <thead class="table-dark">
+            <tr>
+              <th>Número</th>
+              <th>Tipo</th>
+              <th class="text-center">Eliminar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of telefonos">
+              <td>{{ t.numero }}</td>
+              <td>{{ t.nombreTipoTelefono }}</td>
+              <td class="text-center">
+                <button type="button" class="btn btn-danger btn-sm"
+                  (click)="eliminarTelefono(t.id)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="text-muted small mb-0" *ngIf="telefonos.length === 0">
+          No hay teléfonos registrados.
+        </p>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button type="button" class="btn btn-secondary" (click)="volverLista()">
+        <i class="bi bi-x-circle"></i> Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="cargando">
+        <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!cargando" class="bi bi-save"></i>
+        {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- DETALLE DEL PILOTO -->
+<div *ngIf="mostrarDetalle && pilotoSeleccionado">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-person-badge"></i> Detalle del Piloto
+    </h4>
+    <div class="d-flex gap-2">
+      <button class="btn btn-warning btn-sm" (click)="mostrarEditar(pilotoSeleccionado)">
+        <i class="bi bi-pencil"></i> Editar
+      </button>
+      <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-info text-white">
+      <strong>{{ pilotoSeleccionado.apellidos }}, {{ pilotoSeleccionado.nombre }}</strong>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr><th>DPI:</th><td>{{ pilotoSeleccionado.dpi }}</td></tr>
+            <tr><th>NIT:</th><td>{{ pilotoSeleccionado.nit || 'No especificado' }}</td></tr>
+            <tr><th>Correo:</th><td>{{ pilotoSeleccionado.correo || 'No especificado' }}</td></tr>
+            <tr><th>Dirección:</th><td>{{ pilotoSeleccionado.direccion || 'No especificado' }}</td></tr>
+            <tr><th>Fecha Nacimiento:</th><td>{{ pilotoSeleccionado.fechaNacimiento | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Sexo:</th><td>{{ pilotoSeleccionado.nombreSexo }}</td></tr>
+            <tr><th>Tipo Sangre:</th><td>{{ pilotoSeleccionado.nombreTipoSangre }}</td></tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr><th>No. Licencia:</th><td>{{ pilotoSeleccionado.noLicencia }}</td></tr>
+            <tr><th>Tipo Licencia:</th><td>{{ pilotoSeleccionado.nombreTipoLicencia }}</td></tr>
+            <tr><th>Vencimiento:</th><td>{{ pilotoSeleccionado.fechaVencimiento | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Fecha Ingreso:</th><td>{{ pilotoSeleccionado.fechaIngreso | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Unidad:</th><td>{{ pilotoSeleccionado.nombreUnidad }}</td></tr>
+            <tr><th>Teléfonos:</th><td>{{ pilotoSeleccionado.telefonos || 'Sin teléfono' }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Teléfonos detallados -->
+      <div class="mt-3" *ngIf="telefonos.length > 0">
+        <h6><i class="bi bi-telephone"></i> Teléfonos registrados</h6>
+        <table class="table table-sm table-striped">
+          <thead class="table-dark">
+            <tr><th>Número</th><th>Tipo</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of telefonos">
+              <td>{{ t.numero }}</td>
+              <td>{{ t.nombreTipoTelefono }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,115 @@
+/* ============================================
+   MÓDULO PILOTOS — SITRAN
+   ============================================ */
+
+/* Tabla */
+.table th {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table td {
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+/* Botones de acción */
+.btn-sm {
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+/* Badge de vencimiento */
+.badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 10px;
+}
+
+/* Cards */
+.card {
+  border-radius: 8px;
+  border: none;
+}
+
+.card-header {
+  border-radius: 8px 8px 0 0 !important;
+  font-size: 14px;
+}
+
+/* Formulario */
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 4px;
+}
+
+.form-control,
+.form-select {
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* Paginación */
+.pagination .page-link {
+  font-size: 12px;
+  padding: 4px 10px;
+  color: #0d6efd;
+  cursor: pointer;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.pagination .page-item.disabled .page-link {
+  cursor: not-allowed;
+  color: #aaa;
+}
+
+/* Tabla detalle */
+.table-borderless th {
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  width: 40%;
+}
+
+.table-borderless td {
+  font-size: 13px;
+  color: #333;
+}
+
+/* Spinner */
+.spinner-border-sm {
+  width: 14px;
+  height: 14px;
+}
+
+/* Encabezado de página */
+h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 12px;
+  }
+
+  .btn-sm {
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+}

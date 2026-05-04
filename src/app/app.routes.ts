@@ -4,6 +4,7 @@ import { MainLayoutComponent } from './layout/main-layout/main-layout';
 import { DashboardComponent } from './dashboard/dashboard';
 import { authGuard } from './login/auth.guard';
 import { VehiculoComponent } from './vehiculos/vehiculo';
+import { PilotoComponent } from './pilotos/piloto';
 
 export const routes: Routes = [
   // Ruta pública
@@ -16,8 +17,9 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
-      { path: 'vehiculos', component: VehiculoComponent, canActivate: [authGuard] },
+      { path: 'dashboard',  component: DashboardComponent,  canActivate: [authGuard] },
+      { path: 'vehiculos',  component: VehiculoComponent,   canActivate: [authGuard] },
+      { path: 'pilotos',    component: PilotoComponent,     canActivate: [authGuard] },
     ]
   },
 

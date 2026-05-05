@@ -1,0 +1,27 @@
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@mixin button($color) {
+  padding: 10px 15px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  background-color: $color;
+  color: white;
+  font-weight: 500;
+  transition: 0.3s;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}

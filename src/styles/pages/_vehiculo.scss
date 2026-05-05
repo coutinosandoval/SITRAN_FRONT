@@ -1,0 +1,31 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/variables' as *;
+
+// CONTENEDOR GENERAL
+.vehiculo-container {
+  padding: 20px;
+}
+
+// FORMULARIO
+.vehiculo-form {
+  @include card;
+  max-width: 600px;
+  margin: auto;
+}
+
+// DETALLE
+.vehiculo-detalle {
+  @include card;
+}
+
+// GRUPOS DE CAMPOS (aprovecha lo global, pero puedes ajustar)
+.vehiculo-form .form-group {
+  margin-bottom: 15px;
+}
+
+// ACCIONES (botones)
+.vehiculo-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}

@@ -1,0 +1,18 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.btn-primary {
+  @include button($primary);
+}
+
+.btn-secondary {
+  @include button($secondary);
+}
+
+.btn-danger {
+  @include button($danger);
+}
+
+.btn-success {
+  @include button($success);
+}

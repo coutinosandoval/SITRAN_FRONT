@@ -1,0 +1,11 @@
+@use '../abstracts/variables' as *;
+
+body {
+  font-family: $font-main;
+  background: #f4f6f9;
+  color: $text-color;
+}
+
+h1, h2, h3 {
+  margin-bottom: 10px;
+}

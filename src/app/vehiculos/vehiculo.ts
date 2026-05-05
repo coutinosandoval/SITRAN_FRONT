@@ -10,8 +10,8 @@ import { Vehiculo, VehiculoRequest, VehiculoCatalogos } from '../modelos/vehicul
   selector: 'app-vehiculo',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './vehiculo.html',
-  styleUrl: './vehiculo.css'
+  templateUrl: './vehiculo.html'
+
 })
 export class VehiculoComponent implements OnInit {
 

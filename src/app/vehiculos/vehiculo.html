@@ -1,505 +1,140 @@
-<!-- LISTA DE VEHÍCULOS -->
-<div *ngIf="mostrarLista">
+<!-- CONTENEDOR GENERAL -->
+<div class="vehiculo-container">
 
-  <!-- Encabezado -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-truck"></i> Vehículos
-    </h4>
-    <button class="btn btn-primary btn-sm" (click)="mostrarAgregar()">
-      <i class="bi bi-plus-circle"></i> Agregar Vehículo
-    </button>
-  </div>
+  <!-- ================= LISTA ================= -->
+  <div *ngIf="mostrarLista">
 
-  <!-- Mensajes -->
-  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
-    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
-    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
-  </div>
-  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
-    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
-    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
-  </div>
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">
+        <i class="bi bi-truck"></i> Vehículos
+      </h4>
+      <button class="btn btn-primary btn-sm" (click)="mostrarAgregar()">
+        <i class="bi bi-plus-circle"></i> Agregar Vehículo
+      </button>
+    </div>
 
-  <!-- Búsqueda y paginación -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-body py-2">
-      <div class="row align-items-center">
-        <div class="col-md-6">
-          <div class="input-group input-group-sm">
-            <input type="text" class="form-control"
-              placeholder="Buscar por placa, marca, modelo o inventario..."
-              [(ngModel)]="textoBusqueda"
-              (input)="buscarEnTiempoReal()"
-              (keyup.enter)="buscar()">
-            <button class="btn btn-outline-primary" (click)="buscar()">
-              <i class="bi bi-search"></i>
-            </button>
-            <button class="btn btn-outline-secondary" (click)="limpiarBusqueda()"
-              *ngIf="textoBusqueda">
-              <i class="bi bi-x"></i>
-            </button>
+    <!-- Mensajes -->
+    <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
+      <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+      <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+    </div>
+    <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+      <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+      <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+    </div>
+
+    <!-- Busqueda -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body py-2">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="input-group input-group-sm">
+              <input type="text" class="form-control"
+                placeholder="Buscar..."
+                [(ngModel)]="textoBusqueda"
+                (keyup.enter)="buscar()">
+              <button class="btn btn-outline-primary" (click)="buscar()">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
           </div>
         </div>
-        <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
-          <label class="mb-0 text-muted small">Mostrar:</label>
-          <select class="form-select form-select-sm w-auto"
-            (change)="cambiarTamanioPagina(+$any($event.target).value)">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-          </select>
-          <span class="text-muted small">{{ totalRegistros }} registros</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Tabla -->
-  <div class="card shadow-sm">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover table-striped mb-0">
-          <thead class="table-dark">
-            <tr>
-              <th>Placa</th>
-              <th>Inventario</th>
-              <th>Marca / Modelo</th>
-              <th>Año</th>
-              <th>Tipo</th>
-              <th>Sede</th>
-              <th>Disponibilidad</th>
-              <th class="text-center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Cargando -->
-            <tr *ngIf="cargando">
-              <td colspan="8" class="text-center py-4">
-                <div class="spinner-border spinner-border-sm text-primary"></div>
-                Cargando vehículos...
-              </td>
-            </tr>
-            <!-- Sin resultados -->
-            <tr *ngIf="!cargando && vehiculos.length === 0">
-              <td colspan="8" class="text-center py-4 text-muted">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                No se encontraron vehículos.
-              </td>
-            </tr>
-            <!-- Filas -->
-            <tr *ngFor="let v of vehiculos">
-              <td><strong>{{ v.placa }}</strong></td>
-              <td>{{ v.numeroInventario }}</td>
-              <td>{{ v.marca }} {{ v.modelo }}</td>
-              <td>{{ v.anio }}</td>
-              <td>{{ v.nombreTipoVehiculo }}</td>
-              <td>{{ v.nombreSede }}</td>
-              <td>
-                <span class="badge"
-                  [ngClass]="{
-                    'bg-success':          v.estadoDisponibilidad === 'Disponible',
-                    'bg-warning text-dark': v.estadoDisponibilidad === 'No Disponible',
-                    'bg-info text-dark':   v.estadoDisponibilidad === 'En Comision',
-                    'bg-danger':           v.estadoDisponibilidad === 'En Mantenimiento',
-                    'bg-secondary':        !v.estadoDisponibilidad
-                  }">
-                  {{ v.estadoDisponibilidad || 'Sin estado' }}
-                </span>
-              </td>
-              <td class="text-center">
-                <button class="btn btn-success btn-sm me-1" title="Disponibilidad"
-                  (click)="abrirDisponibilidad(v)">
-                  <i class="bi bi-toggle-on"></i>
-                </button>
-                <button class="btn btn-info btn-sm me-1" title="Ver detalle"
-                  (click)="verDetalle(v)">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button class="btn btn-warning btn-sm me-1" title="Editar"
-                  (click)="mostrarEditar(v)">
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button class="btn btn-danger btn-sm" title="Eliminar"
-                  (click)="eliminar(v.id)">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </div>
 
-    <!-- Paginación -->
-    <div class="card-footer d-flex justify-content-between align-items-center"
-      *ngIf="totalPaginas > 1">
-      <span class="text-muted small">
-        Página {{ paginaActual }} de {{ totalPaginas }}
-      </span>
-      <nav>
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item" [class.disabled]="paginaActual === 1">
-            <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
-              <i class="bi bi-chevron-left"></i>
-            </a>
-          </li>
-          <li class="page-item" *ngFor="let p of paginas"
-            [class.active]="p === paginaActual">
-            <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
-          </li>
-          <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
-            <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
-              <i class="bi bi-chevron-right"></i>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
-
-<!-- FORMULARIO AGREGAR / EDITAR -->
-<div *ngIf="mostrarFormulario">
-
-  <!-- Encabezado -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-truck"></i>
-      {{ modoEdicion ? 'Editar Vehículo' : 'Agregar Vehículo' }}
-    </h4>
-    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
-      <i class="bi bi-arrow-left"></i> Volver
-    </button>
-  </div>
-
-  <!-- Mensajes -->
-  <div *ngIf="mensajeExito" class="alert alert-success">
-    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
-  </div>
-  <div *ngIf="mensajeError" class="alert alert-danger">
-    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
-  </div>
-
-  <!-- Formulario -->
-  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+    <!-- Tabla -->
     <div class="card shadow-sm">
-      <div class="card-header bg-primary text-white">
-        <h6 class="mb-0"><i class="bi bi-card-list"></i> Información General</h6>
-      </div>
-      <div class="card-body">
-        <div class="row">
-
-          <!-- Placa -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Placa <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="placa"
-              [class.is-invalid]="tieneError('placa')"
-              placeholder="Ej: P123ABC">
-            <div class="invalid-feedback">La placa es requerida.</div>
-          </div>
-
-          <!-- Número de inventario -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">No. Inventario <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="numeroInventario"
-              [class.is-invalid]="tieneError('numeroInventario')"
-              placeholder="Ej: M123456">
-            <div class="invalid-feedback">El número de inventario es requerido.</div>
-          </div>
-
-          <!-- Sede -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Sede <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idSede"
-              [class.is-invalid]="tieneError('idSede')">
-              <option value="">Seleccione una sede</option>
-              <option *ngFor="let s of catalogos.sedes" [value]="s.id">{{ s.nombre }}</option>
-            </select>
-            <div class="invalid-feedback">La sede es requerida.</div>
-          </div>
-
-          <!-- Marca -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Marca <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="marca"
-              [class.is-invalid]="tieneError('marca')"
-              placeholder="Ej: Toyota">
-            <div class="invalid-feedback">La marca es requerida.</div>
-          </div>
-
-          <!-- Modelo -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Modelo <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="modelo"
-              [class.is-invalid]="tieneError('modelo')"
-              placeholder="Ej: Hilux">
-            <div class="invalid-feedback">El modelo es requerido.</div>
-          </div>
-
-          <!-- Año -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Año <span class="text-danger">*</span></label>
-            <input type="number" class="form-control"
-              formControlName="anio"
-              [class.is-invalid]="tieneError('anio')"
-              placeholder="Ej: 2022">
-            <div class="invalid-feedback">El año es requerido.</div>
-          </div>
-
-          <!-- Color -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Color</label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="color"
-              placeholder="Ej: Blanco">
-          </div>
-
-          <!-- Tipo de vehículo -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Tipo de Vehículo <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idTipoVehiculo"
-              [class.is-invalid]="tieneError('idTipoVehiculo')">
-              <option value="">Seleccione un tipo</option>
-              <option *ngFor="let t of catalogos.tiposVehiculo" [value]="t.id">{{ t.nombre }}</option>
-            </select>
-            <div class="invalid-feedback">El tipo de vehículo es requerido.</div>
-          </div>
-
-          <!-- Tipo de combustible -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Combustible <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idTipoCombustible"
-              [class.is-invalid]="tieneError('idTipoCombustible')">
-              <option value="">Seleccione un tipo</option>
-              <option *ngFor="let t of catalogos.tiposCombustible" [value]="t.id">{{ t.nombre }}</option>
-            </select>
-            <div class="invalid-feedback">El tipo de combustible es requerido.</div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Información técnica -->
-    <div class="card shadow-sm mt-3">
-      <div class="card-header bg-secondary text-white">
-        <h6 class="mb-0"><i class="bi bi-gear"></i> Información Técnica</h6>
-      </div>
-      <div class="card-body">
-        <div class="row">
-
-          <!-- Tipo de transmisión -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Transmisión <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idTipoTransmision"
-              [class.is-invalid]="tieneError('idTipoTransmision')">
-              <option value="">Seleccione un tipo</option>
-              <option *ngFor="let t of catalogos.tiposTransmision" [value]="t.id">{{ t.nombre }}</option>
-            </select>
-            <div class="invalid-feedback">El tipo de transmisión es requerido.</div>
-          </div>
-
-          <!-- Número de chasis -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">No. Chasis</label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="numeroChasis"
-              placeholder="Número de chasis">
-          </div>
-
-          <!-- Número VIN -->
-          <div class="col-md-4 mb-3">
-            <label class="form-label">No. VIN</label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="numeroVin"
-              placeholder="Número VIN">
-          </div>
-
-          <!-- Tamaño de motor -->
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Motor (litros)</label>
-            <input type="number" class="form-control"
-              formControlName="tamanioMotor"
-              placeholder="Ej: 2.7" step="0.1">
-          </div>
-
-          <!-- Capacidad del tanque -->
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Tanque (galones)</label>
-            <input type="number" class="form-control"
-              formControlName="capacidadTanque"
-              placeholder="Ej: 15" step="0.1">
-          </div>
-
-          <!-- Rendimiento -->
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Rendimiento (km/gal)</label>
-            <input type="number" class="form-control"
-              formControlName="rendimientoGalon"
-              placeholder="Ej: 30" step="0.1">
-          </div>
-
-          <!-- Kilometraje -->
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Kilometraje actual</label>
-            <input type="number" class="form-control"
-              formControlName="kilometraje"
-              placeholder="Ej: 50000">
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Botones -->
-    <div class="d-flex justify-content-end gap-2 mt-3">
-      <button type="button" class="btn btn-secondary" (click)="volverLista()">
-        <i class="bi bi-x-circle"></i> Cancelar
-      </button>
-      <button type="submit" class="btn btn-primary" [disabled]="cargando">
-        <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
-        <i *ngIf="!cargando" class="bi bi-save"></i>
-        {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
-      </button>
-    </div>
-
-  </form>
-</div>
-
-<!-- DETALLE DEL VEHÍCULO -->
-<div *ngIf="mostrarDetalle && vehiculoSeleccionado">
-
-  <!-- Encabezado -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-truck"></i> Detalle del Vehículo
-    </h4>
-    <div class="d-flex gap-2">
-      <button class="btn btn-warning btn-sm" (click)="mostrarEditar(vehiculoSeleccionado)">
-        <i class="bi bi-pencil"></i> Editar
-      </button>
-      <button class="btn btn-secondary btn-sm" (click)="volverLista()">
-        <i class="bi bi-arrow-left"></i> Volver
-      </button>
-    </div>
-  </div>
-
-  <div class="card shadow-sm">
-    <div class="card-header bg-info text-white d-flex justify-content-between">
-      <span>
-        <strong>{{ vehiculoSeleccionado.placa }}</strong> —
-        {{ vehiculoSeleccionado.marca }} {{ vehiculoSeleccionado.modelo }}
-      </span>
-      <span class="badge bg-light text-dark">
-        {{ vehiculoSeleccionado.estadoDisponibilidad }}
-      </span>
-    </div>
-    <div class="card-body">
-      <div class="row">
-        <div class="col-md-6">
-          <table class="table table-sm table-borderless">
-            <tr><th>Placa:</th><td>{{ vehiculoSeleccionado.placa }}</td></tr>
-            <tr><th>No. Inventario:</th><td>{{ vehiculoSeleccionado.numeroInventario }}</td></tr>
-            <tr><th>Marca:</th><td>{{ vehiculoSeleccionado.marca }}</td></tr>
-            <tr><th>Modelo:</th><td>{{ vehiculoSeleccionado.modelo }}</td></tr>
-            <tr><th>Año:</th><td>{{ vehiculoSeleccionado.anio }}</td></tr>
-            <tr><th>Color:</th><td>{{ vehiculoSeleccionado.color || 'No especificado' }}</td></tr>
-            <tr><th>Sede:</th><td>{{ vehiculoSeleccionado.nombreSede }}</td></tr>
-          </table>
-        </div>
-        <div class="col-md-6">
-          <table class="table table-sm table-borderless">
-            <tr><th>Tipo:</th><td>{{ vehiculoSeleccionado.nombreTipoVehiculo }}</td></tr>
-            <tr><th>Combustible:</th><td>{{ vehiculoSeleccionado.nombreTipoCombustible }}</td></tr>
-            <tr><th>Transmisión:</th><td>{{ vehiculoSeleccionado.nombreTipoTransmision }}</td></tr>
-            <tr><th>No. Chasis:</th><td>{{ vehiculoSeleccionado.numeroChasis || 'No especificado' }}</td></tr>
-            <tr><th>No. VIN:</th><td>{{ vehiculoSeleccionado.numeroVin || 'No especificado' }}</td></tr>
-            <tr><th>Motor:</th><td>{{ vehiculoSeleccionado.tamanioMotor }} L</td></tr>
-            <tr><th>Kilometraje:</th><td>{{ vehiculoSeleccionado.kilometraje | number }} km</td></tr>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Placa</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Año</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let v of vehiculos">
+                <td><strong>{{ v.placa }}</strong></td>
+                <td>{{ v.marca }}</td>
+                <td>{{ v.modelo }}</td>
+                <td>{{ v.anio }}</td>
+                <td class="text-center">
+                  <button class="btn btn-info btn-sm me-1" (click)="verDetalle(v)">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-warning btn-sm me-1" (click)="mostrarEditar(v)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-danger btn-sm" (click)="eliminar(v.id)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
     </div>
+
   </div>
-</div>
 
-<!-- MODAL CAMBIAR DISPONIBILIDAD -->
-<div *ngIf="mostrarModalDisponibilidad" class="modal-overlay">
-  <div class="modal-box">
-    <div class="modal-header-custom bg-success text-white">
-      <h6 class="mb-0">
-        <i class="bi bi-toggle-on"></i> Cambiar Disponibilidad
-      </h6>
-      <button class="btn-close btn-close-white" (click)="cerrarDisponibilidad()"></button>
+  <!-- ================= FORMULARIO ================= -->
+  <div *ngIf="mostrarFormulario">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4 class="mb-0">
+        {{ modoEdicion ? 'Editar Vehículo' : 'Agregar Vehículo' }}
+      </h4>
+      <button class="btn btn-secondary btn-sm" (click)="volverLista()">Volver</button>
     </div>
-    <div class="modal-body-custom">
 
-      <!-- Info del vehículo -->
-      <div class="alert alert-light border mb-3">
-        <strong>{{ vehiculoDisponibilidad?.placa }}</strong> —
-        {{ vehiculoDisponibilidad?.marca }} {{ vehiculoDisponibilidad?.modelo }}
-        <br>
-        <small class="text-muted">
-          Estado actual:
-          <span class="badge"
-            [ngClass]="{
-              'bg-success':          vehiculoDisponibilidad?.estadoDisponibilidad === 'Disponible',
-              'bg-warning text-dark': vehiculoDisponibilidad?.estadoDisponibilidad === 'No Disponible',
-              'bg-info text-dark':   vehiculoDisponibilidad?.estadoDisponibilidad === 'En Comision',
-              'bg-danger':           vehiculoDisponibilidad?.estadoDisponibilidad === 'En Mantenimiento'
-            }">
-            {{ vehiculoDisponibilidad?.estadoDisponibilidad }}
-          </span>
-        </small>
+    <form [formGroup]="formulario" (ngSubmit)="guardar()" class="vehiculo-form">
+
+      <div class="form-group">
+        <label>Placa</label>
+        <input type="text" class="form-control" formControlName="placa">
       </div>
 
-      <!-- Nuevo estado -->
-      <div class="mb-3">
-        <label class="form-label fw-bold">Nuevo estado:</label>
-        <div class="d-flex flex-column gap-2">
-          <div *ngFor="let estado of estadosDisponibilidad" class="form-check">
-            <input class="form-check-input" type="radio"
-              [id]="'estado_' + estado"
-              [value]="estado"
-              [(ngModel)]="estadoDisponibilidad">
-            <label class="form-check-label" [for]="'estado_' + estado">
-              <span class="badge me-1"
-                [ngClass]="{
-                  'bg-success':          estado === 'Disponible',
-                  'bg-warning text-dark': estado === 'No Disponible',
-                  'bg-info text-dark':   estado === 'En Comision',
-                  'bg-danger':           estado === 'En Mantenimiento'
-                }">
-                {{ estado }}
-              </span>
-            </label>
-          </div>
-        </div>
+      <div class="form-group">
+        <label>Marca</label>
+        <input type="text" class="form-control" formControlName="marca">
       </div>
 
-      <!-- Observaciones -->
-      <div class="mb-3">
-        <label class="form-label">Observaciones</label>
-        <textarea class="form-control" rows="3"
-          [(ngModel)]="observacionesDisponibilidad"
-          placeholder="Motivo del cambio de disponibilidad...">
-        </textarea>
+      <div class="form-group">
+        <label>Modelo</label>
+        <input type="text" class="form-control" formControlName="modelo">
       </div>
 
-    </div>
-    <div class="modal-footer-custom">
-      <button class="btn btn-secondary btn-sm" (click)="cerrarDisponibilidad()">
-        <i class="bi bi-x-circle"></i> Cancelar
-      </button>
-      <button class="btn btn-success btn-sm" (click)="guardarDisponibilidad()">
-        <i class="bi bi-check-circle"></i> Guardar
-      </button>
-    </div>
+      <div class="form-group">
+        <label>Año</label>
+        <input type="number" class="form-control" formControlName="anio">
+      </div>
+
+      <div class="vehiculo-actions">
+        <button type="button" class="btn btn-secondary" (click)="volverLista()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+
+    </form>
+
   </div>
+
+  <!-- ================= DETALLE ================= -->
+  <div *ngIf="mostrarDetalle && vehiculoSeleccionado" class="vehiculo-detalle">
+
+    <h4>{{ vehiculoSeleccionado.placa }}</h4>
+
+    <p><strong>Marca:</strong> {{ vehiculoSeleccionado.marca }}</p>
+    <p><strong>Modelo:</strong> {{ vehiculoSeleccionado.modelo }}</p>
+    <p><strong>Año:</strong> {{ vehiculoSeleccionado.anio }}</p>
+
+    <button class="btn btn-secondary mt-2" (click)="volverLista()">Volver</button>
+
+  </div>
+
 </div>

@@ -1,0 +1,14 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/variables' as *;
+
+.historico-container { padding: 20px; }
+
+.historico-form { @include card; }
+
+.historico-detalle { @include card; }
+
+.historico-recorrido {
+  font-size: 24px;
+  font-weight: bold;
+  color: $primary;
+}

@@ -1,17 +1,53 @@
 @use '../abstracts/variables' as *;
 
-.form-group {
-  margin-bottom: 15px;
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #444;
+  margin-bottom: 4px;
+  display: block;
+}
 
-  label {
-    display: block;
-    margin-bottom: 5px;
+.form-control,
+.form-select {
+  font-size: 13px;
+  border-radius: $radius;
+  border: 1px solid $border-color;
+  padding: 6px 10px;
+  width: 100%;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.15);
+    outline: none;
   }
 
-  input, select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid $border-color;
-    border-radius: $radius;
+  &.is-invalid {
+    border-color: $danger;
   }
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+.invalid-feedback {
+  font-size: 11px;
+  color: $danger;
+  margin-top: 3px;
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+
+.form-check-label {
+  cursor: pointer;
+  font-size: 13px;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
 }

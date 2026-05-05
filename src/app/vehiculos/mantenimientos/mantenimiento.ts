@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { MantenimientoService } from '../servicios/mantenimiento.service';
-import { Mantenimiento, MantenimientoRequest, MantenimientoActualizar, CambiarEstadoMantenimiento } from '../modelos/mantenimiento.model';
-import { CatalogoItem } from '../modelos/vehiculo.model';
+import { MantenimientoService } from '../../servicios/mantenimiento.service';
+import { Mantenimiento, MantenimientoRequest, MantenimientoActualizar, CambiarEstadoMantenimiento } from '../../modelos/mantenimiento.model';
+import { CatalogoItem } from '../../modelos/vehiculo.model';
 
 @Component({
   selector: 'app-mantenimiento',

@@ -1,47 +1,18 @@
 @use '../abstracts/mixins' as *;
 @use '../abstracts/variables' as *;
 
-// CONTENEDOR GENERAL
-.piloto-container {
-  padding: 20px;
-}
+.piloto-container { padding: 20px; }
 
-// FORMULARIO
 .piloto-form {
   @include card;
-  max-width: 800px;
+  max-width: 900px;
   margin: auto;
 }
 
-// DETALLE
-.piloto-detalle {
-  @include card;
-}
+.piloto-detalle { @include card; }
 
-// GRUPOS DE CAMPOS
-.piloto-form .form-group {
-  margin-bottom: 15px;
-}
-
-// ACCIONES
 .piloto-actions {
   display: flex;
   gap: 10px;
   margin-top: 15px;
-}
-
-// BADGE VENCIMIENTO
-.badge-vencida {
-  background-color: $danger;
-  color: white;
-}
-
-.badge-por-vencer {
-  background-color: $warning;
-  color: $dark;
-}
-
-.badge-vigente {
-  background-color: $success;
-  color: white;
 }

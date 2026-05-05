@@ -1,11 +1,51 @@
 @use '../abstracts/variables' as *;
 
-body {
-  font-family: $font-main;
-  background: #f4f6f9;
-  color: $text-color;
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 10px 12px;
+    background: $dark;
+    color: white;
+  }
+
+  td {
+    padding: 8px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid $border-color;
+  }
+
+  &.table-striped tbody tr:nth-child(odd) {
+    background: rgba(0,0,0,0.02);
+  }
+
+  &.table-hover tbody tr:hover {
+    background: rgba($primary, 0.05);
+  }
+
+  &.table-borderless {
+    th, td { border: none; }
+    th {
+      background: transparent;
+      color: $text-light;
+      font-size: 13px;
+      width: 40%;
+    }
+    td {
+      color: $text-color;
+      font-size: 13px;
+    }
+  }
+
+  &.table-sm {
+    th, td { padding: 6px 10px; }
+  }
 }
 
-h1, h2, h3 {
-  margin-bottom: 10px;
+.table-responsive {
+  overflow-x: auto;
 }

@@ -1,18 +1,43 @@
 @use '../abstracts/variables' as *;
 @use '../abstracts/mixins' as *;
 
-.btn-primary {
-  @include button($primary);
+.btn {
+  border-radius: $radius;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  padding: 6px 14px;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
-.btn-secondary {
-  @include button($secondary);
+.btn-sm {
+  padding: 3px 8px;
+  font-size: 12px;
 }
 
-.btn-danger {
-  @include button($danger);
+.btn-primary   { @include button($primary); }
+.btn-secondary { @include button($secondary); }
+.btn-danger    { @include button($danger); }
+.btn-success   { @include button($success); }
+.btn-warning   { @include button($warning); }
+.btn-info      { @include button(#0dcaf0); }
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid $primary;
+  color: $primary;
+  &:hover { background: $primary; color: white; }
 }
 
-.btn-success {
-  @include button($success);
+.btn-outline-secondary {
+  background: transparent;
+  border: 1px solid $secondary;
+  color: $secondary;
+  &:hover { background: $secondary; color: white; }
 }

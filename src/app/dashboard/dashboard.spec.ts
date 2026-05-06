@@ -1,22 +1,52 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { DashboardService } from '../servicios/dashboard.service';
+import { DashboardResumen, PrecioCombustible } from '../modelos/dashboard.model';
 
-import { Dashboard } from './dashboard';
+@Component({
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './dashboard.html'
+})
+export class DashboardComponent implements OnInit {
 
-describe('Dashboard', () => {
-  let component: Dashboard;
-  let fixture: ComponentFixture<Dashboard>;
+  resumen: DashboardResumen | null = null;
+  precios: PrecioCombustible[] = [];
+  preciosAutoservicio: PrecioCombustible[] = [];
+  preciosServicioCompleto: PrecioCombustible[] = [];
+  cargando = true;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [Dashboard],
-    }).compileComponents();
+  constructor(private dashboardService: DashboardService) {}
 
-    fixture = TestBed.createComponent(Dashboard);
-    component = fixture.componentInstance;
-    await fixture.whenStable();
-  });
+  ngOnInit(): void {
+    console.log('Dashboard iniciando...');
+    this.cargarDatos();
+  }
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
+  cargarDatos(): void {
+    console.log('Cargando datos...');
+
+    this.dashboardService.getResumen().subscribe({
+      next: (data) => {
+        console.log('Resumen:', data);
+        this.resumen = data;
+      },
+      error: (err) => console.error('Error resumen:', err)
+    });
+
+    this.dashboardService.getPreciosCombustible().subscribe({
+      next: (data) => {
+        console.log('Precios:', data);
+        this.precios                = data;
+        this.preciosAutoservicio    = data.filter(p => p.tipoServicio === 'Autoservicio');
+        this.preciosServicioCompleto = data.filter(p => p.tipoServicio === 'Servicio Completo');
+        this.cargando               = false;
+      },
+      error: (err) => {
+        console.error('Error precios:', err);
+        this.cargando = false;
+      }
+    });
+  }
+}

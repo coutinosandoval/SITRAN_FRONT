@@ -9,126 +9,118 @@
     <div class="welcome-badge">Sistema Activo</div>
   </div>
 
-  <!-- ESTADÍSTICAS -->
-  @if (resumen) {
-    <div class="dashboard-grid stats-grid">
-
-      <div class="dashboard-card stat-card blue">
-        <div class="stat-icon">...</div>
-        <div class="stat-value">{{ resumen.totalVehiculos }}</div>
-        <div class="stat-label">Vehículos Registrados</div>
-      </div>
-
-      <div class="dashboard-card stat-card green">
-        <div class="stat-icon">...</div>
-        <div class="stat-value">{{ resumen.totalPilotos }}</div>
-        <div class="stat-label">Pilotos Activos</div>
-      </div>
-
-      <div class="dashboard-card stat-card amber">
-        <div class="stat-icon">...</div>
-        <div class="stat-value">{{ resumen.totalCupones }}</div>
-        <div class="stat-label">Cupones Emitidos</div>
-      </div>
-
-      <div class="dashboard-card stat-card red">
-        <div class="stat-icon">...</div>
-        <div class="stat-value">{{ resumen.totalMantenimientos }}</div>
-        <div class="stat-label">Mant. Programados</div>
-      </div>
-
-    </div>
-  }
-
   <!-- LOADING -->
-  @if (cargando) {
-    <div class="dashboard-loading loading-container">
-      <div class="spinner-border text-primary"></div>
-      <p class="loading-text">Cargando información...</p>
+  <div *ngIf="cargando" class="dashboard-loading loading-container">
+    <div class="spinner-border text-primary"></div>
+    <p class="loading-text">Cargando información...</p>
+  </div>
+
+  <!-- ESTADÍSTICAS -->
+  <div *ngIf="!cargando && resumen" class="dashboard-grid stats-grid">
+
+    <div class="dashboard-card stat-card blue">
+      <div class="stat-icon"><i class="bi bi-truck fs-3"></i></div>
+      <div class="stat-value">{{ resumen.totalVehiculos }}</div>
+      <div class="stat-label">Vehículos Registrados</div>
     </div>
-  }
+
+    <div class="dashboard-card stat-card green">
+      <div class="stat-icon"><i class="bi bi-person-badge fs-3"></i></div>
+      <div class="stat-value">{{ resumen.totalPilotos }}</div>
+      <div class="stat-label">Pilotos Activos</div>
+    </div>
+
+    <div class="dashboard-card stat-card amber">
+      <div class="stat-icon"><i class="bi bi-fuel-pump fs-3"></i></div>
+      <div class="stat-value">{{ resumen.totalCupones }}</div>
+      <div class="stat-label">Cupones Emitidos</div>
+    </div>
+
+    <div class="dashboard-card stat-card red">
+      <div class="stat-icon"><i class="bi bi-tools fs-3"></i></div>
+      <div class="stat-value">{{ resumen.totalMantenimientos }}</div>
+      <div class="stat-label">Mant. Programados</div>
+    </div>
+
+  </div>
 
   <!-- SECCIÓN INFERIOR -->
-  @if (!cargando) {
+  <div *ngIf="!cargando" class="dashboard-section bottom-grid">
 
-    <div class="dashboard-section bottom-grid">
-
-      <!-- AUTOSERVICIO -->
-      <div class="dashboard-panel panel">
-        <div class="panel-header">
-          <span class="panel-title">Combustible — Autoservicio</span>
-          <span class="panel-badge">MEM</span>
-        </div>
-
-        <div class="panel-body">
-          <table class="fuel-table">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Anterior</th>
-                <th>Actual</th>
-                <th>Diferencia</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (p of preciosAutoservicio; track p.producto) {
-                <tr>
-                  <td class="fuel-name">{{ p.producto }}</td>
-                  <td>{{ p.precioAnterior }}</td>
-                  <td class="fuel-price">{{ p.precioActual }}</td>
-                  <td>
-                    <span class="fuel-diff"
-                      [class.positivo]="!p.diferencia.startsWith('-')"
-                      [class.negativo]="p.diferencia.startsWith('-')">
-                      {{ p.diferencia }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+    <!-- AUTOSERVICIO -->
+    <div class="dashboard-panel panel">
+      <div class="panel-header">
+        <span class="panel-title">Combustible — Autoservicio</span>
+        <span class="panel-badge">MEM</span>
       </div>
-
-      <!-- SERVICIO COMPLETO -->
-      <div class="dashboard-panel panel">
-        <div class="panel-header">
-          <span class="panel-title">Combustible — Servicio Completo</span>
-          <span class="panel-badge">MEM</span>
+      <div class="panel-body">
+        <div *ngIf="preciosAutoservicio.length === 0" class="text-muted text-center py-3">
+          <i class="bi bi-exclamation-circle"></i> No se pudieron cargar los precios del MEM.
         </div>
-
-        <div class="panel-body">
-          <table class="fuel-table">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Anterior</th>
-                <th>Actual</th>
-                <th>Diferencia</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (p of preciosServicioCompleto; track p.producto) {
-                <tr>
-                  <td class="fuel-name">{{ p.producto }}</td>
-                  <td>{{ p.precioAnterior }}</td>
-                  <td class="fuel-price">{{ p.precioActual }}</td>
-                  <td>
-                    <span class="fuel-diff"
-                      [class.positivo]="!p.diferencia.startsWith('-')"
-                      [class.negativo]="p.diferencia.startsWith('-')">
-                      {{ p.diferencia }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <table *ngIf="preciosAutoservicio.length > 0" class="fuel-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Anterior</th>
+              <th>Actual</th>
+              <th>Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of preciosAutoservicio">
+              <td class="fuel-name">{{ p.producto }}</td>
+              <td>{{ p.precioAnterior }}</td>
+              <td class="fuel-price">{{ p.precioActual }}</td>
+              <td>
+                <span class="fuel-diff"
+                  [class.positivo]="!p.diferencia.startsWith('-')"
+                  [class.negativo]="p.diferencia.startsWith('-')">
+                  {{ p.diferencia }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
     </div>
 
-  }
+    <!-- SERVICIO COMPLETO -->
+    <div class="dashboard-panel panel">
+      <div class="panel-header">
+        <span class="panel-title">Combustible — Servicio Completo</span>
+        <span class="panel-badge">MEM</span>
+      </div>
+      <div class="panel-body">
+        <div *ngIf="preciosServicioCompleto.length === 0" class="text-muted text-center py-3">
+          <i class="bi bi-exclamation-circle"></i> No se pudieron cargar los precios del MEM.
+        </div>
+        <table *ngIf="preciosServicioCompleto.length > 0" class="fuel-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Anterior</th>
+              <th>Actual</th>
+              <th>Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of preciosServicioCompleto">
+              <td class="fuel-name">{{ p.producto }}</td>
+              <td>{{ p.precioAnterior }}</td>
+              <td class="fuel-price">{{ p.precioActual }}</td>
+              <td>
+                <span class="fuel-diff"
+                  [class.positivo]="!p.diferencia.startsWith('-')"
+                  [class.negativo]="p.diferencia.startsWith('-')">
+                  {{ p.diferencia }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
 
 </div>

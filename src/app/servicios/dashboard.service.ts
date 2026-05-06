@@ -2,10 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DashboardResumen, PrecioCombustible } from '../modelos/dashboard.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
-  private readonly base = 'https://localhost:7069/api/dashboard';
+
+  private readonly base = `${environment.apiUrl}/api/dashboard`;
 
   constructor(private http: HttpClient) {}
 

@@ -10,9 +10,8 @@ import { Piloto, PilotoRequest, PilotoCatalogos, Telefono, TelefonoRequest } fro
   selector: 'app-piloto',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './piloto.html',
-  styleUrl: './piloto.css'
-})
+  templateUrl: './piloto.html'
+  })
 export class PilotoComponent implements OnInit {
 
   // Lista de pilotos

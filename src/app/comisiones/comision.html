@@ -1,0 +1,615 @@
+<!-- LISTA DE COMISIONES -->
+<div *ngIf="mostrarLista" class="comision-container">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-briefcase"></i> Gestión de Comisiones
+    </h4>
+    <button class="btn btn-primary btn-sm" (click)="abrirFormulario()">
+      <i class="bi bi-plus-circle"></i> Nueva Comisión
+    </button>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="row g-2 mb-3">
+    <div *ngFor="let e of estadisticas" class="col-6 col-md-3 col-lg-2">
+      <div class="stat-card">
+        <div class="stat-numero">{{ e.total }}</div>
+        <div class="stat-label">{{ e.nombre }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mensajes -->
+  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-3">
+          <select class="form-select form-select-sm"
+            [(ngModel)]="filtroEstado" (change)="filtrar()">
+            <option [value]="0">Todos los estados</option>
+            <option *ngFor="let e of estados" [value]="e.id">{{ e.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm"
+            [(ngModel)]="filtroTipo" (change)="filtrar()">
+            <option value="">Todos los tipos</option>
+            <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control form-control-sm"
+            [(ngModel)]="filtroSolicitante"
+            placeholder="Buscar solicitante..."
+            (keyup.enter)="filtrar()">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control form-control-sm"
+            [(ngModel)]="filtroDestino"
+            placeholder="Buscar destino..."
+            (keyup.enter)="filtrar()">
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+          <button class="btn btn-primary btn-sm" (click)="filtrar()">
+            <i class="bi bi-search"></i>
+          </button>
+          <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">
+            <i class="bi bi-x-circle"></i>
+          </button>
+          <select class="form-select form-select-sm"
+            (change)="tamanioPagina = +$any($event.target).value; filtrar()">
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Tipo</th>
+              <th>Solicitante</th>
+              <th>Destino</th>
+              <th>Fecha Inicio</th>
+              <th>Fecha Fin</th>
+              <th>Hora Salida</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="9" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                Cargando comisiones...
+              </td>
+            </tr>
+            <tr *ngIf="!cargando && comisiones.length === 0">
+              <td colspan="9" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                No se encontraron comisiones.
+              </td>
+            </tr>
+            <tr *ngFor="let c of comisiones">
+              <td>{{ c.id }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="c.tipoComision === 'Nacional' ? 'bg-primary' :
+                             c.tipoComision === 'Regional' ? 'bg-info text-dark' : 'bg-secondary'">
+                  {{ c.tipoComision }}
+                </span>
+              </td>
+              <td>{{ c.solicitante }}</td>
+              <td>{{ c.destino }}</td>
+              <td>
+                <span [class.text-danger]="esFechaVencida(c.fechaInicio)">
+                  {{ c.fechaInicio | date:'dd/MM/yyyy' }}
+                  <i *ngIf="esFechaVencida(c.fechaInicio)"
+                    class="bi bi-exclamation-triangle-fill text-danger ms-1"></i>
+                </span>
+              </td>
+              <td>
+                <span [class.text-danger]="esFechaVencida(c.fechaFin)">
+                  {{ c.fechaFin | date:'dd/MM/yyyy' }}
+                </span>
+              </td>
+              <td>{{ c.horaSalida }}</td>
+              <td>
+                <span class="badge" [ngClass]="colorEstado(c.idEstado)">
+                  <i class="bi me-1" [ngClass]="iconoEstado(c.idEstado)"></i>
+                  {{ c.nombreEstado }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-info btn-sm" title="Ver detalle"
+                  (click)="verDetalle(c.id)">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between align-items-center"
+      *ngIf="totalPaginas > 1">
+      <span class="text-muted small">
+        {{ totalRegistros }} comisiones — Página {{ paginaActual }} de {{ totalPaginas }}
+      </span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="paginaActual === 1">
+            <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
+            <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+            <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULARIO NUEVA COMISIÓN -->
+<div *ngIf="mostrarFormulario" class="comision-container">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-briefcase"></i> Nueva Comisión
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-card-list"></i> Datos Generales</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Tipo de Comisión <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="tipoComision"
+              [class.is-invalid]="tieneError('tipoComision')">
+              <option value="">Seleccione...</option>
+              <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Solicitante <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="solicitante"
+              [class.is-invalid]="tieneError('solicitante')"
+              placeholder="Nombre del solicitante">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-5 mb-3">
+            <label class="form-label">Unidad <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idUnidad"
+              [class.is-invalid]="tieneError('idUnidad')">
+              <option value="">Seleccione una unidad</option>
+              <option *ngFor="let u of unidades" [value]="u.id">{{ u.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Departamento / Sección</label>
+            <input type="text" class="form-control"
+              formControlName="departamentoSeccion"
+              placeholder="Departamento o sección">
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Destino <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="destino"
+              [class.is-invalid]="tieneError('destino')"
+              placeholder="Lugar de destino">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Hora de Salida <span class="text-danger">*</span></label>
+            <input type="time" class="form-control"
+              formControlName="horaSalida"
+              [class.is-invalid]="tieneError('horaSalida')">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Duración Aproximada</label>
+            <input type="text" class="form-control"
+              formControlName="duracionAproximada"
+              placeholder="Ej: 2 días">
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Fecha Inicio <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaInicio"
+              [class.is-invalid]="tieneError('fechaInicio')"
+              (change)="cargarVehiculosYPilotos()">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Fecha Fin <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaFin"
+              [class.is-invalid]="tieneError('fechaFin')"
+              (change)="cargarVehiculosYPilotos()">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Motivo <span class="text-danger">*</span></label>
+            <textarea class="form-control" rows="2"
+              formControlName="motivo"
+              [class.is-invalid]="tieneError('motivo')"
+              placeholder="Describa el motivo de la comisión..."></textarea>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" rows="2"
+              formControlName="observaciones"
+              placeholder="Observaciones adicionales..."></textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Personas comisionadas -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0"><i class="bi bi-people"></i> Personas Comisionadas</h6>
+        <button type="button" class="btn btn-light btn-sm" (click)="agregarCampoPersona()">
+          <i class="bi bi-plus-circle"></i> Agregar
+        </button>
+      </div>
+      <div class="card-body">
+        <div *ngFor="let p of personasFormulario; let i = index; trackBy: trackByIndex"
+          class="d-flex gap-2 mb-2">
+          <input type="text" class="form-control text-uppercase"
+            [(ngModel)]="personasFormulario[i]"
+            [ngModelOptions]="{standalone: true}"
+            placeholder="Nombre completo de la persona">
+          <button type="button" class="btn btn-danger btn-sm"
+            *ngIf="personasFormulario.length > 1"
+            (click)="eliminarCampoPersona(i)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Autoridades -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-person-badge"></i> Autoridades Firmantes</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Autoridad 1 — Nombre</label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="autoridad1Nombre" placeholder="Nombre">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Cargo</label>
+            <input type="text" class="form-control"
+              formControlName="autoridad1Cargo" placeholder="Cargo">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Autoridad 2 — Nombre</label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="autoridad2Nombre" placeholder="Nombre">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Cargo</label>
+            <input type="text" class="form-control"
+              formControlName="autoridad2Cargo" placeholder="Cargo">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Autoridad 3 — Nombre</label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="autoridad3Nombre" placeholder="Nombre">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Cargo</label>
+            <input type="text" class="form-control"
+              formControlName="autoridad3Cargo" placeholder="Cargo">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" (click)="volverLista()">
+        <i class="bi bi-x-circle"></i> Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="cargando">
+        <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!cargando" class="bi bi-save"></i>
+        Registrar Comisión
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- DETALLE DE COMISIÓN -->
+<div *ngIf="mostrarDetalle && comisionDetalle" class="comision-container">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-briefcase"></i> Comisión #{{ comisionDetalle.comision.id }}
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <!-- Header estado -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center"
+      [ngClass]="colorEstado(comisionDetalle.comision.idEstado)">
+      <strong>
+        <i class="bi me-2" [ngClass]="iconoEstado(comisionDetalle.comision.idEstado)"></i>
+        {{ comisionDetalle.comision.nombreEstado }}
+      </strong>
+      <div class="d-flex gap-2">
+        <button *ngFor="let e of estadosAccionables(comisionDetalle.comision.idEstado)"
+          class="btn btn-light btn-sm"
+          (click)="abrirModalEstado(e.id)">
+          → {{ e.nombre }}
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr><th>Tipo:</th><td>{{ comisionDetalle.comision.tipoComision }}</td></tr>
+            <tr><th>Solicitante:</th><td>{{ comisionDetalle.comision.solicitante }}</td></tr>
+            <tr><th>Unidad:</th><td>{{ comisionDetalle.comision.nombreUnidad }}</td></tr>
+            <tr><th>Departamento:</th><td>{{ comisionDetalle.comision.departamentoSeccion || '—' }}</td></tr>
+            <tr><th>Destino:</th><td>{{ comisionDetalle.comision.destino }}</td></tr>
+            <tr><th>Hora Salida:</th><td>{{ comisionDetalle.comision.horaSalida }}</td></tr>
+            <tr><th>Duración:</th><td>{{ comisionDetalle.comision.duracionAproximada || '—' }}</td></tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr><th>Fecha Solicitud:</th><td>{{ comisionDetalle.comision.fechaSolicitud | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Fecha Inicio:</th>
+              <td [class.text-danger]="esFechaVencida(comisionDetalle.comision.fechaInicio)">
+                {{ comisionDetalle.comision.fechaInicio | date:'dd/MM/yyyy' }}
+              </td>
+            </tr>
+            <tr><th>Fecha Fin:</th>
+              <td [class.text-danger]="esFechaVencida(comisionDetalle.comision.fechaFin)">
+                {{ comisionDetalle.comision.fechaFin | date:'dd/MM/yyyy' }}
+              </td>
+            </tr>
+            <tr><th>Creado por:</th><td>{{ comisionDetalle.comision.creadoPor }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="mt-2" *ngIf="comisionDetalle.comision.motivo">
+        <strong>Motivo:</strong>
+        <p class="text-muted mb-0">{{ comisionDetalle.comision.motivo }}</p>
+      </div>
+      <div class="mt-2" *ngIf="comisionDetalle.comision.justificacion">
+        <strong>Justificación:</strong>
+        <p class="text-muted mb-0">{{ comisionDetalle.comision.justificacion }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Personas -->
+    <div class="col-md-6">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0"><i class="bi bi-people"></i> Personas Comisionadas</h6>
+        </div>
+        <div class="card-body">
+          <div *ngIf="personas.length === 0" class="text-muted small text-center py-2">
+            No hay personas registradas.
+          </div>
+          <ul class="list-group list-group-flush">
+            <li *ngFor="let p of personas"
+              class="list-group-item d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-person me-2"></i>{{ p.nombrePersona }}</span>
+              <button class="btn btn-danger btn-sm" (click)="eliminarPersona(p.id)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </li>
+          </ul>
+          <div class="mt-3 d-flex gap-2">
+            <input type="text" class="form-control form-control-sm text-uppercase"
+              [(ngModel)]="nuevaPersona"
+              placeholder="Nombre de la persona">
+            <button class="btn btn-info btn-sm" (click)="agregarPersonaDetalle()">
+              <i class="bi bi-plus-circle"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Autoridades -->
+    <div class="col-md-6">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-secondary text-white">
+          <h6 class="mb-0"><i class="bi bi-person-badge"></i> Autoridades Firmantes</h6>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+
+            <tr *ngIf="comisionDetalle?.comision?.autoridad1Nombre">
+              <th>1.</th>
+              <td>{{ comisionDetalle?.comision?.autoridad1Nombre }}</td>
+              <td class="text-muted">{{ comisionDetalle?.comision?.autoridad1Cargo }}</td>
+              <td>
+                <span *ngIf="comisionDetalle?.comision?.firmadoJefe"
+                  class="badge bg-success">
+                  <i class="bi bi-check-circle"></i> Firmado
+                </span>
+                <button *ngIf="!comisionDetalle?.comision?.firmadoJefe"
+                  class="btn btn-outline-success btn-sm"
+                  (click)="registrarFirma(1)">
+                  <i class="bi bi-pen"></i> Firmar
+                </button>
+              </td>
+            </tr>
+
+            <tr *ngIf="comisionDetalle?.comision?.autoridad2Nombre">
+              <th>2.</th>
+              <td>{{ comisionDetalle?.comision?.autoridad2Nombre }}</td>
+              <td class="text-muted">{{ comisionDetalle?.comision?.autoridad2Cargo }}</td>
+              <td>
+                <span *ngIf="comisionDetalle?.comision?.firmadoFinanciero"
+                  class="badge bg-success">
+                  <i class="bi bi-check-circle"></i> Firmado
+                </span>
+                <button *ngIf="!comisionDetalle?.comision?.firmadoFinanciero && comisionDetalle?.comision?.firmadoJefe"
+                  class="btn btn-outline-success btn-sm"
+                  (click)="registrarFirma(2)">
+                  <i class="bi bi-pen"></i> Firmar
+                </button>
+                <span *ngIf="!comisionDetalle?.comision?.firmadoFinanciero && !comisionDetalle?.comision?.firmadoJefe"
+                  class="badge bg-secondary">
+                  <i class="bi bi-lock"></i> Pendiente Autoridad 1
+                </span>
+              </td>
+            </tr>
+
+            <tr *ngIf="comisionDetalle?.comision?.autoridad3Nombre">
+              <th>3.</th>
+              <td>{{ comisionDetalle?.comision?.autoridad3Nombre }}</td>
+              <td class="text-muted">{{ comisionDetalle?.comision?.autoridad3Cargo }}</td>
+              <td>
+                <span *ngIf="comisionDetalle?.comision?.firmadoAdministrativo"
+                  class="badge bg-success">
+                  <i class="bi bi-check-circle"></i> Firmado
+                </span>
+                <button *ngIf="!comisionDetalle?.comision?.firmadoAdministrativo && comisionDetalle?.comision?.firmadoFinanciero"
+                  class="btn btn-outline-success btn-sm"
+                  (click)="registrarFirma(3)">
+                  <i class="bi bi-pen"></i> Firmar
+                </button>
+                <span *ngIf="!comisionDetalle?.comision?.firmadoAdministrativo && !comisionDetalle?.comision?.firmadoFinanciero"
+                  class="badge bg-secondary">
+                  <i class="bi bi-lock"></i> Pendiente Autoridad 2
+                </span>
+              </td>
+            </tr>
+
+            <tr *ngIf="!comisionDetalle?.comision?.autoridad1Nombre">
+              <td colspan="4" class="text-muted small text-center">
+                Sin autoridades registradas.
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historial -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-dark text-white">
+      <h6 class="mb-0"><i class="bi bi-clock-history"></i> Historial de Acciones</h6>
+    </div>
+    <div class="card-body">
+      <div *ngIf="historial.length === 0" class="text-muted small text-center py-2">
+        No hay historial registrado.
+      </div>
+      <div *ngFor="let h of historial" class="timeline-item">
+        <div class="d-flex justify-content-between">
+          <strong>{{ h.accion }}</strong>
+          <small class="text-muted">{{ h.fechaRegistro | date:'dd/MM/yyyy HH:mm' }}</small>
+        </div>
+        <div class="text-muted small">{{ h.detalle }}</div>
+        <div *ngIf="h.valorAnterior || h.valorNuevo" class="mt-1">
+          <span *ngIf="h.valorAnterior" class="badge bg-secondary me-1">{{ h.valorAnterior }}</span>
+          <i *ngIf="h.valorAnterior && h.valorNuevo" class="bi bi-arrow-right text-muted mx-1"></i>
+          <span *ngIf="h.valorNuevo" class="badge bg-primary">{{ h.valorNuevo }}</span>
+        </div>
+        <small class="text-muted">Por: {{ h.usuario }}</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMBIO DE ESTADO -->
+<div *ngIf="mostrarModalEstado" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header-custom bg-primary text-white">
+      <h6 class="mb-0"><i class="bi bi-arrow-repeat"></i> Cambiar Estado</h6>
+      <button class="btn btn-sm btn-light" (click)="cerrarModalEstado()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body-custom">
+      <p class="text-muted small mb-2">
+        Nuevo estado:
+        <strong>{{ estados.find(e => e.id === nuevoEstado)?.nombre }}</strong>
+      </p>
+      <label class="form-label">Justificación (opcional)</label>
+      <textarea class="form-control" rows="3"
+        [(ngModel)]="justificacionEstado"
+        placeholder="Ingrese una justificación..."></textarea>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary btn-sm" (click)="cerrarModalEstado()">
+        Cancelar
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="confirmarCambioEstado()">
+        <i class="bi bi-check-circle"></i> Confirmar
+      </button>
+    </div>
+  </div>
+</div>

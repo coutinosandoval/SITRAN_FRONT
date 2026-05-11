@@ -1,0 +1,585 @@
+<!-- LISTA DE TALONARIOS -->
+<div *ngIf="mostrarLista">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-bookmarks"></i> Talonarios
+    </h4>
+    <button class="btn btn-primary btn-sm" (click)="mostrarAgregar()">
+      <i class="bi bi-plus-circle"></i> Registrar Talonario
+    </button>
+  </div>
+
+  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="row align-items-center g-2">
+        <div class="col-md-4">
+          <select class="form-select form-select-sm"
+            [(ngModel)]="filtroEstado" (change)="filtrar()">
+            <option *ngFor="let e of estados" [value]="e.id">{{ e.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select form-select-sm"
+            (change)="tamanioPagina = +$any($event.target).value; filtrar()">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+          </select>
+        </div>
+        <div class="col-md-6 text-end">
+          <span class="text-muted small">{{ totalRegistros }} talonarios</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Expendedor</th>
+              <th>Denominación</th>
+              <th>Rango</th>
+              <th>Cupones</th>
+              <th>Saldo</th>
+              <th>Vencimiento</th>
+              <th>Sede Asignada</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="10" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                Cargando talonarios...
+              </td>
+            </tr>
+            <tr *ngIf="!cargando && talonarios.length === 0">
+              <td colspan="10" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                No se encontraron talonarios.
+              </td>
+            </tr>
+            <tr *ngFor="let t of talonarios">
+              <td>{{ t.id }}</td>
+              <td>{{ t.nombreExpendedor }}</td>
+              <td>
+                <span class="badge bg-info text-dark">Q{{ t.valorCupon }}.00</span>
+              </td>
+              <td>{{ t.numeradoDel }} — {{ t.numeradoAl }}</td>
+              <td>{{ t.cantidadCupones }}</td>
+              <td>
+                <span class="badge"
+                  [ngClass]="t.saldo === 0 ? 'bg-danger' : t.saldo <= 10 ? 'bg-warning text-dark' : 'bg-success'">
+                  {{ t.saldo }}
+                </span>
+              </td>
+              <td>{{ t.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+              <td>{{ t.nombreSedeTraslado || '—' }}</td>
+              <td>
+                <span class="badge" [ngClass]="colorEstado(t.estado)">
+                  {{ t.estadoNombre }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-info btn-sm me-1" title="Ver detalle"
+                  (click)="verDetalle(t)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-primary btn-sm me-1" title="Trasladar a sede"
+                  *ngIf="t.estado === 1"
+                  (click)="abrirTraslado(t)">
+                  <i class="bi bi-arrow-right-circle"></i>
+                </button>
+                <button class="btn btn-warning btn-sm" title="Registrar devolución"
+                  *ngIf="t.estado === 2 || t.estado === 3"
+                  (click)="abrirDevolucion(t)">
+                  <i class="bi bi-arrow-return-left"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center"
+      *ngIf="totalPaginas > 1">
+      <span class="text-muted small">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="paginaActual === 1">
+            <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
+            <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+            <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULARIO AGREGAR TALONARIO -->
+<div *ngIf="mostrarFormulario">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-bookmarks"></i> Registrar Talonario
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-card-list"></i> Datos del Talonario</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha de Compra <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaCompra"
+              [class.is-invalid]="tieneError('fechaCompra')">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Expendedor <span class="text-danger">*</span></label>
+            <div class="position-relative">
+              <div class="input-group">
+                <input type="text" class="form-control"
+                  [(ngModel)]="busquedaExpendedor"
+                  [ngModelOptions]="{standalone: true}"
+                  (input)="filtrarExpendedores()"
+                  [class.is-invalid]="tieneError('idExpendedor')"
+                  placeholder="Buscar expendedor...">
+                <button class="btn btn-outline-secondary" type="button"
+                  *ngIf="expendedorSeleccionado"
+                  (click)="limpiarExpendedor()">
+                  <i class="bi bi-x"></i>
+                </button>
+              </div>
+              <div *ngIf="mostrarDropdown"
+                class="position-absolute w-100 bg-white border rounded shadow-sm"
+                style="z-index: 1000; max-height: 200px; overflow-y: auto;">
+                <a *ngFor="let e of expendedoresFiltrados"
+                  class="d-block px-3 py-2 text-decoration-none text-dark border-bottom"
+                  style="cursor: pointer; font-size: 13px;"
+                  (click)="seleccionarExpendedor(e)"
+                  [ngClass]="{'bg-light': expendedorSeleccionado?.id === e.id}">
+                  <i class="bi bi-fuel-pump me-2 text-muted"></i>{{ e.nombre }}
+                </a>
+              </div>
+              <div *ngIf="expendedorSeleccionado" class="mt-1">
+                <span class="badge bg-success">
+                  <i class="bi bi-check-circle"></i> {{ expendedorSeleccionado.nombre }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Denominación <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="valorCupon"
+              [class.is-invalid]="tieneError('valorCupon')">
+              <option *ngFor="let v of valores" [value]="v">Q{{ v }}.00 por cupón</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Cantidad de Cupones <span class="text-danger">*</span></label>
+            <input type="number" class="form-control"
+              formControlName="cantidadCupones"
+              [class.is-invalid]="tieneError('cantidadCupones')"
+              (change)="calcularNumeradoAl()"
+              placeholder="Ej: 50" min="1" max="100">
+            <div class="invalid-feedback">Requerido. Debe ser mayor a 0 y menor o igual a 100.</div>
+            <small class="text-muted">Mínimo 1, máximo 100 cupones</small>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Numerado del <span class="text-danger">*</span></label>
+            <input type="number" class="form-control"
+              formControlName="numeradoDel"
+              [class.is-invalid]="tieneError('numeradoDel')"
+              (change)="calcularNumeradoAl()"
+              placeholder="Ej: 1001">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Numerado al</label>
+            <input type="number" class="form-control" formControlName="numeradoAl" readonly>
+            <small class="text-muted">Se calcula automáticamente</small>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaEmision"
+              [class.is-invalid]="tieneError('fechaEmision')">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha de Vencimiento <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaVencimiento"
+              [class.is-invalid]="tieneError('fechaVencimiento')">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" rows="2"
+              formControlName="observaciones"
+              placeholder="Observaciones adicionales..."></textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="card shadow-sm mb-3 border-info">
+      <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="bi bi-calculator"></i> Resumen</h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-4">
+            <div class="fs-4 fw-bold text-primary">{{ formulario.get('cantidadCupones')?.value }}</div>
+            <div class="text-muted small">Cupones a generar</div>
+          </div>
+          <div class="col-md-4">
+            <div class="fs-4 fw-bold text-success">Q{{ formulario.get('valorCupon')?.value }}.00</div>
+            <div class="text-muted small">Valor por cupón</div>
+          </div>
+          <div class="col-md-4">
+            <div class="fs-4 fw-bold text-warning">
+              Q{{ formulario.get('cantidadCupones')?.value * formulario.get('valorCupon')?.value | number }}.00
+            </div>
+            <div class="text-muted small">Total del talonario</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" (click)="volverLista()">
+        <i class="bi bi-x-circle"></i> Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="cargando">
+        <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!cargando" class="bi bi-save"></i>
+        Registrar Talonario
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- DETALLE DEL TALONARIO -->
+<div *ngIf="mostrarDetalle && talonarioSeleccionado">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-bookmarks"></i> Detalle del Talonario #{{ talonarioSeleccionado.id }}
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center"
+      [ngClass]="colorEstado(talonarioSeleccionado.estado)">
+      <strong>Talonario #{{ talonarioSeleccionado.id }} — {{ talonarioSeleccionado.nombreExpendedor }}</strong>
+      <span class="badge bg-light text-dark">{{ talonarioSeleccionado.estadoNombre }}</span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr><th>Expendedor:</th><td>{{ talonarioSeleccionado.nombreExpendedor }}</td></tr>
+            <tr><th>Denominación:</th><td>Q{{ talonarioSeleccionado.valorCupon }}.00 por cupón</td></tr>
+            <tr><th>Rango:</th><td>Del {{ talonarioSeleccionado.numeradoDel }} al {{ talonarioSeleccionado.numeradoAl }}</td></tr>
+            <tr><th>Total cupones:</th><td>{{ talonarioSeleccionado.cantidadCupones }}</td></tr>
+            <tr><th>Saldo disponible:</th>
+              <td>
+                <span class="badge"
+                  [ngClass]="talonarioSeleccionado.saldo === 0 ? 'bg-danger' : 'bg-success'">
+                  {{ talonarioSeleccionado.saldo }} cupones
+                </span>
+              </td>
+            </tr>
+            <tr><th>Total talonario:</th>
+              <td class="fw-bold text-success">
+                Q{{ talonarioSeleccionado.cantidadCupones * talonarioSeleccionado.valorCupon | number }}.00
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr><th>Fecha Compra:</th><td>{{ talonarioSeleccionado.fechaCompra | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Fecha Emisión:</th><td>{{ talonarioSeleccionado.fechaEmision | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Fecha Vencimiento:</th><td>{{ talonarioSeleccionado.fechaVencimiento | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Sede Asignada:</th><td>{{ talonarioSeleccionado.nombreSedeTraslado || 'Sin asignar' }}</td></tr>
+            <tr><th>Fecha Traslado:</th><td>{{ talonarioSeleccionado.fechaTraslado | date:'dd/MM/yyyy' }}</td></tr>
+            <tr><th>Trasladado por:</th><td>{{ talonarioSeleccionado.trasladadoPor || '—' }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Devolución -->
+      <div class="mt-3" *ngIf="talonarioSeleccionado.cuponesRetornados">
+        <h6 class="text-warning">
+          <i class="bi bi-arrow-return-left"></i> Información de Devolución
+        </h6>
+        <table class="table table-sm table-borderless">
+          <tr><th>Cupones retornados:</th><td>{{ talonarioSeleccionado.cuponesRetornados }}</td></tr>
+          <tr><th>Fecha retorno:</th><td>{{ talonarioSeleccionado.fechaRetorno | date:'dd/MM/yyyy' }}</td></tr>
+          <tr><th>Retornado por:</th><td>{{ talonarioSeleccionado.retornadoPor }}</td></tr>
+        </table>
+      </div>
+
+      <div class="mt-3 text-muted small" *ngIf="talonarioSeleccionado.observaciones">
+        <i class="bi bi-chat-text"></i> {{ talonarioSeleccionado.observaciones }}
+      </div>
+    </div>
+  </div>
+
+  <!-- BITÁCORA DE MOVIMIENTOS -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-dark text-white">
+      <h6 class="mb-0">
+        <i class="bi bi-clock-history"></i> Bitácora de Movimientos
+      </h6>
+    </div>
+    <div class="card-body">
+      <div *ngIf="bitacora.length === 0" class="text-muted small text-center py-3">
+        No hay movimientos registrados.
+      </div>
+      <div *ngFor="let b of bitacora" class="card border-0 shadow-sm mb-3">
+        <div class="card-header py-2" [ngClass]="colorMovimiento(b.tipoMovimiento)">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold">
+              <i class="bi" [ngClass]="iconoMovimiento(b.tipoMovimiento)"></i>
+              {{ b.tipoMovimiento }}
+            </span>
+            <small>{{ b.fechaMovimiento | date:'dd/MM/yyyy' }}</small>
+          </div>
+        </div>
+        <div class="card-body py-2">
+          <div class="row">
+            <div class="col-md-6">
+              <small class="text-muted">Sede Origen:</small>
+              <div class="fw-semibold">{{ b.nombreSedeOrigen || '—' }}</div>
+            </div>
+            <div class="col-md-6">
+              <small class="text-muted">Sede Destino:</small>
+              <div class="fw-semibold">{{ b.nombreSedeDestino || '—' }}</div>
+            </div>
+            <div class="col-md-6 mt-2">
+              <small class="text-muted">Entregado por:</small>
+              <div>{{ b.entregadoPor || '—' }}</div>
+            </div>
+            <div class="col-md-6 mt-2">
+              <small class="text-muted">Recibido por:</small>
+              <div>{{ b.recibidoPor || '—' }}</div>
+            </div>
+            <div class="col-md-6 mt-2">
+              <small class="text-muted">Cupones movidos:</small>
+              <div>
+                <span class="badge bg-info text-dark">{{ b.cuponesMovidos }}</span>
+              </div>
+            </div>
+            <div class="col-md-6 mt-2" *ngIf="b.observaciones">
+              <small class="text-muted">Observaciones:</small>
+              <div>{{ b.observaciones }}</div>
+            </div>
+            <div class="col-12 mt-2">
+              <small class="text-muted">
+                Registrado por {{ b.registradoPor }} el {{ b.fechaRegistro | date:'dd/MM/yyyy HH:mm' }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULARIO TRASLADO -->
+<div *ngIf="mostrarTraslado && talonarioSeleccionado">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-arrow-right-circle"></i> Trasladar Talonario #{{ talonarioSeleccionado.id }}
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <div class="alert alert-info mb-3">
+    <strong>Talonario #{{ talonarioSeleccionado.id }}</strong> —
+    Q{{ talonarioSeleccionado.valorCupon }}.00 —
+    Del {{ talonarioSeleccionado.numeradoDel }} al {{ talonarioSeleccionado.numeradoAl }} —
+    Saldo: {{ talonarioSeleccionado.saldo }} cupones
+  </div>
+
+  <form [formGroup]="formularioTraslado" (ngSubmit)="guardarTraslado()">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-arrow-right-circle"></i> Datos del Traslado</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Sede Destino <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idSedeTraslado"
+              [class.is-invalid]="tieneError('idSedeTraslado', formularioTraslado)">
+              <option value="">Seleccione una sede</option>
+              <option *ngFor="let s of sedes" [value]="s.id">{{ s.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">La sede es requerida.</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Fecha de Traslado <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaTraslado"
+              [class.is-invalid]="tieneError('fechaTraslado', formularioTraslado)">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Entregado por <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="trasladadoPor"
+              [class.is-invalid]="tieneError('trasladadoPor', formularioTraslado)"
+              placeholder="Nombre de quien entrega">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Recibido por <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="retornadoPor"
+              [class.is-invalid]="tieneError('retornadoPor', formularioTraslado)"
+              placeholder="Nombre de quien recibe">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" (click)="volverLista()">
+        <i class="bi bi-x-circle"></i> Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-arrow-right-circle"></i> Trasladar
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- FORMULARIO DEVOLUCIÓN -->
+<div *ngIf="mostrarDevolucion && talonarioSeleccionado">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-arrow-return-left"></i> Devolución — Talonario #{{ talonarioSeleccionado.id }}
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <div class="alert alert-warning mb-3">
+    <strong>Talonario #{{ talonarioSeleccionado.id }}</strong> —
+    Q{{ talonarioSeleccionado.valorCupon }}.00 —
+    Saldo disponible: <strong>{{ talonarioSeleccionado.saldo }} cupones</strong>
+  </div>
+
+  <form [formGroup]="formularioDevolver" (ngSubmit)="guardarDevolucion()">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0"><i class="bi bi-arrow-return-left"></i> Datos de la Devolución</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Cupones a devolver <span class="text-danger">*</span></label>
+            <input type="number" class="form-control"
+              formControlName="cuponesRetornados"
+              [class.is-invalid]="tieneError('cuponesRetornados', formularioDevolver)"
+              [max]="talonarioSeleccionado.saldo"
+              placeholder="Cantidad de cupones">
+            <div class="invalid-feedback">Requerido. Mínimo 1.</div>
+            <small class="text-muted">Máximo: {{ talonarioSeleccionado.saldo }}</small>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Fecha de Retorno <span class="text-danger">*</span></label>
+            <input type="date" class="form-control"
+              formControlName="fechaRetorno"
+              [class.is-invalid]="tieneError('fechaRetorno', formularioDevolver)">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Retornado por <span class="text-danger">*</span></label>
+            <input type="text" class="form-control text-uppercase"
+              formControlName="retornadoPor"
+              [class.is-invalid]="tieneError('retornadoPor', formularioDevolver)"
+              placeholder="Nombre de quien devuelve">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" (click)="volverLista()">
+        <i class="bi bi-x-circle"></i> Cancelar
+      </button>
+      <button type="submit" class="btn btn-warning">
+        <i class="bi bi-arrow-return-left"></i> Registrar Devolución
+      </button>
+    </div>
+  </form>
+</div>

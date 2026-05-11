@@ -1,0 +1,48 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+.comision-container { padding: 20px; }
+
+// Cards de estadísticas
+.stat-card {
+  @include card;
+  text-align: center;
+  padding: 12px;
+  .stat-numero {
+    font-size: 2rem;
+    font-weight: 700;
+    color: $primary;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: $text-light;
+    text-transform: uppercase;
+  }
+}
+
+// Timeline historial
+.timeline-item {
+  border-left: 3px solid $primary;
+  padding-left: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  &::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: $primary;
+    border-radius: 50%;
+    position: absolute;
+    left: -7px;
+    top: 4px;
+  }
+}
+
+// Badge estados comision
+.badge-estado-1   { background-color: #f59e0b; color: #1f2937; }
+.badge-estado-2   { background-color: #06b6d4; color: #1f2937; }
+.badge-estado-3   { background-color: $primary; color: white; }
+.badge-estado-4   { background-color: $success; color: white; }
+.badge-estado-5   { background-color: $secondary; color: white; }
+.badge-estado-81  { background-color: $danger; color: white; }
+.badge-estado-121 { background-color: $danger; color: white; }

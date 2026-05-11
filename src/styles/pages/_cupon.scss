@@ -1,0 +1,21 @@
+@use '../abstracts/mixins' as *;
+@use '../abstracts/variables' as *;
+
+.cupon-container { padding: 20px; }
+
+.cupon-form { @include card; }
+
+.cupon-detalle { @include card; }
+
+.cupon-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+// Badge de estado talonario
+.badge-disponible  { background-color: $success; color: white; }
+.badge-asignado    { background-color: $primary; color: white; }
+.badge-entregado   { background-color: $warning; color: $dark; }
+.badge-devuelto    { background-color: $secondary; color: white; }
+.badge-vencido     { background-color: $danger; color: white; }

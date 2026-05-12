@@ -114,3 +114,20 @@ export interface ComisionDetalle {
   personas:  ComisionPersona[];
   historial: HistorialComision[];
 }
+
+export interface ChecklistComision {
+  id?:                number;
+  idComision?:        number;
+  idVehiculo:         number;
+  nombreVehiculo?:    string;
+  idPiloto:           number;
+  nombrePiloto?:      string;
+  idUnidad?:          number;
+  fechaRevision?:     string;
+  horaRevision?:      string;
+  kilometrajInicial?: number;
+  montoCombustible?:  number;
+  observaciones?:     string;
+  creadoPor?:         string;
+  fechaCreacion?:     string;
+}

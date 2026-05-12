@@ -8,6 +8,9 @@ import {
   CambiarEstadoComision, ComisionPersona, AgregarPersona,
   HistorialComision, EstadoComision, EstadisticaComision, ComisionDetalle
 } from '../modelos/comision.model';
+import {
+   ChecklistComision
+} from '../modelos/comision.model';
 
 @Injectable({ providedIn: 'root' })
 export class ComisionService {
@@ -90,5 +93,13 @@ export class ComisionService {
 
   registrarFirma(id: number, autoridad: number): Observable<any> {
   return this.http.patch(`${this.apiUrl}/${id}/firma`, { autoridad });
+}
+
+registrarChecklist(idComision: number, dto: ChecklistComision): Observable<any> {
+  return this.http.post(`${this.apiUrl}/${idComision}/checklist`, dto);
+}
+
+obtenerChecklist(idComision: number): Observable<ChecklistComision> {
+  return this.http.get<ChecklistComision>(`${this.apiUrl}/${idComision}/checklist`);
 }
 }

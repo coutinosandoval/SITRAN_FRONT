@@ -398,6 +398,15 @@
         {{ comisionDetalle.comision.nombreEstado }}
       </strong>
       <div class="d-flex gap-2">
+       <button *ngIf="comisionDetalle.comision.idEstado === 181"
+  class="btn btn-sm"
+  [ngClass]="esFechaHoraVencida() ? 'btn-warning text-dark' : 'btn-success'"
+  [disabled]="esFechaHoraVencida()"
+  [title]="esFechaHoraVencida() ? 'Hora de salida ya venció' : 'Asignar vehículo y piloto'"
+  (click)="abrirChecklist()">
+  <i class="bi" [ngClass]="esFechaHoraVencida() ? 'bi-exclamation-triangle' : 'bi-clipboard-check'"></i>
+  {{ esFechaHoraVencida() ? 'Hora Vencida' : 'Asignar Vehículo/Piloto' }}
+</button>
         <button *ngFor="let e of estadosAccionables(comisionDetalle.comision.idEstado)"
           class="btn btn-light btn-sm"
           (click)="abrirModalEstado(e.id)">
@@ -582,6 +591,109 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- CHECKLIST -->
+<div *ngIf="mostrarChecklist && comisionDetalle" class="comision-container">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-truck"></i> Asignar Vehículo y Piloto — Comisión #{{ comisionDetalle.comision.id }}
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverDetalle()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <!-- Info comisión -->
+  <div class="alert alert-info mb-3">
+    <strong>Destino:</strong> {{ comisionDetalle.comision.destino }} —
+    <strong>Fecha:</strong> {{ comisionDetalle.comision.fechaInicio | date:'dd/MM/yyyy' }}
+    al {{ comisionDetalle.comision.fechaFin | date:'dd/MM/yyyy' }}
+  </div>
+
+  <form [formGroup]="formularioChecklist" (ngSubmit)="guardarChecklist()">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-truck"></i> Datos de Asignación</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Vehículo <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idVehiculo"
+              [class.is-invalid]="tieneError('idVehiculo', formularioChecklist)">
+              <option value="">Seleccione un vehículo disponible</option>
+              <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Piloto <span class="text-danger">*</span></label>
+            <select class="form-select" formControlName="idPiloto"
+              [class.is-invalid]="tieneError('idPiloto', formularioChecklist)">
+              <option value="">Seleccione un piloto disponible</option>
+              <option *ngFor="let p of pilotos" [value]="p.id">{{ p.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-3 mb-3">
+  <label class="form-label">Fecha de Salida</label>
+  <input type="date" class="form-control" formControlName="fechaRevision" readonly>
+  <small class="text-muted">Tomada de la comisión</small>
+</div>
+
+<div class="col-md-3 mb-3">
+  <label class="form-label">Hora de Salida</label>
+  <input type="time" class="form-control" formControlName="horaRevision" readonly>
+  <small class="text-muted">Tomada de la comisión</small>
+</div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Kilometraje Inicial <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" formControlName="kilometrajInicial"
+              [class.is-invalid]="tieneError('kilometrajInicial', formularioChecklist)"
+              placeholder="Km actuales del vehículo">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Monto Combustible <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" formControlName="montoCombustible"
+              [class.is-invalid]="tieneError('montoCombustible', formularioChecklist)"
+              placeholder="Ej: 100, 150, 200..."
+              step="50" min="50">
+            <div class="invalid-feedback">Requerido. Mínimo Q50.00</div>
+            <small class="text-muted">Debe ser múltiplo de Q50.00</small>
+          </div>
+
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" rows="2"
+              formControlName="observaciones"
+              placeholder="Observaciones adicionales..."></textarea>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" (click)="volverDetalle()">
+        <i class="bi bi-x-circle"></i> Cancelar
+      </button>
+      <button type="submit" class="btn btn-success">
+        <i class="bi bi-check-circle"></i> Asignar y Poner En Curso
+      </button>
+    </div>
+  </form>
 </div>
 
 <!-- MODAL CAMBIO DE ESTADO -->

@@ -48,6 +48,7 @@ export class ComisionComponent implements OnInit {
   mostrarDetalle:        boolean = false;
   mostrarChecklist:      boolean = false;
   mostrarAsignarCupones: boolean = false;
+  mostrarFinalizar:      boolean = false;
 
   // ─── Detalle ───
   comisionDetalle: ComisionDetalle | null = null;
@@ -66,6 +67,7 @@ export class ComisionComponent implements OnInit {
   // ─── Formularios ───
   formulario:          FormGroup;
   formularioChecklist: FormGroup;
+  formularioFinalizar: FormGroup;
 
   // ─── Mensajes ───
   mensajeExito: string  = '';
@@ -104,6 +106,13 @@ export class ComisionComponent implements OnInit {
       autoridad3Cargo:     [''],
     });
 
+// Formulario finalización de comisión
+this.formularioFinalizar = this.fb.group({
+  kilometrajeFinal: ['', Validators.required],
+  fechaRetorno:     ['', Validators.required],
+  horaRetorno:      ['', Validators.required],
+  observaciones:    [''],
+});
     // Formulario checklist / asignación vehículo
     this.formularioChecklist = this.fb.group({
       idVehiculo:        ['', Validators.required],
@@ -271,20 +280,22 @@ export class ComisionComponent implements OnInit {
 
   volverLista(): void {
     this.mostrarLista          = true;
-    this.mostrarFormulario     = false;
-    this.mostrarDetalle        = false;
-    this.mostrarChecklist      = false;
-    this.mostrarAsignarCupones = false;
-    this.comisionDetalle       = null;
-    this.limpiarMensajes();
+  this.mostrarFormulario     = false;
+  this.mostrarDetalle        = false;
+  this.mostrarChecklist      = false;
+  this.mostrarAsignarCupones = false;
+  this.mostrarFinalizar      = false;
+  this.comisionDetalle       = null;
+  this.limpiarMensajes();
   }
 
   volverDetalle(): void {
-    this.mostrarLista      = false;
-    this.mostrarFormulario = false;
-    this.mostrarDetalle    = true;
-    this.mostrarChecklist  = false;
-    this.limpiarMensajes();
+   this.mostrarLista      = false;
+  this.mostrarFormulario = false;
+  this.mostrarDetalle    = true;
+  this.mostrarChecklist  = false;
+  this.mostrarFinalizar  = false;
+  this.limpiarMensajes();
   }
 
   // ─── Personas ───
@@ -594,4 +605,49 @@ export class ComisionComponent implements OnInit {
       default:  return [];
     }
   }
+
+  // Abre el formulario de finalización
+abrirFinalizar(): void {
+  this.mostrarLista      = false;
+  this.mostrarFormulario = false;
+  this.mostrarDetalle    = false;
+  this.mostrarChecklist  = false;
+  this.mostrarFinalizar  = true;
+  this.formularioFinalizar.reset();
+  this.limpiarMensajes();
+}
+
+// Finaliza la comisión
+finalizar(): void {
+  if (this.formularioFinalizar.invalid) {
+    this.formularioFinalizar.markAllAsTouched();
+    return;
+  }
+
+  const v   = this.formularioFinalizar.value;
+  const dto = {
+    kilometrajeFinal: Number(v.kilometrajeFinal),
+    fechaRetorno:     v.fechaRetorno,
+    horaRetorno:      v.horaRetorno,
+    observaciones:    v.observaciones,
+  };
+
+  if (!confirm('¿Confirma finalizar esta comisión?')) return;
+
+  this.comisionService.finalizarComision(
+    this.comisionDetalle!.comision.id, dto
+  ).subscribe({
+    next: () => {
+      alert('Comisión finalizada correctamente.');
+      this.mostrarFinalizar = false;
+      this.mostrarDetalle   = true;
+      this.verDetalle(this.comisionDetalle!.comision.id);
+      this.cargarEstadisticas();
+    },
+    error: (err) => {
+      this.mensajeError = err.error?.mensaje || 'Error al finalizar.';
+    }
+  });
+}
+
 }

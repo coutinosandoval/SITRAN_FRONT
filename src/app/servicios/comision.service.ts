@@ -115,5 +115,11 @@ obtenerCuponesComision(idComision: number): Observable<any[]> {
   return this.http.get<any[]>(`${this.apiUrl}/${idComision}/cupones`);
 }
 
+// Finaliza una comisión registrando km final
+finalizarComision(idComision: number, dto: any): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/${idComision}/finalizar`, dto);
+}
+
+
 
 }

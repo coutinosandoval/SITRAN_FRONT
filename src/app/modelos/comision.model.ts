@@ -131,3 +131,8 @@ export interface ChecklistComision {
   creadoPor?:         string;
   fechaCreacion?:     string;
 }
+
+// Solicitud para asignar cupones a una comisión
+export interface AsignarCuponesComision {
+  idTalonario: number;
+}

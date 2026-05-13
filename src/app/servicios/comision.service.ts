@@ -102,4 +102,18 @@ registrarChecklist(idComision: number, dto: ChecklistComision): Observable<any> 
 obtenerChecklist(idComision: number): Observable<ChecklistComision> {
   return this.http.get<ChecklistComision>(`${this.apiUrl}/${idComision}/checklist`);
 }
+
+// ─── CUPONES DE COMISIÓN ───
+
+// Asigna cupones automáticamente a una comisión
+asignarCuponesComision(idComision: number, idTalonario: number): Observable<any> {
+  return this.http.post(`${this.apiUrl}/${idComision}/cupones/asignar`, { idTalonario });
+}
+
+// Obtiene los cupones asignados a una comisión
+obtenerCuponesComision(idComision: number): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/${idComision}/cupones`);
+}
+
+
 }

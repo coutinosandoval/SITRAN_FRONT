@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ComisionService } from '../servicios/comision.service';
+import { CuponService } from '../servicios/cupon.service';
 import {
   Comision, ComisionRequest, ComisionDetalle,
   EstadoComision, EstadisticaComision, ComisionPersona,
@@ -17,60 +18,72 @@ import { CatalogoItem } from '../modelos/vehiculo.model';
 })
 export class ComisionComponent implements OnInit {
 
+  // ─── Lista ───
   comisiones:     Comision[] = [];
   paginaActual:   number = 1;
   tamanioPagina:  number = 10;
   totalRegistros: number = 0;
   totalPaginas:   number = 0;
 
+  // ─── Filtros ───
   filtroEstado:      number = 0;
   filtroTipo:        string = '';
   filtroSolicitante: string = '';
   filtroDestino:     string = '';
 
-  estados:   EstadoComision[]     = [];
-  unidades:  CatalogoItem[]       = [];
-  vehiculos: CatalogoItem[]       = [];
-  pilotos:   CatalogoItem[]       = [];
+  // ─── Catálogos ───
+  estados:              EstadoComision[]   = [];
+  unidades:             CatalogoItem[]     = [];
+  vehiculos:            CatalogoItem[]     = [];
+  pilotos:              CatalogoItem[]     = [];
+  talonariosDisponibles: CatalogoItem[]   = [];
+  estadisticas:         EstadisticaComision[] = [];
 
-  estadisticas: EstadisticaComision[] = [];
-
+  // ─── Tipos ───
   tipos = ['Local', 'Nacional', 'Regional'];
 
-  mostrarLista:      boolean = true;
-  mostrarFormulario: boolean = false;
-  mostrarDetalle:    boolean = false;
-  mostrarChecklist:  boolean = false;
+  // ─── Control de vistas ───
+  mostrarLista:          boolean = true;
+  mostrarFormulario:     boolean = false;
+  mostrarDetalle:        boolean = false;
+  mostrarChecklist:      boolean = false;
+  mostrarAsignarCupones: boolean = false;
 
+  // ─── Detalle ───
   comisionDetalle: ComisionDetalle | null = null;
   personas:        ComisionPersona[]      = [];
   historial:       HistorialComision[]    = [];
   checklist:       ChecklistComision | null = null;
+  cuponesComision: any[] = [];
 
+  // ─── Formulario personas ───
   personasFormulario: string[] = [''];
   nuevaPersona: string = '';
 
+  // ─── Cupones ───
+  idTalonarioSeleccionado: number = 0;
+
+  // ─── Formularios ───
   formulario:          FormGroup;
   formularioChecklist: FormGroup;
 
+  // ─── Mensajes ───
   mensajeExito: string  = '';
   mensajeError: string  = '';
   cargando:     boolean = false;
 
+  // ─── Modal estado ───
   mostrarModalEstado:  boolean = false;
   nuevoEstado:         number  = 0;
   justificacionEstado: string  = '';
 
-  opcionesOk    = ['Sí', 'No'];
-  opcionesNivel = ['Lleno', 'Medio', 'Bajo', 'Vacío'];
-  opcionesEstado = ['Bueno', 'Regular', 'Malo'];
-  opcionesOkNivel = ['OK', 'Regular', 'Malo'];
-
   constructor(
     private comisionService: ComisionService,
-    private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cuponService:    CuponService,
+    private fb:              FormBuilder,
+    private cdr:             ChangeDetectorRef
   ) {
+    // Formulario nueva comisión
     this.formulario = this.fb.group({
       tipoComision:        ['', Validators.required],
       solicitante:         ['', Validators.required],
@@ -91,14 +104,15 @@ export class ComisionComponent implements OnInit {
       autoridad3Cargo:     [''],
     });
 
+    // Formulario checklist / asignación vehículo
     this.formularioChecklist = this.fb.group({
-  idVehiculo:         ['', Validators.required],
-  idPiloto:           ['', Validators.required],
-  fechaRevision:      ['', Validators.required],
-  horaRevision:       ['', Validators.required],
-  kilometrajInicial:  ['', Validators.required],
-  montoCombustible:   ['', [Validators.required, Validators.min(50)]],
-  observaciones:      [''],
+      idVehiculo:        ['', Validators.required],
+      idPiloto:          ['', Validators.required],
+      fechaRevision:     ['', Validators.required],
+      horaRevision:      ['', Validators.required],
+      kilometrajInicial: ['', Validators.required],
+      montoCombustible:  ['', [Validators.required, Validators.min(50)]],
+      observaciones:     [''],
     });
   }
 
@@ -108,6 +122,8 @@ export class ComisionComponent implements OnInit {
     this.cargarUnidades();
     this.cargarEstadisticas();
   }
+
+  // ─── Carga de datos ───
 
   cargarComisiones(): void {
     this.cargando = true;
@@ -148,6 +164,7 @@ export class ComisionComponent implements OnInit {
       .subscribe({ next: (data) => this.estadisticas = data });
   }
 
+  // Carga vehículos y pilotos disponibles para el formulario de nueva comisión
   cargarVehiculosYPilotos(): void {
     const fi = this.formulario.get('fechaInicio')?.value;
     const ff = this.formulario.get('fechaFin')?.value;
@@ -158,6 +175,7 @@ export class ComisionComponent implements OnInit {
       .subscribe({ next: (data) => this.pilotos = data });
   }
 
+  // Carga vehículos y pilotos disponibles para el checklist
   cargarVehiculosYPilotosChecklist(): void {
     if (!this.comisionDetalle) return;
     const fi = this.comisionDetalle.comision.fechaInicio || '';
@@ -167,6 +185,27 @@ export class ComisionComponent implements OnInit {
     this.comisionService.obtenerPilotosDisponibles(fi, ff)
       .subscribe({ next: (data) => this.pilotos = data });
   }
+
+  // Carga talonarios disponibles usando CuponService
+ cargarTalonariosDisponibles(): void {
+  this.cuponService.obtenerTalonariosDisponibles()
+    .subscribe({
+      next: (data) => {
+        this.talonariosDisponibles = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => { this.mensajeError = 'Error al cargar talonarios.'; }
+    });
+}
+
+  // Carga cupones asignados a la comisión actual
+  cargarCuponesComision(): void {
+    if (!this.comisionDetalle) return;
+    this.comisionService.obtenerCuponesComision(this.comisionDetalle.comision.id)
+      .subscribe({ next: (data) => this.cuponesComision = data });
+  }
+
+  // ─── Navegación ───
 
   filtrar(): void {
     this.paginaActual = 1;
@@ -194,38 +233,49 @@ export class ComisionComponent implements OnInit {
   verDetalle(id: number): void {
     this.comisionService.obtenerPorId(id).subscribe({
       next: (data) => {
-        this.comisionDetalle   = data;
-        this.personas          = data.personas;
-        this.historial         = data.historial;
-        this.mostrarLista      = false;
-        this.mostrarFormulario = false;
-        this.mostrarDetalle    = true;
-        this.mostrarChecklist  = false;
+        this.comisionDetalle      = data;
+        this.personas             = data.personas;
+        this.historial            = data.historial;
+        this.mostrarLista         = false;
+        this.mostrarFormulario    = false;
+        this.mostrarDetalle       = true;
+        this.mostrarChecklist     = false;
+        this.mostrarAsignarCupones = false;
         this.cdr.detectChanges();
       },
       error: () => { this.mensajeError = 'Error al cargar el detalle.'; }
     });
   }
 
- abrirChecklist(): void {
-  this.mostrarLista      = false;
-  this.mostrarFormulario = false;
-  this.mostrarDetalle    = false;
-  this.mostrarChecklist  = true;
-  this.cargarVehiculosYPilotosChecklist();
-  this.formularioChecklist.reset({
-    fechaRevision: this.comisionDetalle?.comision.fechaInicio?.split('T')[0] || '',
-    horaRevision:  this.comisionDetalle?.comision.horaSalida || '',
-  });
-  this.limpiarMensajes();
-}
-
-  volverLista(): void {
-    this.mostrarLista      = true;
+  abrirChecklist(): void {
+    this.mostrarLista      = false;
     this.mostrarFormulario = false;
     this.mostrarDetalle    = false;
-    this.mostrarChecklist  = false;
-    this.comisionDetalle   = null;
+    this.mostrarChecklist  = true;
+    this.cargarVehiculosYPilotosChecklist();
+    this.formularioChecklist.reset({
+      fechaRevision: this.comisionDetalle?.comision.fechaInicio?.split('T')[0] || '',
+      horaRevision:  this.comisionDetalle?.comision.horaSalida || '',
+    });
+    this.limpiarMensajes();
+  }
+
+  // Abre o cierra el panel de asignación de cupones
+  abrirAsignarCupones(): void {
+    this.mostrarAsignarCupones = !this.mostrarAsignarCupones;
+    if (this.mostrarAsignarCupones) {
+      this.cargarTalonariosDisponibles();
+      this.cargarCuponesComision();
+    }
+  }
+
+  volverLista(): void {
+    this.mostrarLista          = true;
+    this.mostrarFormulario     = false;
+    this.mostrarDetalle        = false;
+    this.mostrarChecklist      = false;
+    this.mostrarAsignarCupones = false;
+    this.comisionDetalle       = null;
     this.limpiarMensajes();
   }
 
@@ -236,6 +286,8 @@ export class ComisionComponent implements OnInit {
     this.mostrarChecklist  = false;
     this.limpiarMensajes();
   }
+
+  // ─── Personas ───
 
   agregarCampoPersona(): void {
     this.personasFormulario.push('');
@@ -271,6 +323,8 @@ export class ComisionComponent implements OnInit {
     });
   }
 
+  // ─── Estado ───
+
   abrirModalEstado(idEstado: number): void {
     this.nuevoEstado         = idEstado;
     this.justificacionEstado = '';
@@ -296,6 +350,8 @@ export class ComisionComponent implements OnInit {
     });
   }
 
+  // ─── Firmas ───
+
   registrarFirma(autoridad: number): void {
     if (!this.comisionDetalle) return;
     if (!confirm(`¿Confirma registrar la firma de la Autoridad ${autoridad}?`)) return;
@@ -310,6 +366,8 @@ export class ComisionComponent implements OnInit {
     });
   }
 
+  // ─── Guardar comisión ───
+
   guardar(): void {
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
@@ -318,6 +376,7 @@ export class ComisionComponent implements OnInit {
 
     const v = this.formulario.value;
 
+    // Validar hora de salida si la fecha es hoy
     if (v.horaSalida && v.fechaInicio) {
       const hoy       = new Date();
       const fechaForm = new Date(v.fechaInicio + 'T00:00:00');
@@ -373,45 +432,84 @@ export class ComisionComponent implements OnInit {
     });
   }
 
+  // ─── Guardar checklist ───
+
   guardarChecklist(): void {
     if (this.formularioChecklist.invalid) {
-    this.formularioChecklist.markAllAsTouched();
-    return;
+      this.formularioChecklist.markAllAsTouched();
+      return;
     }
-    if (!confirm('¿Confirma registrar el checklist? La comisión pasará a En Curso.')) return;
+
+    // Validar que el monto sea múltiplo de Q50
+    const monto = Number(this.formularioChecklist.get('montoCombustible')?.value);
+    if (monto % 50 !== 0) {
+      this.mensajeError = 'El monto de combustible debe ser múltiplo de Q50.00';
+      return;
+    }
+
+    if (!confirm('¿Confirma asignar vehículo y piloto? La comisión pasará a En Curso.')) return;
 
     const v = this.formularioChecklist.value;
     const dto: ChecklistComision = {
-     idVehiculo:        Number(v.idVehiculo),
-    idPiloto:          Number(v.idPiloto),
-    fechaRevision:     v.fechaRevision,
-    horaRevision:      v.horaRevision,
-    kilometrajInicial: Number(v.kilometrajInicial),
-    montoCombustible:  Number(v.montoCombustible),
-    observaciones:     v.observaciones,
+      idVehiculo:        Number(v.idVehiculo),
+      idPiloto:          Number(v.idPiloto),
+      fechaRevision:     v.fechaRevision,
+      horaRevision:      v.horaRevision,
+      kilometrajInicial: Number(v.kilometrajInicial),
+      montoCombustible:  Number(v.montoCombustible),
+      observaciones:     v.observaciones,
     };
 
     this.comisionService.registrarChecklist(
       this.comisionDetalle!.comision.id, dto
     ).subscribe({
-     next: () => {
-      alert('Vehículo y piloto asignados. Comisión en curso.');
-      this.mostrarChecklist = false;
-      this.mostrarDetalle   = true;
-      this.verDetalle(this.comisionDetalle!.comision.id);
-      this.cargarEstadisticas();
+      next: () => {
+        alert('Vehículo y piloto asignados. Comisión en curso.');
+        this.mostrarChecklist = false;
+        this.mostrarDetalle   = true;
+        this.verDetalle(this.comisionDetalle!.comision.id);
+        this.cargarEstadisticas();
       },
       error: (err) => {
-      this.mensajeError = err.error?.mensaje || 'Error al registrar.';
+        this.mensajeError = err.error?.mensaje || 'Error al registrar.';
       }
     });
   }
+
+  // ─── Asignación de cupones ───
+
+  // Asigna cupones automáticamente según monto de combustible
+  asignarCupones(): void {
+    if (!this.idTalonarioSeleccionado || this.idTalonarioSeleccionado === 0) {
+      this.mensajeError = 'Debe seleccionar un talonario.';
+      return;
+    }
+    if (!confirm('¿Confirma asignar los cupones a esta comisión?')) return;
+
+    this.comisionService.asignarCuponesComision(
+      this.comisionDetalle!.comision.id,
+      this.idTalonarioSeleccionado
+    ).subscribe({
+      next: (res) => {
+        alert(res.mensaje);
+        this.cargarCuponesComision();
+        this.idTalonarioSeleccionado = 0;
+      },
+      error: (err) => {
+        this.mensajeError = err.error?.mensaje || 'Error al asignar cupones.';
+      }
+    });
+  }
+
+  // ─── Paginación ───
 
   cambiarPagina(pagina: number): void {
     if (pagina < 1 || pagina > this.totalPaginas) return;
     this.paginaActual = pagina;
     this.cargarComisiones();
   }
+
+  // ─── Utilidades ───
 
   tieneError(campo: string, form: FormGroup = this.formulario): boolean {
     const control = form.get(campo);
@@ -427,10 +525,24 @@ export class ComisionComponent implements OnInit {
     return Array.from({ length: this.totalPaginas }, (_, i) => i + 1);
   }
 
+  // Verifica si la fecha ya venció
   esFechaVencida(fecha?: string): boolean {
     if (!fecha) return false;
     return new Date(fecha) < new Date();
   }
+
+  // Verifica si la fecha y hora de salida de la comisión ya vencieron
+  esFechaHoraVencida(): boolean {
+    if (!this.comisionDetalle) return false;
+    const fi         = this.comisionDetalle.comision.fechaInicio;
+    const horaSalida = this.comisionDetalle.comision.horaSalida || '00:00';
+    if (!fi) return false;
+    const fechaStr    = fi.substring(0, 10);
+    const fechaSalida = new Date(`${fechaStr}T${horaSalida}:00`);
+    return fechaSalida < new Date();
+  }
+
+  // ─── Colores e iconos de estado ───
 
   colorEstado(idEstado?: number): string {
     switch (idEstado) {
@@ -471,6 +583,7 @@ export class ComisionComponent implements OnInit {
     }
   }
 
+  // Define qué estados se pueden seleccionar desde el estado actual
   estadosAccionables(idEstado?: number): EstadoComision[] {
     switch (idEstado) {
       case 1:   return this.estados.filter(e => [2, 81].includes(e.id));
@@ -481,20 +594,4 @@ export class ComisionComponent implements OnInit {
       default:  return [];
     }
   }
-
-  esFechaHoraVencida(): boolean {
-  if (!this.comisionDetalle) return false;
-  const ahora      = new Date();
-  const fi         = this.comisionDetalle.comision.fechaInicio;
-  const horaSalida = this.comisionDetalle.comision.horaSalida || '00:00';
-
-  if (!fi) return false;
-
-  // Tomar solo la parte de fecha YYYY-MM-DD
-  const fechaStr   = fi.substring(0, 10);
-  const [horas, minutos] = horaSalida.split(':').map(Number);
-  const fechaSalida = new Date(`${fechaStr}T${horaSalida}:00`);
-
-  return fechaSalida < ahora;
-}
 }

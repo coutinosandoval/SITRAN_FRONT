@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../servicios/dashboard.service';
 import { DashboardResumen, PrecioCombustible } from '../modelos/dashboard.model';
-import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,43 +11,47 @@ import { environment } from '../../environments/environment';
 })
 export class DashboardComponent implements OnInit {
 
-  resumen: DashboardResumen | null = null;
-  precios: PrecioCombustible[] = [];
-  preciosAutoservicio: PrecioCombustible[] = [];
-  preciosServicioCompleto: PrecioCombustible[] = [];
-  cargando = true;
+  // ─── Datos ───
+  resumen:                 DashboardResumen | null = null;
+  precios:                 PrecioCombustible[]     = [];
+  preciosAutoservicio:     PrecioCombustible[]     = [];
+  preciosServicioCompleto: PrecioCombustible[]     = [];
+  cargando:                boolean                 = true;
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(
+    private dashboardService: DashboardService,
+    private cdr:              ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
-    console.log('Dashboard iniciando...');
     this.cargarDatos();
   }
 
-cargarDatos(): void {
-  console.log('Cargando datos...');
+  cargarDatos(): void {
+    // Cargar resumen de estadísticas
+    this.dashboardService.getResumen().subscribe({
+      next: (data) => {
+        this.resumen  = data;
+        this.cargando = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cargando = false;
+        this.cdr.detectChanges();
+      }
+    });
 
-  this.dashboardService.getResumen().subscribe({
-    next: (data) => {
-      console.log('Resumen completo:', JSON.stringify(data));
-  this.resumen  = data;
-  this.cargando = false;
-    },
-    error: (err) => {
-      console.error('Error resumen:', err);
-      this.cargando = false;
-    }
-  });
-
-  this.dashboardService.getPreciosCombustible().subscribe({
-    next: (data) => {
-      this.precios                 = data;
-      this.preciosAutoservicio     = data.filter(p => p.tipoServicio === 'Autoservicio');
-      this.preciosServicioCompleto = data.filter(p => p.tipoServicio === 'Servicio Completo');
-    },
-    error: (err) => console.error('Error precios:', err)
-  });
-
-  
-}
+    // Cargar precios de combustible del MEM
+    this.dashboardService.getPreciosCombustible().subscribe({
+      next: (data) => {
+        this.precios                 = data;
+        this.preciosAutoservicio     = data.filter(p => p.tipoServicio === 'Autoservicio');
+        this.preciosServicioCompleto = data.filter(p => p.tipoServicio === 'Servicio Completo');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cdr.detectChanges();
+      }
+    });
+  }
 }

@@ -1,0 +1,84 @@
+
+<div class="login-container">
+  <div class="login-card">
+
+    <!-- LOGO -->
+    <div class="login-logo">
+      <img src="favicon.png" alt="SITRAN" />
+    </div>
+
+    <!-- TÍTULO -->
+    <div class="login-form-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      Crear Cuenta
+    </div>
+
+    <!-- ALERTAS -->
+    <div *ngIf="mensajeError" class="alert alert-danger">
+      <i class="bi bi-exclamation-circle"></i> {{ mensajeError }}
+    </div>
+    <div *ngIf="mensajeExito" class="alert alert-success">
+      <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+    </div>
+
+    <!-- CAMPOS -->
+    <div class="form-group">
+      <label class="form-label">Nombre Completo</label>
+      <input type="text" class="form-control text-uppercase"
+             [(ngModel)]="form.nombre"
+             placeholder="Nombre completo">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Usuario</label>
+      <input type="text" class="form-control"
+             [(ngModel)]="form.usuario"
+             placeholder="Nombre de usuario">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Correo</label>
+      <input type="email" class="form-control"
+             [(ngModel)]="form.correo"
+             placeholder="correo@segeplan.gob.gt">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input type="password" class="form-control"
+             [(ngModel)]="form.clave"
+             placeholder="Mínimo 6 caracteres">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Confirmar Contraseña</label>
+      <input type="password" class="form-control"
+             [(ngModel)]="confirmarClave"
+             placeholder="Repita la contraseña"
+             (keyup.enter)="registrar()">
+    </div>
+
+    <!-- BOTÓN -->
+    <button class="btn-login" (click)="registrar()" [disabled]="cargando">
+      <span *ngIf="cargando" class="spinner"></span>
+      <svg *ngIf="!cargando" width="14" height="14" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      {{ cargando ? 'Registrando...' : 'Crear Cuenta' }}
+    </button>
+
+    <!-- LINK VOLVER -->
+    <div class="login-links">
+      <a routerLink="/login" class="login-link">
+        ← Volver al inicio de sesión
+      </a>
+    </div>
+
+  </div>
+</div>

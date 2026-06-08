@@ -4,13 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../servicios/auth.service';
 import { LoginRequest } from '../modelos/auth.model';
+import { RouterModule } from '@angular/router';
+
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.html',
-  styleUrl: './login.css'
+ 
 })
 export class LoginComponent {
 
@@ -19,6 +21,10 @@ export class LoginComponent {
     usuario: '',
     clave: ''
   };
+
+  irARegistro(): void {
+  this.router.navigate(['/registro']);
+}
 
   // Mensaje de error para mostrar al usuario
   mensajeError: string = '';

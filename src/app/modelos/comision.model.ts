@@ -4,6 +4,7 @@ export interface Comision {
   solicitante?:          string;
   idUnidad?:             number;
   nombreUnidad?:         string;
+  idSede?:               number;
   departamentoSeccion?:  string;
   fechaSolicitud?:       string;
   fechaInicio?:          string;
@@ -33,6 +34,7 @@ export interface ComisionRequest {
   tipoComision?:        string;
   solicitante?:         string;
   idUnidad?:            number;
+  idSede?:              number;
   departamentoSeccion?: string;
   fechaInicio?:         string;
   fechaFin?:            string;

@@ -9,6 +9,7 @@ import {
 } from '../modelos/seguridad.model';
 import { CatalogoItem } from '../modelos/vehiculo.model';
 import { CatalogoService } from '../servicios/catalogo.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-seguridad',
@@ -32,15 +33,19 @@ export class SeguridadComponent implements OnInit {
   // ─── Roles y permisos ───
   roles:    Rol[]     = [];
   permisos: Permiso[] = [];
+  lugaresDisponibles: (CatalogoItem & { tipo: string })[] = [];
+lugaresFiltrados:   (CatalogoItem & { tipo: string })[] = [];
 
   // ─── Catálogos ───
   unidades: CatalogoItem[] = [];
+ textoBusquedaLugar: string         = '';
 
   // ─── Modales ───
   mostrarModalUsuario:      boolean = false;
   mostrarModalRolesUsuario: boolean = false;
   mostrarModalRol:          boolean = false;
   mostrarModalPermisosRol:  boolean = false;
+  mostrarDropdown:    boolean         = false;
 
   // ─── Seleccionados ───
   usuarioSeleccionado: Usuario | null = null;
@@ -88,8 +93,17 @@ export class SeguridadComponent implements OnInit {
 
 // Carga unidades para el formulario de usuario
 cargarUnidades(): void {
-  this.catalogoService.obtenerUnidades()
-    .subscribe({ next: (data) => this.unidades = data });
+  forkJoin({
+    unidades: this.catalogoService.obtenerUnidades(),
+    sedes:    this.catalogoService.obtenerSedes()
+  }).subscribe({
+    next: ({ unidades, sedes }) => {
+      this.lugaresDisponibles = [
+        ...unidades.map(u => ({ ...u, tipo: 'Unidad' })),
+        ...sedes.map(s => ({ ...s, tipo: 'Sede' }))
+      ];
+    }
+  });
 } 
   // ─── Tab ───
 
@@ -152,11 +166,15 @@ cargarUnidades(): void {
     this.mostrarModalUsuario = true;
   }
 
-  abrirEditarUsuario(u: Usuario): void {
-    this.usuarioEditando     = u;
-    this.formUsuario         = { correo: u.correo, estado: u.estado, idUnidad: u.idUnidad };
-    this.mostrarModalUsuario = true;
-  }
+ abrirEditarUsuario(u: Usuario): void {
+  console.log('Usuario:', JSON.stringify(u));  // ← agrega esta línea
+  this.usuarioEditando     = u;
+  this.formUsuario         = { correo: u.correo, estado: u.estado, idUnidad: u.idUnidad, tipoLugar: u.tipoLugar };
+  const lugar = this.lugaresDisponibles.find(l => l.id === u.idUnidad && l.tipo.toUpperCase() === (u.tipoLugar || 'UNIDAD'));
+  this.textoBusquedaLugar  = lugar?.nombre || '';
+  this.mostrarDropdown     = false;
+  this.mostrarModalUsuario = true;
+}
 
   cerrarModalUsuario(): void {
     this.mostrarModalUsuario = false;
@@ -166,10 +184,11 @@ cargarUnidades(): void {
     if (this.usuarioEditando) {
       // Actualizar usuario existente
       this.seguridadService.actualizarUsuario(this.usuarioEditando.id, {
-        correo:   this.formUsuario.correo,
-        estado:   this.formUsuario.estado,
-        idUnidad: this.formUsuario.idUnidad,
-      }).subscribe({
+  correo:    this.formUsuario.correo,
+  estado:    this.formUsuario.estado,
+  idUnidad:  this.formUsuario.idUnidad,
+  tipoLugar: this.formUsuario.tipoLugar,
+}).subscribe({
         next: () => {
           this.mensajeExito        = 'Usuario actualizado correctamente.';
           this.mostrarModalUsuario = false;
@@ -320,4 +339,25 @@ cargarUnidades(): void {
     this.mensajeExito = '';
     this.mensajeError = '';
   }
+
+  filtrarLugares(): void {
+  const texto = this.textoBusquedaLugar.toLowerCase();
+  this.lugaresFiltrados = this.lugaresDisponibles.filter(l =>
+    l.nombre.toLowerCase().includes(texto)
+  );
+  this.mostrarDropdown = true;
+}
+
+seleccionarLugar(lugar: CatalogoItem & { tipo: string }): void {
+  this.formUsuario.idUnidad   = lugar.id;
+  this.formUsuario.tipoLugar  = lugar.tipo.toUpperCase();
+  this.textoBusquedaLugar     = lugar.nombre;
+  this.mostrarDropdown        = false;
+}
+
+limpiarLugar(): void {
+  this.formUsuario.idUnidad = undefined;
+  this.textoBusquedaLugar   = '';
+  this.mostrarDropdown      = false;
+}
 }

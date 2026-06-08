@@ -1,0 +1,560 @@
+@use '../abstracts/variables' as *;
+@use '../abstracts/mixins' as *;
+
+// ─── Contenedor principal ───
+.solicitud-container {
+  padding: $padding-lg;
+}
+
+// ─── Header de página ───
+.solicitud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+
+  h4 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: $dark;
+    margin: 0;
+
+    i {
+      margin-right: 8px;
+      color: $primary;
+    }
+  }
+}
+
+// ─── Filtros ───
+.solicitud-filtros {
+  @include card;
+  padding: $padding-md;
+  margin-bottom: 16px;
+
+  .filtros-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    select {
+      border: 1px solid $border-color;
+      border-radius: $radius;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: $text-color;
+      background: white;
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+      }
+    }
+
+    .total-label {
+      margin-left: auto;
+      font-size: 13px;
+      color: $text-light;
+    }
+  }
+}
+
+// ─── Tabla de solicitudes ───
+.solicitud-tabla {
+  @include card;
+  padding: 0;
+  overflow: hidden;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    thead tr {
+      background: $dark;
+      color: white;
+
+      th {
+        padding: 12px 14px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        &.text-center {
+          text-align: center;
+        }
+      }
+    }
+
+    tbody tr {
+      border-bottom: 1px solid $border-color;
+      transition: background 0.2s;
+
+      &:hover {
+        background: #f5f9ff;
+      }
+      &:last-child {
+        border-bottom: none;
+      }
+
+      td {
+        padding: 11px 14px;
+        color: $text-color;
+        vertical-align: middle;
+
+        &.text-center {
+          text-align: center;
+        }
+        &.monto {
+          color: $success;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  // Footer paginación
+  .tabla-footer {
+    padding: 10px 14px;
+    border-top: 1px solid $border-color;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: $text-light;
+  }
+}
+
+// ─── Badges de estado ───
+.badge-pendiente {
+  background: $warning;
+  color: #1f2937;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-aprobada {
+  background: $success;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.badge-rechazada {
+  background: $danger;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+// ─── Badge denominación ───
+.badge-denominacion {
+  background: #0dcaf0;
+  color: #1f2937;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+// ─── Botones de acción en tabla ───
+.btn-accion {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  margin: 0 2px;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &.ver {
+    background: #17a2b8;
+    color: white;
+  }
+  &.aprobar {
+    background: $success;
+    color: white;
+  }
+  &.rechazar {
+    background: $danger;
+    color: white;
+  }
+  &.cupones {
+    background: $warning;
+    color: #1f2937;
+  }
+}
+
+// ─── Formulario solicitud ───
+.solicitud-form {
+  .form-card {
+    @include card;
+    margin-bottom: 16px;
+
+    .form-card-header {
+      background: $primary;
+      color: white;
+      padding: 10px 16px;
+      border-radius: $radius $radius 0 0;
+      margin: -20px -20px 16px -20px;
+      font-size: 13px;
+      font-weight: 600;
+
+      i {
+        margin-right: 6px;
+      }
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: $text-color;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid $border-color;
+      border-radius: $radius;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: $text-color;
+      transition: border-color 0.2s;
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+      }
+
+      &.is-invalid {
+        border-color: $danger;
+      }
+      &[readonly] {
+        background: #f8f9fa;
+      }
+    }
+
+    .invalid-feedback {
+      font-size: 11px;
+      color: $danger;
+      margin-top: 2px;
+    }
+
+    small {
+      font-size: 11px;
+      color: $text-light;
+    }
+  }
+
+  // Card resumen
+  .resumen-card {
+    @include card;
+    border: 1px solid #0dcaf0;
+    margin-bottom: 16px;
+
+    .resumen-header {
+      background: #0dcaf0;
+      color: #1f2937;
+      padding: 10px 16px;
+      border-radius: $radius $radius 0 0;
+      margin: -20px -20px 16px -20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .resumen-item {
+      text-align: center;
+
+      .resumen-valor {
+        font-size: 1.6rem;
+        font-weight: 700;
+        &.primary {
+          color: $primary;
+        }
+        &.success {
+          color: $success;
+        }
+        &.warning {
+          color: $warning;
+        }
+      }
+
+      .resumen-label {
+        font-size: 11px;
+        color: $text-light;
+        text-transform: uppercase;
+      }
+    }
+  }
+}
+
+// ─── Vista de asignación bodega ───
+.asignacion-container {
+  // Alerta resumen solicitud
+  .resumen-solicitud {
+    background: #e8f4fd;
+    border: 1px solid #bee3f8;
+    border-radius: $radius;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+
+    strong {
+      color: $dark;
+    }
+
+    .badge-restantes {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+
+      &.completo {
+        background: $success;
+        color: white;
+      }
+      &.incompleto {
+        background: $warning;
+        color: #1f2937;
+      }
+    }
+  }
+
+  // Tabla talonarios disponibles
+  .talonarios-disponibles {
+    @include card;
+    margin-bottom: 16px;
+
+    .card-header-bodega {
+      background: $primary;
+      color: white;
+      padding: 10px 16px;
+      border-radius: $radius $radius 0 0;
+      margin: -20px -20px 16px -20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      font-size: 13px;
+      border-collapse: collapse;
+
+      thead tr {
+        background: $dark;
+        color: white;
+        th {
+          padding: 10px 12px;
+          font-size: 12px;
+        }
+      }
+
+      tbody tr {
+        border-bottom: 1px solid $border-color;
+        transition: background 0.2s;
+        &:hover {
+          background: #f5f9ff;
+        }
+        &.seleccionado {
+          background: #e8f4fd;
+        }
+
+        td {
+          padding: 10px 12px;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    // Badge saldo talonario
+    .badge-saldo {
+      background: $success;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+  }
+
+  // Card de asignación del talonario seleccionado
+  .asignacion-form {
+    border: 2px solid $primary;
+    border-radius: $radius;
+    overflow: hidden;
+    margin-bottom: 16px;
+
+    .asignacion-form-header {
+      background: $primary;
+      color: white;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .asignacion-form-body {
+      padding: 16px;
+
+      input[type='number'] {
+        border: 1px solid $border-color;
+        border-radius: $radius;
+        padding: 8px 10px;
+        font-size: 13px;
+        width: 100%;
+
+        &:focus {
+          outline: none;
+          border-color: $primary;
+        }
+      }
+
+      small {
+        font-size: 11px;
+        color: $text-light;
+      }
+    }
+  }
+}
+
+// ─── Vista de cupones info (delegado) ───
+.cupones-info-container {
+  .detalle-talonario {
+    @include card;
+    margin-bottom: 16px;
+
+    .detalle-header {
+      background: $primary;
+      color: white;
+      padding: 10px 16px;
+      border-radius: $radius $radius 0 0;
+      margin: -20px -20px 16px -20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      font-size: 13px;
+      border-collapse: collapse;
+
+      thead tr {
+        background: $dark;
+        color: white;
+        th {
+          padding: 10px 12px;
+          font-size: 12px;
+        }
+      }
+
+      tbody tr {
+        border-bottom: 1px solid $border-color;
+        &:last-child {
+          border-bottom: none;
+        }
+        td {
+          padding: 10px 12px;
+          vertical-align: middle;
+        }
+      }
+    }
+  }
+
+  // Card devolución inline
+  .devolucion-card {
+    border: 2px solid #0dcaf0;
+    border-radius: $radius;
+    overflow: hidden;
+    margin-bottom: 16px;
+
+    .devolucion-header {
+      background: #0dcaf0;
+      color: #1f2937;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .devolucion-body {
+      padding: 16px;
+
+      input[type='number'] {
+        border: 1px solid $border-color;
+        border-radius: $radius;
+        padding: 8px 10px;
+        font-size: 13px;
+        width: 100%;
+        &:focus {
+          outline: none;
+          border-color: #0dcaf0;
+        }
+      }
+    }
+  }
+}
+
+// ─── Paginación ───
+.solicitud-paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-top: 1px solid $border-color;
+  font-size: 13px;
+  color: $text-light;
+
+  .pagination {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .page-item {
+      .page-link {
+        padding: 4px 10px;
+        border: 1px solid $border-color;
+        border-radius: $radius;
+        color: $primary;
+        cursor: pointer;
+        font-size: 12px;
+        background: white;
+
+        &:hover {
+          background: $primary;
+          color: white;
+        }
+      }
+
+      &.active .page-link {
+        background: $primary;
+        color: white;
+        border-color: $primary;
+      }
+
+      &.disabled .page-link {
+        color: $text-light;
+        cursor: not-allowed;
+        &:hover {
+          background: white;
+          color: $text-light;
+        }
+      }
+    }
+  }
+}

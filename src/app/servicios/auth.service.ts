@@ -32,11 +32,14 @@ export class AuthService {
   // Guarda el token y datos del usuario en sessionStorage
   // sessionStorage se borra automáticamente al cerrar el navegador
   guardarToken(response: LoginResponse): void {
-    sessionStorage.setItem('token',          response.token);
-    sessionStorage.setItem('nombre',         response.nombre);
-    sessionStorage.setItem('usuarioSistema', response.usuarioSistema);
-    sessionStorage.setItem('roles',          JSON.stringify(response.roles));
-    sessionStorage.setItem('expiracion',     response.expiracion);
+ sessionStorage.setItem('token',          response.token);
+  sessionStorage.setItem('nombre',         response.nombre);
+  sessionStorage.setItem('usuarioSistema', response.usuarioSistema);
+  sessionStorage.setItem('roles',          JSON.stringify(response.roles));
+  sessionStorage.setItem('expiracion',     response.expiracion);
+  sessionStorage.setItem('idUnidad',       response.idUnidad?.toString() || '');
+  sessionStorage.setItem('tipoLugar',      response.tipoLugar || '');
+
   }
 
   // Elimina el token y datos del usuario
@@ -77,4 +80,24 @@ export class AuthService {
   obtenerUsuario(): string {
     return sessionStorage.getItem('usuarioSistema') || '';
   }
+
+  // Obtiene los roles del usuario autenticado
+obtenerRoles(): string[] {
+  const roles = sessionStorage.getItem('roles');
+  return roles ? JSON.parse(roles) : [];
+}
+
+// Verifica si el usuario tiene un rol específico
+tieneRol(rol: string): boolean {
+  return this.obtenerRoles().some(r => r.toLowerCase() === rol.toLowerCase());
+}
+
+obtenerIdUnidad(): number | null {
+  const val = sessionStorage.getItem('idUnidad');
+  return val ? parseInt(val) : null;
+}
+
+obtenerTipoLugar(): string {
+  return sessionStorage.getItem('tipoLugar') || '';
+}
 }

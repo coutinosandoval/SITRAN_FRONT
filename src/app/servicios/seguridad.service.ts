@@ -89,4 +89,9 @@ export class SeguridadService {
   obtenerPermisos(): Observable<Permiso[]> {
     return this.http.get<Permiso[]>(`${this.apiUrl}/permisos`);
   }
+
+  // Registro público de usuario
+registro(dto: UsuarioCrear): Observable<any> {
+  return this.http.post(`${this.apiUrl}/registro`, dto);
+}
 }

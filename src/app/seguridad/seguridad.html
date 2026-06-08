@@ -260,13 +260,34 @@
         <input type="password" class="form-control"
           [(ngModel)]="formUsuario.clave" placeholder="Clave inicial">
       </div>
-      <div class="mb-3">
-        <label class="form-label">Unidad</label>
-        <select class="form-select" [(ngModel)]="formUsuario.idUnidad">
-          <option [ngValue]="null">Sin unidad</option>
-          <option *ngFor="let u of unidades" [value]="u.id">{{ u.nombre }}</option>
-        </select>
-      </div>
+      <div class="mb-3 position-relative">
+  <label class="form-label">Unidad / Sede</label>
+  <div class="input-group">
+    <input type="text" class="form-control"
+      [(ngModel)]="textoBusquedaLugar"
+      (input)="filtrarLugares()"
+      (focus)="filtrarLugares()"
+      placeholder="Buscar unidad o sede..."
+      autocomplete="off">
+    <button class="btn btn-outline-secondary" type="button"
+      *ngIf="textoBusquedaLugar"
+      (click)="limpiarLugar()">
+      <i class="bi bi-x"></i>
+    </button>
+  </div>
+  <!-- Dropdown de resultados -->
+  <ul *ngIf="mostrarDropdown && lugaresFiltrados.length > 0"
+    class="list-group position-absolute w-100 shadow-sm"
+    style="z-index:1000; max-height:200px; overflow-y:auto;">
+    <li *ngFor="let l of lugaresFiltrados"
+      class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+      (click)="seleccionarLugar(l)"
+      style="cursor:pointer;">
+      {{ l.nombre }}
+      <span class="badge bg-secondary">{{ l.tipo }}</span>
+    </li>
+  </ul>
+</div>
       <div class="mb-3">
         <label class="form-label">Estado</label>
         <select class="form-select" [(ngModel)]="formUsuario.estado">

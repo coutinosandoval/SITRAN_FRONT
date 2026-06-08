@@ -12,11 +12,14 @@ import { TalonarioComponent } from './cupones/talonario/talonario';
 import { SolicitudTalonarioComponent } from './cupones/solicitud-talonario/solicitud-talonario';
 import { ComisionComponent } from './comisiones/comision';
 import { SeguridadComponent } from './seguridad/seguridad';
+import { RegistroComponent } from './registro/registro';
+import { ReporteIAComponent } from './reportes/reporte-ia';
 
 
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'registro', component: RegistroComponent },
   {
     path: '',
     component: MainLayoutComponent,
@@ -34,8 +37,12 @@ export const routes: Routes = [
   { path: 'comisiones',                      component: ComisionComponent,           canActivate: [authGuard] },
   { path: 'seguridad/usuarios',              component: SeguridadComponent,          canActivate: [authGuard] },
   { path: 'seguridad/roles',                 component: SeguridadComponent,          canActivate: [authGuard] },
+  { path: 'reportes-ia', component: ReporteIAComponent },
+  
+  
 
     ]
   },
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: 'login' },
+  
 ];

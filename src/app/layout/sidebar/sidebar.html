@@ -9,13 +9,14 @@
   <!-- Menú -->
   <nav class="sidebar-menu">
 
+    <!-- Dashboard: todos -->
     <a routerLink="/dashboard" routerLinkActive="active" class="menu-item">
       <i class="bi bi-speedometer2"></i>
       <span>Dashboard</span>
     </a>
 
-    <!-- Vehículos -->
-    <div class="menu-group">
+    <!-- Vehículos: solo admin -->
+    <div class="menu-group" *ngIf="esAdmin">
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuVehiculos">
         <i class="bi bi-truck"></i>
         <span>Vehículos</span>
@@ -34,40 +35,46 @@
       </div>
     </div>
 
-    <a routerLink="/pilotos" routerLinkActive="active" class="menu-item">
+    <!-- Pilotos: solo admin -->
+    <a routerLink="/pilotos" routerLinkActive="active" class="menu-item" *ngIf="esAdmin">
       <i class="bi bi-person-badge"></i>
       <span>Pilotos</span>
     </a>
 
-    <!-- Cupones -->
-<div class="menu-group">
+    <!-- Cupones: admin, compras, delegado y bodega -->
+<div class="menu-group" *ngIf="esAdmin || esCompras || esDelegado || esBodega">
   <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuCupones">
     <i class="bi bi-fuel-pump"></i>
     <span>Cupones</span>
     <i class="bi bi-chevron-down ms-auto"></i>
   </a>
   <div class="collapse" id="menuCupones">
-    <a routerLink="/cupones/talonarios" routerLinkActive="active" class="menu-item submenu-item">
+    <!-- Talonarios: admin, compras y bodega -->
+    <a routerLink="/cupones/talonarios" routerLinkActive="active" class="menu-item submenu-item"
+      *ngIf="esAdmin || esCompras || esBodega">
       <i class="bi bi-bookmarks"></i> Talonarios
     </a>
-   <a routerLink="/cupones/solicitudes-talonario" routerLinkActive="active" class="menu-item submenu-item">
-  <i class="bi bi-file-earmark-text"></i> Solicitudes
-</a>
+    <!-- Solicitudes: todos -->
+    <a routerLink="/cupones/solicitudes-talonario" routerLinkActive="active" class="menu-item submenu-item">
+      <i class="bi bi-file-earmark-text"></i> Solicitudes
+    </a>
   </div>
 </div>
 
-    <a routerLink="/comisiones" routerLinkActive="active" class="menu-item">
+    <!-- Comisiones: admin y delegado -->
+    <a routerLink="/comisiones" routerLinkActive="active" class="menu-item" *ngIf="esAdmin || esDelegado">
       <i class="bi bi-briefcase"></i>
       <span>Comisiones</span>
     </a>
 
-    <a routerLink="/facturas" routerLinkActive="active" class="menu-item">
+    <!-- Facturas: solo admin -->
+    <a routerLink="/facturas" routerLinkActive="active" class="menu-item" *ngIf="esAdmin">
       <i class="bi bi-receipt"></i>
       <span>Facturas</span>
     </a>
 
-    <!-- Reportes -->
-    <div class="menu-group">
+    <!-- Reportes: solo admin -->
+    <div class="menu-group" *ngIf="esAdmin">
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuReportes">
         <i class="bi bi-bar-chart"></i>
         <span>Reportes</span>
@@ -89,13 +96,20 @@
       </div>
     </div>
 
-<a routerLink="/catalogos" routerLinkActive="active" class="menu-item">
-  <i class="bi bi-collection"></i>
-  <span>Catálogos</span>
-</a>
+    <!-- Catálogos: solo admin -->
+    <a routerLink="/catalogos" routerLinkActive="active" class="menu-item" *ngIf="esAdmin">
+      <i class="bi bi-collection"></i>
+      <span>Catálogos</span>
+    </a>
 
-    <!-- Seguridad -->
-    <div class="menu-group">
+      <!-- reportes: solo admin -->
+<li *ngIf="esAdmin">
+  <a routerLink="/reportes-ia" routerLinkActive="active">
+    <i class="bi bi-robot"></i> Reportes IA
+  </a>
+</li>
+    <!-- Seguridad: solo admin -->
+    <div class="menu-group" *ngIf="esAdmin">
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuSeguridad">
         <i class="bi bi-shield-lock"></i>
         <span>Seguridad</span>

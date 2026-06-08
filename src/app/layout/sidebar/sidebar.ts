@@ -12,8 +12,11 @@ import { AuthService } from '../../servicios/auth.service';
 })
 export class SidebarComponent implements OnInit {
 
-  // Nombre del usuario autenticado
   nombreUsuario: string = '';
+  esAdmin:    boolean = false;
+  esCompras:  boolean = false;
+  esDelegado: boolean = false;
+  esBodega:   boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -22,9 +25,12 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.nombreUsuario = this.authService.obtenerNombre();
+    this.esAdmin    = this.authService.tieneRol('administrador');
+    this.esCompras  = this.authService.tieneRol('compras');
+    this.esDelegado = this.authService.tieneRol('delegado');
+    this.esBodega   = this.authService.tieneRol('bodega');
   }
 
-  // Cierra la sesión del usuario
   cerrarSesion(): void {
     this.authService.logout();
     this.router.navigate(['/login']);

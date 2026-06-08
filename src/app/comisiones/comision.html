@@ -1,10 +1,7 @@
 <!-- LISTA DE COMISIONES -->
 <div *ngIf="mostrarLista" class="comision-container">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-briefcase"></i> Gestión de Comisiones
-    </h4>
+    <h4 class="mb-0"><i class="bi bi-briefcase"></i> Gestión de Comisiones</h4>
     <button class="btn btn-primary btn-sm" (click)="abrirFormulario()">
       <i class="bi bi-plus-circle"></i> Nueva Comisión
     </button>
@@ -31,30 +28,38 @@
     <div class="card-body py-2">
       <div class="row g-2 align-items-center">
         <div class="col-md-3">
-          <select class="form-select form-select-sm"
-            [(ngModel)]="filtroEstado" (change)="filtrar()">
+          <select
+            class="form-select form-select-sm"
+            [(ngModel)]="filtroEstado"
+            (change)="filtrar()"
+          >
             <option [value]="0">Todos los estados</option>
             <option *ngFor="let e of estados" [value]="e.id">{{ e.nombre }}</option>
           </select>
         </div>
         <div class="col-md-2">
-          <select class="form-select form-select-sm"
-            [(ngModel)]="filtroTipo" (change)="filtrar()">
+          <select class="form-select form-select-sm" [(ngModel)]="filtroTipo" (change)="filtrar()">
             <option value="">Todos los tipos</option>
             <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
           </select>
         </div>
         <div class="col-md-3">
-          <input type="text" class="form-control form-control-sm"
+          <input
+            type="text"
+            class="form-control form-control-sm"
             [(ngModel)]="filtroSolicitante"
             placeholder="Buscar solicitante..."
-            (keyup.enter)="filtrar()">
+            (keyup.enter)="filtrar()"
+          />
         </div>
         <div class="col-md-2">
-          <input type="text" class="form-control form-control-sm"
+          <input
+            type="text"
+            class="form-control form-control-sm"
             [(ngModel)]="filtroDestino"
             placeholder="Buscar destino..."
-            (keyup.enter)="filtrar()">
+            (keyup.enter)="filtrar()"
+          />
         </div>
         <div class="col-md-2 d-flex gap-1">
           <button class="btn btn-primary btn-sm" (click)="filtrar()">
@@ -63,8 +68,10 @@
           <button class="btn btn-secondary btn-sm" (click)="limpiarFiltros()">
             <i class="bi bi-x-circle"></i>
           </button>
-          <select class="form-select form-select-sm"
-            (change)="tamanioPagina = +$any($event.target).value; filtrar()">
+          <select
+            class="form-select form-select-sm"
+            (change)="tamanioPagina = +$any($event.target).value; filtrar()"
+          >
             <option value="10" selected>10</option>
             <option value="25">25</option>
             <option value="50">50</option>
@@ -108,9 +115,16 @@
             <tr *ngFor="let c of comisiones">
               <td>{{ c.id }}</td>
               <td>
-                <span class="badge"
-                  [ngClass]="c.tipoComision === 'Nacional' ? 'bg-primary' :
-                             c.tipoComision === 'Regional' ? 'bg-info text-dark' : 'bg-secondary'">
+                <span
+                  class="badge"
+                  [ngClass]="
+                    c.tipoComision === 'Nacional'
+                      ? 'bg-primary'
+                      : c.tipoComision === 'Regional'
+                        ? 'bg-info text-dark'
+                        : 'bg-secondary'
+                  "
+                >
                   {{ c.tipoComision }}
                 </span>
               </td>
@@ -118,14 +132,16 @@
               <td>{{ c.destino }}</td>
               <td>
                 <span [class.text-danger]="esFechaVencida(c.fechaInicio)">
-                  {{ c.fechaInicio | date:'dd/MM/yyyy' }}
-                  <i *ngIf="esFechaVencida(c.fechaInicio)"
-                    class="bi bi-exclamation-triangle-fill text-danger ms-1"></i>
+                  {{ c.fechaInicio | date: 'dd/MM/yyyy' }}
+                  <i
+                    *ngIf="esFechaVencida(c.fechaInicio)"
+                    class="bi bi-exclamation-triangle-fill text-danger ms-1"
+                  ></i>
                 </span>
               </td>
               <td>
                 <span [class.text-danger]="esFechaVencida(c.fechaFin)">
-                  {{ c.fechaFin | date:'dd/MM/yyyy' }}
+                  {{ c.fechaFin | date: 'dd/MM/yyyy' }}
                 </span>
               </td>
               <td>{{ c.horaSalida }}</td>
@@ -136,8 +152,7 @@
                 </span>
               </td>
               <td class="text-center">
-                <button class="btn btn-info btn-sm" title="Ver detalle"
-                  (click)="verDetalle(c.id)">
+                <button class="btn btn-info btn-sm" title="Ver detalle" (click)="verDetalle(c.id)">
                   <i class="bi bi-eye"></i>
                 </button>
               </td>
@@ -146,9 +161,10 @@
         </table>
       </div>
     </div>
-
-    <div class="card-footer d-flex justify-content-between align-items-center"
-      *ngIf="totalPaginas > 1">
+    <div
+      class="card-footer d-flex justify-content-between align-items-center"
+      *ngIf="totalPaginas > 1"
+    >
       <span class="text-muted small">
         {{ totalRegistros }} comisiones — Página {{ paginaActual }} de {{ totalPaginas }}
       </span>
@@ -175,11 +191,8 @@
 
 <!-- FORMULARIO NUEVA COMISIÓN -->
 <div *ngIf="mostrarFormulario" class="comision-container">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-briefcase"></i> Nueva Comisión
-    </h4>
+    <h4 class="mb-0"><i class="bi bi-briefcase"></i> Nueva Comisión</h4>
     <button class="btn btn-secondary btn-sm" (click)="volverLista()">
       <i class="bi bi-arrow-left"></i> Volver
     </button>
@@ -196,101 +209,122 @@
       </div>
       <div class="card-body">
         <div class="row">
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Tipo de Comisión <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="tipoComision"
-              [class.is-invalid]="tieneError('tipoComision')">
+            <select
+              class="form-select"
+              formControlName="tipoComision"
+              [class.is-invalid]="tieneError('tipoComision')"
+            >
               <option value="">Seleccione...</option>
               <option *ngFor="let t of tipos" [value]="t">{{ t }}</option>
             </select>
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-4 mb-3">
             <label class="form-label">Solicitante <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
+            <input
+              type="text"
+              class="form-control text-uppercase"
               formControlName="solicitante"
               [class.is-invalid]="tieneError('solicitante')"
-              placeholder="Nombre del solicitante">
+              placeholder="Nombre del solicitante"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-5 mb-3">
             <label class="form-label">Unidad <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idUnidad"
-              [class.is-invalid]="tieneError('idUnidad')">
+            <select
+              class="form-select"
+              formControlName="idUnidad"
+              [class.is-invalid]="tieneError('idUnidad')"
+            >
               <option value="">Seleccione una unidad</option>
               <option *ngFor="let u of unidades" [value]="u.id">{{ u.nombre }}</option>
             </select>
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-4 mb-3">
             <label class="form-label">Departamento / Sección</label>
-            <input type="text" class="form-control"
+            <input
+              type="text"
+              class="form-control"
               formControlName="departamentoSeccion"
-              placeholder="Departamento o sección">
+              placeholder="Departamento o sección"
+            />
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Destino <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
+            <input
+              type="text"
+              class="form-control text-uppercase"
               formControlName="destino"
               [class.is-invalid]="tieneError('destino')"
-              placeholder="Lugar de destino">
+              placeholder="Lugar de destino"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-2 mb-3">
             <label class="form-label">Hora de Salida <span class="text-danger">*</span></label>
-            <input type="time" class="form-control"
+            <input
+              type="time"
+              class="form-control"
               formControlName="horaSalida"
-              [class.is-invalid]="tieneError('horaSalida')">
+              [class.is-invalid]="tieneError('horaSalida')"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Duración Aproximada</label>
-            <input type="text" class="form-control"
+            <input
+              type="text"
+              class="form-control"
               formControlName="duracionAproximada"
-              placeholder="Ej: 2 días">
+              placeholder="Ej: 2 días"
+            />
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Fecha Inicio <span class="text-danger">*</span></label>
-            <input type="date" class="form-control"
+            <input
+              type="date"
+              class="form-control"
               formControlName="fechaInicio"
               [class.is-invalid]="tieneError('fechaInicio')"
-              (change)="cargarVehiculosYPilotos()">
+              (change)="cargarVehiculosYPilotos()"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Fecha Fin <span class="text-danger">*</span></label>
-            <input type="date" class="form-control"
+            <input
+              type="date"
+              class="form-control"
               formControlName="fechaFin"
               [class.is-invalid]="tieneError('fechaFin')"
-              (change)="cargarVehiculosYPilotos()">
+              (change)="cargarVehiculosYPilotos()"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-12 mb-3">
             <label class="form-label">Motivo <span class="text-danger">*</span></label>
-            <textarea class="form-control" rows="2"
+            <textarea
+              class="form-control"
+              rows="2"
               formControlName="motivo"
               [class.is-invalid]="tieneError('motivo')"
-              placeholder="Describa el motivo de la comisión..."></textarea>
+              placeholder="Describa el motivo de la comisión..."
+            ></textarea>
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-12 mb-3">
             <label class="form-label">Observaciones</label>
-            <textarea class="form-control" rows="2"
+            <textarea
+              class="form-control"
+              rows="2"
               formControlName="observaciones"
-              placeholder="Observaciones adicionales..."></textarea>
+              placeholder="Observaciones adicionales..."
+            ></textarea>
           </div>
-
         </div>
       </div>
     </div>
@@ -304,15 +338,23 @@
         </button>
       </div>
       <div class="card-body">
-        <div *ngFor="let p of personasFormulario; let i = index; trackBy: trackByIndex"
-          class="d-flex gap-2 mb-2">
-          <input type="text" class="form-control text-uppercase"
+        <div
+          *ngFor="let p of personasFormulario; let i = index; trackBy: trackByIndex"
+          class="d-flex gap-2 mb-2"
+        >
+          <input
+            type="text"
+            class="form-control text-uppercase"
             [(ngModel)]="personasFormulario[i]"
-            [ngModelOptions]="{standalone: true}"
-            placeholder="Nombre completo de la persona">
-          <button type="button" class="btn btn-danger btn-sm"
+            [ngModelOptions]="{ standalone: true }"
+            placeholder="Nombre completo de la persona"
+          />
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
             *ngIf="personasFormulario.length > 1"
-            (click)="eliminarCampoPersona(i)">
+            (click)="eliminarCampoPersona(i)"
+          >
             <i class="bi bi-trash"></i>
           </button>
         </div>
@@ -328,33 +370,57 @@
         <div class="row">
           <div class="col-md-4 mb-3">
             <label class="form-label">Autoridad 1 — Nombre</label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="autoridad1Nombre" placeholder="Nombre">
+            <input
+              type="text"
+              class="form-control text-uppercase"
+              formControlName="autoridad1Nombre"
+              placeholder="Nombre"
+            />
           </div>
           <div class="col-md-2 mb-3">
             <label class="form-label">Cargo</label>
-            <input type="text" class="form-control"
-              formControlName="autoridad1Cargo" placeholder="Cargo">
+            <input
+              type="text"
+              class="form-control"
+              formControlName="autoridad1Cargo"
+              placeholder="Cargo"
+            />
           </div>
           <div class="col-md-4 mb-3">
             <label class="form-label">Autoridad 2 — Nombre</label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="autoridad2Nombre" placeholder="Nombre">
+            <input
+              type="text"
+              class="form-control text-uppercase"
+              formControlName="autoridad2Nombre"
+              placeholder="Nombre"
+            />
           </div>
           <div class="col-md-2 mb-3">
             <label class="form-label">Cargo</label>
-            <input type="text" class="form-control"
-              formControlName="autoridad2Cargo" placeholder="Cargo">
+            <input
+              type="text"
+              class="form-control"
+              formControlName="autoridad2Cargo"
+              placeholder="Cargo"
+            />
           </div>
           <div class="col-md-4 mb-3">
             <label class="form-label">Autoridad 3 — Nombre</label>
-            <input type="text" class="form-control text-uppercase"
-              formControlName="autoridad3Nombre" placeholder="Nombre">
+            <input
+              type="text"
+              class="form-control text-uppercase"
+              formControlName="autoridad3Nombre"
+              placeholder="Nombre"
+            />
           </div>
           <div class="col-md-2 mb-3">
             <label class="form-label">Cargo</label>
-            <input type="text" class="form-control"
-              formControlName="autoridad3Cargo" placeholder="Cargo">
+            <input
+              type="text"
+              class="form-control"
+              formControlName="autoridad3Cargo"
+              placeholder="Cargo"
+            />
           </div>
         </div>
       </div>
@@ -375,7 +441,6 @@
 
 <!-- DETALLE DE COMISIÓN -->
 <div *ngIf="mostrarDetalle && comisionDetalle" class="comision-container">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">
       <i class="bi bi-briefcase"></i> Comisión #{{ comisionDetalle.comision.id }}
@@ -389,39 +454,60 @@
     <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
   </div>
 
+  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+
   <!-- Header estado -->
   <div class="card shadow-sm mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center"
-      [ngClass]="colorEstado(comisionDetalle.comision.idEstado)">
+    <div
+      class="card-header d-flex justify-content-between align-items-center"
+      [ngClass]="colorEstado(comisionDetalle.comision.idEstado)"
+    >
       <strong>
         <i class="bi me-2" [ngClass]="iconoEstado(comisionDetalle.comision.idEstado)"></i>
         {{ comisionDetalle.comision.nombreEstado }}
       </strong>
       <div class="d-flex gap-2">
-
-        <!-- Botón asignar vehículo para comisiones Autorizadas -->
-        <button *ngIf="comisionDetalle.comision.idEstado === 181"
+        <button
+          *ngIf="comisionDetalle.comision.idEstado === 181"
           class="btn btn-sm"
           [ngClass]="esFechaHoraVencida() ? 'btn-warning text-dark' : 'btn-success'"
           [disabled]="esFechaHoraVencida()"
           [title]="esFechaHoraVencida() ? 'Hora de salida ya venció' : 'Asignar vehículo y piloto'"
-          (click)="abrirChecklist()">
-          <i class="bi" [ngClass]="esFechaHoraVencida() ? 'bi-exclamation-triangle' : 'bi-clipboard-check'"></i>
+          (click)="abrirChecklist()"
+        >
+          <i
+            class="bi"
+            [ngClass]="esFechaHoraVencida() ? 'bi-exclamation-triangle' : 'bi-clipboard-check'"
+          ></i>
           {{ esFechaHoraVencida() ? 'Hora Vencida' : 'Asignar Vehículo/Piloto' }}
         </button>
-
-        <!-- Botón finalizar para comisiones En Curso -->
-        <button *ngIf="comisionDetalle.comision.idEstado === 4"
+        <button
+          *ngIf="comisionDetalle.comision.idEstado === 4"
           class="btn btn-danger btn-sm"
-          (click)="abrirFinalizar()">
+          (click)="abrirFinalizar()"
+        >
           <i class="bi bi-flag-fill"></i> Finalizar Comisión
         </button>
-
-        <!-- Botones de cambio de estado -->
-        <button *ngFor="let e of estadosAccionables(comisionDetalle.comision.idEstado)"
+        <button
+          *ngFor="let e of estadosAccionables(comisionDetalle.comision.idEstado)"
           class="btn btn-light btn-sm"
-          (click)="abrirModalEstado(e.id)">
+          (click)="abrirModalEstado(e.id)"
+        >
           → {{ e.nombre }}
+        </button>
+        <button
+          *ngIf="
+            esDelegado &&
+            comisionDetalle.comision.idEstado !== 5 &&
+            comisionDetalle.comision.idEstado !== 81
+          "
+          class="btn btn-danger btn-sm"
+          (click)="abrirModalEstado(81)"
+        >
+          <i class="bi bi-x-octagon"></i> Cancelar Comisión
         </button>
       </div>
     </div>
@@ -429,33 +515,61 @@
       <div class="row">
         <div class="col-md-6">
           <table class="table table-sm table-borderless">
-            <tr><th>Tipo:</th><td>{{ comisionDetalle.comision.tipoComision }}</td></tr>
-            <tr><th>Solicitante:</th><td>{{ comisionDetalle.comision.solicitante }}</td></tr>
-            <tr><th>Unidad:</th><td>{{ comisionDetalle.comision.nombreUnidad }}</td></tr>
-            <tr><th>Departamento:</th><td>{{ comisionDetalle.comision.departamentoSeccion || '—' }}</td></tr>
-            <tr><th>Destino:</th><td>{{ comisionDetalle.comision.destino }}</td></tr>
-            <tr><th>Hora Salida:</th><td>{{ comisionDetalle.comision.horaSalida }}</td></tr>
-            <tr><th>Duración:</th><td>{{ comisionDetalle.comision.duracionAproximada || '—' }}</td></tr>
+            <tr>
+              <th>Tipo:</th>
+              <td>{{ comisionDetalle.comision.tipoComision }}</td>
+            </tr>
+            <tr>
+              <th>Solicitante:</th>
+              <td>{{ comisionDetalle.comision.solicitante }}</td>
+            </tr>
+            <tr>
+              <th>Unidad:</th>
+              <td>{{ comisionDetalle.comision.nombreUnidad }}</td>
+            </tr>
+            <tr>
+              <th>Departamento:</th>
+              <td>{{ comisionDetalle.comision.departamentoSeccion || '—' }}</td>
+            </tr>
+            <tr>
+              <th>Destino:</th>
+              <td>{{ comisionDetalle.comision.destino }}</td>
+            </tr>
+            <tr>
+              <th>Hora Salida:</th>
+              <td>{{ comisionDetalle.comision.horaSalida }}</td>
+            </tr>
+            <tr>
+              <th>Duración:</th>
+              <td>{{ comisionDetalle.comision.duracionAproximada || '—' }}</td>
+            </tr>
           </table>
         </div>
         <div class="col-md-6">
           <table class="table table-sm table-borderless">
-            <tr><th>Fecha Solicitud:</th><td>{{ comisionDetalle.comision.fechaSolicitud | date:'dd/MM/yyyy' }}</td></tr>
-            <tr><th>Fecha Inicio:</th>
+            <tr>
+              <th>Fecha Solicitud:</th>
+              <td>{{ comisionDetalle.comision.fechaSolicitud | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr>
+              <th>Fecha Inicio:</th>
               <td [class.text-danger]="esFechaVencida(comisionDetalle.comision.fechaInicio)">
-                {{ comisionDetalle.comision.fechaInicio | date:'dd/MM/yyyy' }}
+                {{ comisionDetalle.comision.fechaInicio | date: 'dd/MM/yyyy' }}
               </td>
             </tr>
-            <tr><th>Fecha Fin:</th>
+            <tr>
+              <th>Fecha Fin:</th>
               <td [class.text-danger]="esFechaVencida(comisionDetalle.comision.fechaFin)">
-                {{ comisionDetalle.comision.fechaFin | date:'dd/MM/yyyy' }}
+                {{ comisionDetalle.comision.fechaFin | date: 'dd/MM/yyyy' }}
               </td>
             </tr>
-            <tr><th>Creado por:</th><td>{{ comisionDetalle.comision.creadoPor }}</td></tr>
+            <tr>
+              <th>Creado por:</th>
+              <td>{{ comisionDetalle.comision.creadoPor }}</td>
+            </tr>
           </table>
         </div>
       </div>
-
       <div class="mt-2" *ngIf="comisionDetalle.comision.motivo">
         <strong>Motivo:</strong>
         <p class="text-muted mb-0">{{ comisionDetalle.comision.motivo }}</p>
@@ -479,24 +593,31 @@
             No hay personas registradas.
           </div>
           <ul class="list-group list-group-flush">
-            <li *ngFor="let p of personas"
-              class="list-group-item d-flex justify-content-between align-items-center">
+            <li
+              *ngFor="let p of personas"
+              class="list-group-item d-flex justify-content-between align-items-center"
+            >
               <span><i class="bi bi-person me-2"></i>{{ p.nombrePersona }}</span>
-              <button class="btn btn-danger btn-sm"
-  *ngIf="comisionDetalle.comision.idEstado !== 5"
-  (click)="eliminarPersona(p.id)">
-  <i class="bi bi-trash"></i>
-</button>
+              <button
+                class="btn btn-danger btn-sm"
+                *ngIf="comisionDetalle.comision.idEstado !== 5"
+                (click)="eliminarPersona(p.id)"
+              >
+                <i class="bi bi-trash"></i>
+              </button>
             </li>
           </ul>
-         <div class="mt-3 d-flex gap-2" *ngIf="comisionDetalle.comision.idEstado !== 5">
-  <input type="text" class="form-control form-control-sm text-uppercase"
-    [(ngModel)]="nuevaPersona"
-    placeholder="Nombre de la persona">
-  <button class="btn btn-info btn-sm" (click)="agregarPersonaDetalle()">
-    <i class="bi bi-plus-circle"></i>
-  </button>
-</div>
+          <div class="mt-3 d-flex gap-2" *ngIf="comisionDetalle.comision.idEstado !== 5">
+            <input
+              type="text"
+              class="form-control form-control-sm text-uppercase"
+              [(ngModel)]="nuevaPersona"
+              placeholder="Nombre de la persona"
+            />
+            <button class="btn btn-info btn-sm" (click)="agregarPersonaDetalle()">
+              <i class="bi bi-plus-circle"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -509,70 +630,86 @@
         </div>
         <div class="card-body">
           <table class="table table-sm table-borderless">
-
             <tr *ngIf="comisionDetalle.comision.autoridad1Nombre">
               <th>1.</th>
               <td>{{ comisionDetalle.comision.autoridad1Nombre }}</td>
               <td class="text-muted">{{ comisionDetalle.comision.autoridad1Cargo }}</td>
               <td>
-                <span *ngIf="comisionDetalle.comision.firmadoJefe"
-                  class="badge bg-success">
+                <span *ngIf="comisionDetalle.comision.firmadoJefe" class="badge bg-success">
                   <i class="bi bi-check-circle"></i> Firmado
                 </span>
-                <button *ngIf="!comisionDetalle.comision.firmadoJefe"
+                <button
+                  *ngIf="!comisionDetalle.comision.firmadoJefe"
                   class="btn btn-outline-success btn-sm"
-                  (click)="registrarFirma(1)">
+                  (click)="registrarFirma(1)"
+                >
                   <i class="bi bi-pen"></i> Firmar
                 </button>
               </td>
             </tr>
-
             <tr *ngIf="comisionDetalle.comision.autoridad2Nombre">
               <th>2.</th>
               <td>{{ comisionDetalle.comision.autoridad2Nombre }}</td>
               <td class="text-muted">{{ comisionDetalle.comision.autoridad2Cargo }}</td>
               <td>
-                <span *ngIf="comisionDetalle.comision.firmadoFinanciero"
-                  class="badge bg-success">
+                <span *ngIf="comisionDetalle.comision.firmadoFinanciero" class="badge bg-success">
                   <i class="bi bi-check-circle"></i> Firmado
                 </span>
-                <button *ngIf="!comisionDetalle.comision.firmadoFinanciero && comisionDetalle.comision.firmadoJefe"
+                <button
+                  *ngIf="
+                    !comisionDetalle.comision.firmadoFinanciero &&
+                    comisionDetalle.comision.firmadoJefe
+                  "
                   class="btn btn-outline-success btn-sm"
-                  (click)="registrarFirma(2)">
+                  (click)="registrarFirma(2)"
+                >
                   <i class="bi bi-pen"></i> Firmar
                 </button>
-                <span *ngIf="!comisionDetalle.comision.firmadoFinanciero && !comisionDetalle.comision.firmadoJefe"
-                  class="badge bg-secondary">
+                <span
+                  *ngIf="
+                    !comisionDetalle.comision.firmadoFinanciero &&
+                    !comisionDetalle.comision.firmadoJefe
+                  "
+                  class="badge bg-secondary"
+                >
                   <i class="bi bi-lock"></i> Pendiente Autoridad 1
                 </span>
               </td>
             </tr>
-
             <tr *ngIf="comisionDetalle.comision.autoridad3Nombre">
               <th>3.</th>
               <td>{{ comisionDetalle.comision.autoridad3Nombre }}</td>
               <td class="text-muted">{{ comisionDetalle.comision.autoridad3Cargo }}</td>
               <td>
-                <span *ngIf="comisionDetalle.comision.firmadoAdministrativo"
-                  class="badge bg-success">
+                <span
+                  *ngIf="comisionDetalle.comision.firmadoAdministrativo"
+                  class="badge bg-success"
+                >
                   <i class="bi bi-check-circle"></i> Firmado
                 </span>
-                <button *ngIf="!comisionDetalle.comision.firmadoAdministrativo && comisionDetalle.comision.firmadoFinanciero"
+                <button
+                  *ngIf="
+                    !comisionDetalle.comision.firmadoAdministrativo &&
+                    comisionDetalle.comision.firmadoFinanciero
+                  "
                   class="btn btn-outline-success btn-sm"
-                  (click)="registrarFirma(3)">
+                  (click)="registrarFirma(3)"
+                >
                   <i class="bi bi-pen"></i> Firmar
                 </button>
-                <span *ngIf="!comisionDetalle.comision.firmadoAdministrativo && !comisionDetalle.comision.firmadoFinanciero"
-                  class="badge bg-secondary">
+                <span
+                  *ngIf="
+                    !comisionDetalle.comision.firmadoAdministrativo &&
+                    !comisionDetalle.comision.firmadoFinanciero
+                  "
+                  class="badge bg-secondary"
+                >
                   <i class="bi bi-lock"></i> Pendiente Autoridad 2
                 </span>
               </td>
             </tr>
-
             <tr *ngIf="!comisionDetalle.comision.autoridad1Nombre">
-              <td colspan="4" class="text-muted small text-center">
-                Sin autoridades registradas.
-              </td>
+              <td colspan="4" class="text-muted small text-center">Sin autoridades registradas.</td>
             </tr>
           </table>
         </div>
@@ -583,25 +720,37 @@
   <!-- Cupones asignados — solo comisiones En Curso -->
   <div *ngIf="comisionDetalle.comision.idEstado === 4" class="card shadow-sm mb-3">
     <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-      <h6 class="mb-0">
-        <i class="bi bi-fuel-pump"></i> Cupones de Combustible
-      </h6>
-      <button class="btn btn-warning btn-sm" (click)="abrirAsignarCupones()">
+      <h6 class="mb-0"><i class="bi bi-fuel-pump"></i> Cupones de Combustible</h6>
+
+      <button
+        *ngIf="comisionDetalle.comision.idEstado === 4"
+        class="btn btn-warning btn-sm"
+        (click)="abrirReasignar()"
+      >
+        <i class="bi bi-arrow-repeat"></i> Cambiar Piloto/Vehículo
+      </button>
+      <button
+        class="btn btn-warning btn-sm"
+        (click)="abrirAsignarCupones()"
+        [disabled]="tieneCuponesAsignados"
+      >
         <i class="bi" [ngClass]="mostrarAsignarCupones ? 'bi-chevron-up' : 'bi-plus-circle'"></i>
-        {{ mostrarAsignarCupones ? 'Ocultar' : 'Asignar Cupones' }}
+        {{
+          tieneCuponesAsignados
+            ? 'Cupones Ya Asignados'
+            : mostrarAsignarCupones
+              ? 'Ocultar'
+              : 'Asignar Cupones'
+        }}
       </button>
     </div>
-
-    <!-- Panel de asignación -->
     <div *ngIf="mostrarAsignarCupones" class="card-body border-bottom">
       <div class="row align-items-end g-2">
         <div class="col-md-6">
           <label class="form-label">Seleccionar Talonario</label>
           <select class="form-select" [(ngModel)]="idTalonarioSeleccionado">
-            <option [value]="0">Seleccione un talonario...</option>
-            <option *ngFor="let t of talonariosDisponibles" [value]="t.id">
-              {{ t.nombre }}
-            </option>
+            <option [ngValue]="0">Seleccione un talonario...</option>
+            <option *ngFor="let t of talonariosDisponibles" [ngValue]="t.id">{{ t.nombre }}</option>
           </select>
         </div>
         <div class="col-md-3">
@@ -616,8 +765,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Lista de cupones asignados -->
     <div class="card-body">
       <div *ngIf="cuponesComision.length === 0" class="text-muted small text-center py-2">
         No hay cupones asignados aún.
@@ -626,7 +773,8 @@
         <thead class="table-light">
           <tr>
             <th>#</th>
-            <th>Número</th>
+            <th>No. Talonario</th>
+            <th>Número de cupón</th>
             <th>Valor</th>
             <th>Vencimiento</th>
             <th>Estado</th>
@@ -635,15 +783,102 @@
         <tbody>
           <tr *ngFor="let c of cuponesComision; let i = index">
             <td>{{ i + 1 }}</td>
+            <td>
+              <span class="badge bg-primary">#{{ c.idTalonario }}</span>
+            </td>
             <td>{{ c.numeroCupon }}</td>
             <td>Q{{ c.valor }}</td>
-            <td>{{ c.fechaVencimiento | date:'dd/MM/yyyy' }}</td>
+            <td>{{ c.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
             <td>
               <span class="badge bg-warning text-dark">{{ c.disponibilidad }}</span>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ─── DEVOLUCIÓN DE CUPONES — solo comisiones Finalizadas con cupones ─── -->
+  <div
+    *ngIf="comisionDetalle.comision.idEstado === 5 && cuponesComision.length > 0"
+    class="card shadow-sm mb-3"
+  >
+    <div class="card-header bg-info text-dark d-flex justify-content-between align-items-center">
+      <h6 class="mb-0"><i class="bi bi-arrow-return-left"></i> Devolución de Cupones No Usados</h6>
+      <button class="btn btn-info btn-sm" (click)="confirmarDevolucion()">
+        <i class="bi bi-check-circle"></i> Confirmar Devolución ({{ totalSeleccionados }})
+      </button>
+    </div>
+    <div class="card-body">
+      <p class="text-muted small mb-2">
+        Seleccione los cupones físicos que el piloto devolvió y confirme.
+      </p>
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 40px">Sel.</th>
+            <th>#</th>
+            <th>No. Talonario</th>
+            <th>Número de cupón</th>
+            <th>Valor</th>
+            <th>Vencimiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let c of cuponesComision; let i = index"
+            [class.table-warning]="c.seleccionado"
+            (click)="toggleCupon(c)"
+            style="cursor: pointer"
+          >
+            <td>
+              <input type="checkbox" class="form-check-input" [checked]="c.seleccionado" />
+            </td>
+            <td>{{ i + 1 }}</td>
+            <td>
+              <span class="badge bg-primary">#{{ c.idTalonario }}</span>
+            </td>
+            <td>{{ c.numeroCupon }}</td>
+            <td>Q{{ c.valor }}</td>
+            <td>{{ c.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─── REASIGNAR PILOTO/VEHÍCULO ─── -->
+  <div *ngIf="mostrarReasignar" class="card shadow-sm mb-3">
+    <div class="card-header bg-warning text-dark">
+      <h6 class="mb-0"><i class="bi bi-arrow-repeat"></i> Cambiar Piloto / Vehículo</h6>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label">Nuevo Vehículo</label>
+          <select class="form-select" [(ngModel)]="idVehiculoReasignar">
+            <option [ngValue]="0">Seleccione un vehículo...</option>
+            <option *ngFor="let v of vehiculos" [ngValue]="v.id">{{ v.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Nuevo Piloto</label>
+          <select class="form-select" [(ngModel)]="idPilotoReasignar">
+            <option [ngValue]="0">Seleccione un piloto...</option>
+            <option *ngFor="let p of pilotos" [ngValue]="p.id">{{ p.nombre }}</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button class="btn btn-warning w-100" (click)="reasignarPilotoVehiculo()">
+            <i class="bi bi-check-circle"></i> Confirmar
+          </button>
+        </div>
+      </div>
+      <div class="mt-2">
+        <button class="btn btn-secondary btn-sm" (click)="mostrarReasignar = false">
+          Cancelar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -659,7 +894,7 @@
       <div *ngFor="let h of historial" class="timeline-item">
         <div class="d-flex justify-content-between">
           <strong>{{ h.accion }}</strong>
-          <small class="text-muted">{{ h.fechaRegistro | date:'dd/MM/yyyy HH:mm' }}</small>
+          <small class="text-muted">{{ h.fechaRegistro | date: 'dd/MM/yyyy HH:mm' }}</small>
         </div>
         <div class="text-muted small">{{ h.detalle }}</div>
         <div *ngIf="h.valorAnterior || h.valorNuevo" class="mt-1">
@@ -675,10 +910,11 @@
 
 <!-- ASIGNAR VEHÍCULO Y PILOTO -->
 <div *ngIf="mostrarChecklist && comisionDetalle" class="comision-container">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">
-      <i class="bi bi-truck"></i> Asignar Vehículo y Piloto — Comisión #{{ comisionDetalle.comision.id }}
+      <i class="bi bi-truck"></i> Asignar Vehículo y Piloto — Comisión #{{
+        comisionDetalle.comision.id
+      }}
     </h4>
     <button class="btn btn-secondary btn-sm" (click)="volverDetalle()">
       <i class="bi bi-arrow-left"></i> Volver
@@ -690,9 +926,9 @@
   </div>
 
   <div class="alert alert-info mb-3">
-    <strong>Destino:</strong> {{ comisionDetalle.comision.destino }} —
-    <strong>Fecha:</strong> {{ comisionDetalle.comision.fechaInicio | date:'dd/MM/yyyy' }}
-    al {{ comisionDetalle.comision.fechaFin | date:'dd/MM/yyyy' }}
+    <strong>Destino:</strong> {{ comisionDetalle.comision.destino }} — <strong>Fecha:</strong>
+    {{ comisionDetalle.comision.fechaInicio | date: 'dd/MM/yyyy' }} al
+    {{ comisionDetalle.comision.fechaFin | date: 'dd/MM/yyyy' }}
   </div>
 
   <form [formGroup]="formularioChecklist" (ngSubmit)="guardarChecklist()">
@@ -702,68 +938,77 @@
       </div>
       <div class="card-body">
         <div class="row">
-
           <div class="col-md-6 mb-3">
             <label class="form-label">Vehículo <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idVehiculo"
-              [class.is-invalid]="tieneError('idVehiculo', formularioChecklist)">
+            <select
+              class="form-select"
+              formControlName="idVehiculo"
+              [class.is-invalid]="tieneError('idVehiculo', formularioChecklist)"
+            >
               <option value="">Seleccione un vehículo disponible</option>
               <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
             </select>
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-6 mb-3">
             <label class="form-label">Piloto <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idPiloto"
-              [class.is-invalid]="tieneError('idPiloto', formularioChecklist)">
+            <select
+              class="form-select"
+              formControlName="idPiloto"
+              [class.is-invalid]="tieneError('idPiloto', formularioChecklist)"
+            >
               <option value="">Seleccione un piloto disponible</option>
               <option *ngFor="let p of pilotos" [value]="p.id">{{ p.nombre }}</option>
             </select>
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Fecha de Salida</label>
-            <input type="date" class="form-control" formControlName="fechaRevision" readonly>
+            <input type="date" class="form-control" formControlName="fechaRevision" readonly />
             <small class="text-muted">Tomada de la comisión</small>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Hora de Salida</label>
-            <input type="time" class="form-control" formControlName="horaRevision" readonly>
+            <input type="time" class="form-control" formControlName="horaRevision" readonly />
             <small class="text-muted">Tomada de la comisión</small>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Kilometraje Inicial <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" formControlName="kilometrajInicial"
+            <input
+              type="number"
+              class="form-control"
+              formControlName="kilometrajInicial"
               [class.is-invalid]="tieneError('kilometrajInicial', formularioChecklist)"
-              placeholder="Km actuales del vehículo">
+              placeholder="Km actuales del vehículo"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Monto Combustible <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" formControlName="montoCombustible"
+            <input
+              type="number"
+              class="form-control"
+              formControlName="montoCombustible"
               [class.is-invalid]="tieneError('montoCombustible', formularioChecklist)"
               placeholder="Ej: 100, 150, 200..."
-              step="50" min="50">
+              step="50"
+              min="50"
+            />
             <div class="invalid-feedback">Requerido. Mínimo Q50.00</div>
             <small class="text-muted">Debe ser múltiplo de Q50.00</small>
           </div>
-
           <div class="col-md-12 mb-3">
             <label class="form-label">Observaciones</label>
-            <textarea class="form-control" rows="2"
+            <textarea
+              class="form-control"
+              rows="2"
               formControlName="observaciones"
-              placeholder="Observaciones adicionales..."></textarea>
+              placeholder="Observaciones adicionales..."
+            ></textarea>
           </div>
-
         </div>
       </div>
     </div>
-
     <div class="d-flex justify-content-end gap-2">
       <button type="button" class="btn btn-secondary" (click)="volverDetalle()">
         <i class="bi bi-x-circle"></i> Cancelar
@@ -776,12 +1021,22 @@
 </div>
 
 <!-- FINALIZAR COMISIÓN -->
-<div *ngIf="mostrarFinalizar && comisionDetalle" class="comision-container">
 
+<div *ngIf="mostrarFinalizar && comisionDetalle" class="comision-container">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">
       <i class="bi bi-flag-fill"></i> Finalizar Comisión #{{ comisionDetalle.comision.id }}
     </h4>
+
+    <!-- Botón reasignar piloto/vehículo — solo En Curso -->
+    <button
+      *ngIf="comisionDetalle.comision.idEstado === 4"
+      class="btn btn-warning btn-sm"
+      (click)="abrirReasignar()"
+    >
+      <i class="bi bi-arrow-repeat"></i> Cambiar Piloto/Vehículo
+    </button>
+
     <button class="btn btn-secondary btn-sm" (click)="volverDetalle()">
       <i class="bi bi-arrow-left"></i> Volver
     </button>
@@ -791,10 +1046,9 @@
     <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
   </div>
 
-  <!-- Info comisión -->
   <div class="alert alert-info mb-3">
-    <strong>Destino:</strong> {{ comisionDetalle.comision.destino }} —
-    <strong>Salida:</strong> {{ comisionDetalle.comision.fechaInicio | date:'dd/MM/yyyy' }}
+    <strong>Destino:</strong> {{ comisionDetalle.comision.destino }} — <strong>Salida:</strong>
+    {{ comisionDetalle.comision.fechaInicio | date: 'dd/MM/yyyy' }}
     {{ comisionDetalle.comision.horaSalida }}
   </div>
 
@@ -805,43 +1059,49 @@
       </div>
       <div class="card-body">
         <div class="row">
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Fecha de Retorno <span class="text-danger">*</span></label>
-            <input type="date" class="form-control"
+            <input
+              type="date"
+              class="form-control"
               formControlName="fechaRetorno"
-              [class.is-invalid]="tieneError('fechaRetorno', formularioFinalizar)">
+              [class.is-invalid]="tieneError('fechaRetorno', formularioFinalizar)"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Hora de Retorno <span class="text-danger">*</span></label>
-            <input type="time" class="form-control"
+            <input
+              type="time"
+              class="form-control"
               formControlName="horaRetorno"
-              [class.is-invalid]="tieneError('horaRetorno', formularioFinalizar)">
+              [class.is-invalid]="tieneError('horaRetorno', formularioFinalizar)"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-3 mb-3">
             <label class="form-label">Kilometraje Final <span class="text-danger">*</span></label>
-            <input type="number" class="form-control"
+            <input
+              type="number"
+              class="form-control"
               formControlName="kilometrajeFinal"
               [class.is-invalid]="tieneError('kilometrajeFinal', formularioFinalizar)"
-              placeholder="Km actuales del vehículo">
+              placeholder="Km actuales del vehículo"
+            />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
           <div class="col-md-12 mb-3">
             <label class="form-label">Observaciones</label>
-            <textarea class="form-control" rows="3"
+            <textarea
+              class="form-control"
+              rows="3"
               formControlName="observaciones"
-              placeholder="Observaciones del retorno..."></textarea>
+              placeholder="Observaciones del retorno..."
+            ></textarea>
           </div>
-
         </div>
       </div>
     </div>
-
     <div class="d-flex justify-content-end gap-2">
       <button type="button" class="btn btn-secondary" (click)="volverDetalle()">
         <i class="bi bi-x-circle"></i> Cancelar
@@ -865,20 +1125,36 @@
     <div class="modal-body-custom">
       <p class="text-muted small mb-2">
         Nuevo estado:
-        <strong>{{ estados.find(e => e.id === nuevoEstado)?.nombre }}</strong>
+        <strong>{{ estados.find((e) => e.id === nuevoEstado)?.nombre }}</strong>
       </p>
       <label class="form-label">Justificación (opcional)</label>
-      <textarea class="form-control" rows="3"
+      <textarea
+        class="form-control"
+        rows="3"
         [(ngModel)]="justificacionEstado"
-        placeholder="Ingrese una justificación..."></textarea>
+        placeholder="Ingrese una justificación..."
+      ></textarea>
     </div>
     <div class="modal-footer-custom">
-      <button class="btn btn-secondary btn-sm" (click)="cerrarModalEstado()">
-        Cancelar
-      </button>
+      <button class="btn btn-secondary btn-sm" (click)="cerrarModalEstado()">Cancelar</button>
       <button class="btn btn-primary btn-sm" (click)="confirmarCambioEstado()">
         <i class="bi bi-check-circle"></i> Confirmar
       </button>
     </div>
   </div>
 </div>
+
+<!-- ─── MODAL REUTILIZABLE ─── -->
+<app-modal
+  [visible]="modalVisible"
+  [titulo]="modalTitulo"
+  [mensaje]="modalMensaje"
+  [tipo]="modalTipo"
+  [textoBtnAceptar]="modalBtnAceptar"
+  [conNumero]="modalConNumero"
+  [labelNumero]="modalLabelNumero"
+  [maxNumero]="modalMaxNumero"
+  (aceptar)="onModalAceptar($event)"
+  (cancelar)="onModalCancelar()"
+>
+</app-modal>

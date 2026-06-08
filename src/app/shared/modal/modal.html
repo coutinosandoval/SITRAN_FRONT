@@ -1,0 +1,144 @@
+<!-- Modal overlay -->
+<div
+  *ngIf="visible"
+  style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  "
+>
+  <!-- Modal card -->
+  <div
+    style="
+      background: white;
+      border-radius: 8px;
+      width: 440px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+    "
+  >
+    <!-- Header -->
+    <div
+      [style.background]="colorHeader"
+      style="padding: 14px 20px; display: flex; justify-content: space-between; align-items: center"
+    >
+      <span
+        [style.color]="colorTextoHeader"
+        style="font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px"
+      >
+        <i class="ti" [ngClass]="icono" style="font-size: 16px" aria-hidden="true"></i>
+        {{ titulo }}
+      </span>
+      <i
+        class="ti ti-x"
+        [style.color]="colorTextoHeader"
+        style="font-size: 16px; cursor: pointer"
+        (click)="onCancelar()"
+        aria-hidden="true"
+      ></i>
+    </div>
+
+    <!-- Body -->
+    <div style="padding: 20px">
+      <!-- Mensaje principal -->
+      <p
+        *ngIf="mensaje"
+        style="font-size: 13px; color: #333; margin: 0 0 16px"
+        [innerHTML]="mensaje"
+      ></p>
+
+      <!-- Textarea opcional (ej: rechazo) -->
+      <div *ngIf="conTexto" style="margin-bottom: 12px">
+        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px">
+          {{ placeholderTexto }}
+        </label>
+        <textarea
+          [(ngModel)]="textoIngresado"
+          rows="4"
+          style="
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 13px;
+            resize: none;
+            box-sizing: border-box;
+          "
+          [placeholder]="placeholderTexto"
+        >
+        </textarea>
+      </div>
+
+      <!-- Input numérico opcional (ej: devolución) -->
+      <div *ngIf="conNumero">
+        <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px">
+          {{ labelNumero }}
+        </label>
+        <input
+          type="number"
+          [(ngModel)]="numeroIngresado"
+          [max]="maxNumero"
+          min="1"
+          style="
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 13px;
+            box-sizing: border-box;
+          "
+          [placeholder]="placeholderNumero"
+        />
+        <small style="font-size: 11px; color: #666">Máximo: {{ maxNumero }}</small>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div
+      style="
+        padding: 12px 20px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      "
+    >
+      <button
+        (click)="onCancelar()"
+        style="
+          padding: 8px 16px;
+          border-radius: 6px;
+          border: 1px solid #6c757d;
+          background: white;
+          color: #6c757d;
+          font-size: 13px;
+          cursor: pointer;
+        "
+      >
+        Cancelar
+      </button>
+      <button
+        (click)="onAceptar()"
+        [style.background]="colorHeader"
+        [style.color]="colorTextoHeader"
+        style="
+          padding: 8px 16px;
+          border-radius: 6px;
+          border: none;
+          font-size: 13px;
+          cursor: pointer;
+          font-weight: 500;
+        "
+      >
+        {{ textoBtnAceptar }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -11,6 +11,7 @@ export interface Usuario {
   creadoPor?:       string;
   intentosFallidos?: number;
   bloqueado?:       string;
+  tipoLugar?: string;
 }
 
 export interface UsuarioLista {
@@ -56,4 +57,11 @@ export interface Permiso {
   nombre?:      string;
   descripcion?: string;
   estado?:      string;
+}
+
+export interface UsuarioActualizar {
+  correo?: string;
+  estado?: string;
+  idUnidad?: number;
+  tipoLugar?: string;
 }

@@ -227,3 +227,15 @@ export interface TalonarioBodegaDisponible {
   nombre: string;
   saldo: number;
 }
+
+// Agregar junto a los otros interfaces del modelo
+export interface TalonarioAsignacionDTO {
+  idTalonario: number;
+  cantidad: number;
+}
+
+export interface AprobarSolicitudTalonarioRequest {
+  talonarios: TalonarioAsignacionDTO[];
+  nombreEntregador?: string;
+  nombreReceptor?: string;
+}

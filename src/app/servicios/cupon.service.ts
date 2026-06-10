@@ -30,6 +30,7 @@ import {
   DevolverCuponesBodega,
   TalonarioBodegaDisponible,
 } from '../modelos/cupon.model';
+import {AprobarSolicitudTalonarioRequest } from '../modelos/cupon.model';
 
 @Injectable({ providedIn: 'root' })
 export class CuponService {
@@ -183,10 +184,9 @@ export class CuponService {
     return this.http.post(`${this.apiUrl}/solicitudes-talonario`, dto);
   }
 
-  aprobarSolicitudTalonario(id: number, dto: AprobarSolicitudTalonario): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/solicitudes-talonario/${id}/aprobar`, dto);
-  }
-
+aprobarSolicitudTalonario(id: number, dto: AprobarSolicitudTalonarioRequest): Observable<any> {
+  return this.http.patch(`${this.apiUrl}/solicitudes-talonario/${id}/aprobar`, dto);
+}
   rechazarSolicitudTalonario(id: number, dto: RechazarSolicitudTalonario): Observable<any> {
     return this.http.patch(`${this.apiUrl}/solicitudes-talonario/${id}/rechazar`, dto);
   }
@@ -273,5 +273,10 @@ export class CuponService {
       `${this.apiUrl}/solicitudes-talonario/detalle/${idDetalle}/devolver`,
       dto,
     );
+  }
+
+  // Obtiene los números de cupón disponibles de un detalle de solicitud
+  obtenerCuponesDisponiblesDetalle(idDetalle: number): Observable<number[]> {
+    return this.http.get<number[]>(`${this.apiUrl}/detalle/${idDetalle}/cupones-disponibles`);
   }
 }

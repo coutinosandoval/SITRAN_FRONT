@@ -202,12 +202,14 @@
           </div>
 
           <!-- Denominación -->
+          <!-- Denominación -->
           <div class="col-md-3 mb-3">
             <label class="form-label">Denominación <span class="text-danger">*</span></label>
             <select
               class="form-select"
               formControlName="valorCupon"
               [class.is-invalid]="tieneError('valorCupon')"
+              (change)="actualizarValor($any($event.target).value)"
             >
               <option *ngFor="let v of valores" [value]="v">Q{{ v }}.00 por cupón</option>
             </select>
@@ -224,6 +226,7 @@
               [class.is-invalid]="tieneError('cantidadCupones')"
               placeholder="Ej: 80"
               min="1"
+              (input)="actualizarCantidad($any($event.target).value)"
             />
             <div class="invalid-feedback">Requerido. Debe ser mayor a 0.</div>
             <small class="text-muted">Ingrese la cantidad exacta de cupones que necesita.</small>
@@ -239,7 +242,7 @@
               rows="3"
               formControlName="motivo"
               [class.is-invalid]="tieneError('motivo')"
-              placeholder="Ingrese el número de solicitud (memo, si existe)  y observaciones relevantes...."
+              placeholder="Ingrese el nciones relevantes...."
             ></textarea>
             <div class="invalid-feedback">Las observaciones son requeridas.</div>
           </div>
@@ -247,6 +250,7 @@
       </div>
     </div>
 
+    <!-- Resumen -->
     <!-- Resumen -->
     <div class="card shadow-sm mb-3 border-info">
       <div class="card-header bg-info text-white">
@@ -356,68 +360,109 @@
         <p class="text-muted mt-1">{{ solicitudSeleccionada.motivo }}</p>
       </div>
 
-      <!-- Detalle de talonarios asignados si está aprobada -->
-      <div
-        class="mt-3"
-        *ngIf="solicitudSeleccionada.estado === 'Aprobada' && detalleSolicitud.length > 0"
-      >
-        <h6 class="text-success"><i class="bi bi-check-circle"></i> Talonarios Asignados</h6>
-        <table class="table table-sm table-hover">
-          <thead class="table-dark">
-            <tr>
-              <th>Talonario</th>
-              <th>Denominación</th>
-              <th>Asignados</th>
-              <th>En Comisiones</th>
-              <th>Dev. Bodega</th>
-              <th>Disponibles</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let d of detalleSolicitud">
-              <td>{{ d.nombreTalonario }}</td>
-              <td>
-                <span class="badge bg-info text-dark">Q{{ d.valorCupon }}.00</span>
-              </td>
-              <td>
-                <span class="badge bg-success">{{ d.cuponesAsignados }}</span>
-              </td>
-              <td>
-                <span class="badge bg-warning text-dark">{{ d.cuponesEntregados || 0 }}</span>
-              </td>
-              <td>
-                <span class="badge bg-secondary">{{ d.cuponesDevueltos }}</span>
-              </td>
-              <td>
-                <span
-                  class="badge"
-                  [ngClass]="cuponesDisponiblesDetalle(d) > 0 ? 'bg-primary' : 'bg-danger'"
-                >
-                  {{
-                    cuponesDisponiblesDetalle(d) > 0 ? cuponesDisponiblesDetalle(d) : 'Retornado'
-                  }}
-                </span>
-              </td>
-              <td>
-                <span
-                  class="badge"
-                  [ngClass]="{
-                    'bg-danger': cuponesDisponiblesDetalle(d) === 0 && d.estado !== 'Devuelto',
-                    'bg-warning text-dark': d.estado === 'Devuelto',
-                    'bg-success': d.estado === 'Asignado' && cuponesDisponiblesDetalle(d) > 0,
-                  }"
-                >
-                  {{
-                    cuponesDisponiblesDetalle(d) === 0 && d.estado !== 'Devuelto'
-                      ? 'Sin saldo'
-                      : d.estado
-                  }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Detalle si está aprobada -->
+      <div class="mt-3" *ngIf="solicitudSeleccionada.estado === 'Aprobada'">
+        <!-- Vista Bodega: talonarios disponibles en bodega -->
+        <div *ngIf="esBodega && talonariosBodega.length > 0">
+          <h6 class="text-primary"><i class="bi bi-bookmarks"></i> Talonarios en Bodega</h6>
+          <table class="table table-sm table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>Talonario</th>
+                <th>Disponibles en Bodega</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of talonariosBodega">
+                <td>{{ t.nombre }}</td>
+                <td>
+                  <span class="badge bg-primary">{{ t.saldo }} cupones</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Vista Delegado/otros: talonarios asignados a la sede -->
+        <div *ngIf="!esBodega && detalleSolicitud.length > 0">
+          <h6 class="text-success"><i class="bi bi-check-circle"></i> Talonarios Asignados</h6>
+          <table class="table table-sm table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>Talonario</th>
+                <th>Denominación</th>
+                <th>Asignados</th>
+                <th>En Comisiones</th>
+                <th>Dev. Bodega</th>
+                <th>Disponibles</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of detalleSolicitud">
+                <td>{{ d.nombreTalonario }}</td>
+                <td>
+                  <span class="badge bg-info text-dark">Q{{ d.valorCupon }}.00</span>
+                </td>
+                <td>
+                  <span class="badge bg-success">{{ d.cuponesAsignados }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-warning text-dark">{{ d.cuponesEntregados || 0 }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-secondary">{{ d.cuponesDevueltos }}</span>
+                </td>
+                <td>
+                  <span
+                    class="badge"
+                    [ngClass]="cuponesDisponiblesDetalle(d) > 0 ? 'bg-primary' : 'bg-danger'"
+                    [style.cursor]="cuponesDisponiblesDetalle(d) > 0 ? 'pointer' : 'default'"
+                    (click)="cuponesDisponiblesDetalle(d) > 0 && toggleCuponesDisponibles(d.id)"
+                  >
+                    {{
+                      cuponesDisponiblesDetalle(d) > 0
+                        ? cuponesDisponiblesDetalle(d)
+                        : 'Retornado a Bodega'
+                    }}
+                  </span>
+                  <div
+                    *ngIf="
+                      cuponesDisponiblesExpandido === d.id && cuponesDisponiblesLista.length > 0
+                    "
+                    class="mt-2 p-2 border rounded bg-light small"
+                  >
+                    <strong>Cupones disponibles:</strong>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                      <span *ngFor="let n of cuponesDisponiblesLista" class="badge bg-secondary">{{
+                        n
+                      }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span
+                    class="badge"
+                    [ngClass]="d.estado === 'Devuelto' ? 'bg-warning text-dark' : 'bg-success'"
+                  >
+                    {{ d.estado }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button
+                    class="btn btn-info btn-sm"
+                    *ngIf="cuponesDisponiblesDetalle(d) > 0 && d.estado !== 'Devuelto'"
+                    (click)="abrirDevolucion(d)"
+                    title="Devolver cupones a Bodega"
+                  >
+                    <i class="bi bi-arrow-return-left"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="mt-3" *ngIf="solicitudSeleccionada.estado === 'Rechazada'">
@@ -560,10 +605,14 @@
                 <input
                   type="number"
                   class="form-control"
-                  [(ngModel)]="cuponesAAsignar"
-                  [max]="Math.min(talonarioAsignando.saldo, cuponesRestantes)"
+                  formControlName="cantidadCupones"
+                  [class.is-invalid]="tieneError('cantidadCupones')"
+                  placeholder="Ej: 80"
                   min="1"
-                  placeholder="Cantidad"
+                  (input)="
+                    resumenCantidad = +$any($event.target).value;
+                    resumenTotal = resumenCantidad * resumenValor
+                  "
                 />
                 <small class="text-muted">
                   Máximo: {{ talonarioAsignando.saldo }} (saldo talonario) | Faltan:
@@ -772,6 +821,8 @@
               <span
                 class="badge"
                 [ngClass]="cuponesDisponiblesDetalle(d) > 0 ? 'bg-primary' : 'bg-danger'"
+                [style.cursor]="cuponesDisponiblesDetalle(d) > 0 ? 'pointer' : 'default'"
+                (click)="cuponesDisponiblesDetalle(d) > 0 && toggleCuponesDisponibles(d.id)"
               >
                 {{
                   cuponesDisponiblesDetalle(d) > 0
@@ -779,6 +830,17 @@
                     : 'Retornado a Bodega'
                 }}
               </span>
+              <div
+                *ngIf="cuponesDisponiblesExpandido === d.id && cuponesDisponiblesLista.length > 0"
+                class="mt-2 p-2 border rounded bg-light small"
+              >
+                <strong>Cupones disponibles:</strong>
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                  <span *ngFor="let n of cuponesDisponiblesLista" class="badge bg-secondary">{{
+                    n
+                  }}</span>
+                </div>
+              </div>
             </td>
             <td>
               <span

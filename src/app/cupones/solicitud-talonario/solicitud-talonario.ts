@@ -13,9 +13,9 @@ import {
   SolicitudTalonarioRequest,
   RechazarSolicitudTalonario,
   SolicitudTalonarioDetalle,
-  AsignarCuponesSolicitud,
   DevolverCuponesBodega,
   TalonarioBodegaDisponible,
+  AprobarSolicitudTalonarioRequest,
 } from '../../modelos/cupon.model';
 import { CatalogoItem } from '../../modelos/vehiculo.model';
 import { AuthService } from '../../servicios/auth.service';
@@ -33,6 +33,9 @@ export class SolicitudTalonarioComponent implements OnInit {
   sedes: CatalogoItem[] = [];
   detalleSolicitud: SolicitudTalonarioDetalle[] = [];
   talonariosBodega: TalonarioBodegaDisponible[] = [];
+  cuponesDisponiblesExpandido: number | null = null;
+  cuponesDisponiblesLista: number[] = [];
+  talonariosAsignados: { idTalonario: number; cantidad: number }[] = [];
 
   // ─── Paginación ───
   paginaActual: number = 1;
@@ -45,6 +48,7 @@ export class SolicitudTalonarioComponent implements OnInit {
   resumenCantidad: number = 0;
   resumenValor: number = 100;
   resumenTotal: number = 0;
+  cantidadCuponesInput: number = 0;
 
   // ─── Roles ───
   esDelegado: boolean = false;
@@ -76,7 +80,7 @@ export class SolicitudTalonarioComponent implements OnInit {
   detalleDevolviendo: SolicitudTalonarioDetalle | null = null;
   cuponesADevolver: number = 0;
 
-  // ─── Control del modal reutilizable ───
+  // ─── Modal ───
   modalVisible: boolean = false;
   modalTitulo: string = '';
   modalMensaje: string = '';
@@ -89,7 +93,6 @@ export class SolicitudTalonarioComponent implements OnInit {
   modalPlaceholder: string = '';
   modalAccion: (() => void) | null = null;
 
-  // ─── Referencia a Math para el template ───
   Math = Math;
 
   estados = [
@@ -101,7 +104,6 @@ export class SolicitudTalonarioComponent implements OnInit {
 
   valores = [50, 100];
 
-  // ─── Formularios ───
   formulario: FormGroup;
   formularioRechazar: FormGroup;
   formularioDevolucion: FormGroup;
@@ -122,11 +124,9 @@ export class SolicitudTalonarioComponent implements OnInit {
       valorCupon: [100, Validators.required],
       motivo: ['', Validators.required],
     });
-
     this.formularioRechazar = this.fb.group({
       justificacionRechazo: ['', Validators.required],
     });
-
     this.formularioDevolucion = this.fb.group({
       cuponesDevolver: ['', [Validators.required, Validators.min(1)]],
     });
@@ -148,15 +148,6 @@ export class SolicitudTalonarioComponent implements OnInit {
           this.nombreSedeDelegado = sede?.nombre || '';
         }
       },
-    });
-
-    // Actualizar resumen cuando cambia el formulario
-    this.formulario.valueChanges.subscribe(() => {
-      const val = this.formulario.getRawValue();
-      this.resumenCantidad = Number(val.cantidadCupones) || 0;
-      this.resumenValor = Number(val.valorCupon) || 100;
-      this.resumenTotal = this.resumenCantidad * this.resumenValor;
-      this.cdr.detectChanges();
     });
   }
 
@@ -231,13 +222,11 @@ export class SolicitudTalonarioComponent implements OnInit {
   abrirFormulario(): void {
     this.ocultarTodo();
     this.mostrarFormulario = true;
-    this.formulario.reset({ valorCupon: 100 });
-
-    // Resetear resumen
     this.resumenCantidad = 0;
     this.resumenValor = 100;
     this.resumenTotal = 0;
-
+    this.cantidadCuponesInput = 0;
+    this.formulario.reset({ valorCupon: 100 });
     if (this.esDelegado && this.idSedeDelegado) {
       this.formulario.patchValue({ idSede: this.idSedeDelegado });
       this.formulario.get('idSede')?.disable();
@@ -245,13 +234,31 @@ export class SolicitudTalonarioComponent implements OnInit {
     this.limpiarMensajes();
   }
 
+  onCantidadChange(val: number): void {
+    this.cantidadCuponesInput = val;
+    this.formulario.get('cantidadCupones')?.setValue(val);
+    this.resumenCantidad = Number(val) || 0;
+    this.resumenTotal = this.resumenCantidad * this.resumenValor;
+  }
+
+  onValorChange(event: Event): void {
+    const val = Number((event.target as HTMLSelectElement).value);
+    this.resumenValor = val || 100;
+    this.resumenTotal = this.resumenCantidad * this.resumenValor;
+  }
+
   verDetalle(s: SolicitudTalonario): void {
     this.solicitudSeleccionada = s;
     this.ocultarTodo();
     this.mostrarDetalle = true;
     if (s.estado === 'Aprobada') {
-      this.cargarDetalleSolicitud(s.id);
+      if (this.esBodega) {
+        this.cargarTalonariosBodega(s.valorCupon);
+      } else {
+        this.cargarDetalleSolicitud(s.id);
+      }
     }
+    this.limpiarMensajes();
   }
 
   abrirAprobar(s: SolicitudTalonario): void {
@@ -263,6 +270,7 @@ export class SolicitudTalonarioComponent implements OnInit {
     this.cuponesAsignadosTotal = 0;
     this.asignacionCompleta = false;
     this.detalleSolicitud = [];
+    this.talonariosAsignados = [];
     this.cargarTalonariosBodega(s.valorCupon);
     this.cargarDetalleSolicitud(s.id);
     this.limpiarMensajes();
@@ -366,30 +374,43 @@ export class SolicitudTalonarioComponent implements OnInit {
   }
 
   private _ejecutarAsignacion(): void {
-    const usuario = this.authService.obtenerNombre();
-    const dto: AsignarCuponesSolicitud = {
-      idTalonario: this.talonarioAsignando!.id,
-      cupones: this.cuponesAAsignar,
-      entregadoPor: usuario,
-      recibidoPor: this.solicitudSeleccionada!.creadoPor || '',
-    };
-    this.cuponService.asignarCuponesSolicitud(this.solicitudSeleccionada!.id, dto).subscribe({
-      next: () => {
-        this.cuponesAsignadosTotal += this.cuponesAAsignar;
-        this.talonarioAsignando = null;
-        this.cuponesAAsignar = 0;
-        this.mensajeError = '';
-        if (this.cuponesAsignadosTotal >= this.solicitudSeleccionada!.cantidadCupones) {
-          this.asignacionCompleta = true;
-        }
-        this.cargarTalonariosBodega(this.solicitudSeleccionada!.valorCupon);
-        this.cargarDetalleSolicitud(this.solicitudSeleccionada!.id);
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al asignar cupones.';
-      },
-    });
+    const t = this.talonarioAsignando!;
+
+    const existente = this.talonariosAsignados.find((x) => x.idTalonario === t.id);
+    if (existente) {
+      existente.cantidad += this.cuponesAAsignar;
+    } else {
+      this.talonariosAsignados.push({ idTalonario: t.id, cantidad: this.cuponesAAsignar });
+    }
+
+    const enDetalle = this.detalleSolicitud.find((d) => d.idTalonario === t.id);
+    if (enDetalle) {
+      enDetalle.cuponesAsignados += this.cuponesAAsignar;
+    } else {
+      this.detalleSolicitud.push({
+        id: t.id,
+        idSolicitud: this.solicitudSeleccionada!.id,
+        idTalonario: t.id,
+        nombreTalonario: t.nombre,
+        valorCupon: this.solicitudSeleccionada!.valorCupon,
+        cuponesAsignados: this.cuponesAAsignar,
+        cuponesDevueltos: 0,
+        cuponesEntregados: 0,
+        estado: 'Pendiente',
+        fechaAsignacion: new Date().toISOString(),
+      });
+    }
+
+    t.saldo -= this.cuponesAAsignar;
+    this.cuponesAsignadosTotal += this.cuponesAAsignar;
+    this.talonarioAsignando = null;
+    this.cuponesAAsignar = 0;
+    this.mensajeError = '';
+
+    if (this.cuponesAsignadosTotal >= this.solicitudSeleccionada!.cantidadCupones) {
+      this.asignacionCompleta = true;
+    }
+    this.cdr.detectChanges();
   }
 
   finalizarAsignacion(): void {
@@ -405,7 +426,13 @@ export class SolicitudTalonarioComponent implements OnInit {
   }
 
   private _ejecutarFinalizar(): void {
-    this.cuponService.marcarSolicitudAtendida(this.solicitudSeleccionada!.id).subscribe({
+    const usuario = this.authService.obtenerNombre();
+    const dto: AprobarSolicitudTalonarioRequest = {
+      talonarios: this.talonariosAsignados,
+      nombreEntregador: usuario,
+      nombreReceptor: this.solicitudSeleccionada!.creadoPor || '',
+    };
+    this.cuponService.aprobarSolicitudTalonario(this.solicitudSeleccionada!.id, dto).subscribe({
       next: () => {
         this.volverLista();
         this.cargarSolicitudes();
@@ -540,10 +567,40 @@ export class SolicitudTalonarioComponent implements OnInit {
   }
 
   cuponesDisponiblesDetalle(detalle: SolicitudTalonarioDetalle): number {
-    return detalle.cuponesAsignados - detalle.cuponesDevueltos;
+    return this.detalleSolicitud
+      .filter((d) => d.idTalonario === detalle.idTalonario && d.estado === 'Asignado')
+      .reduce((sum, d) => sum + (d.cuponesAsignados - d.cuponesDevueltos), 0);
   }
 
   detectarCambios(): void {
+    this.cdr.detectChanges();
+  }
+
+  toggleCuponesDisponibles(idDetalle: number): void {
+    if (this.cuponesDisponiblesExpandido === idDetalle) {
+      this.cuponesDisponiblesExpandido = null;
+      this.cuponesDisponiblesLista = [];
+      return;
+    }
+    this.cuponService.obtenerCuponesDisponiblesDetalle(idDetalle).subscribe({
+      next: (data) => {
+        this.cuponesDisponiblesLista = data;
+        this.cuponesDisponiblesExpandido = idDetalle;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  actualizarCantidad(val: string): void {
+    this.resumenCantidad = Number(val) || 0;
+    this.resumenTotal = this.resumenCantidad * this.resumenValor;
+    this.formulario.get('cantidadCupones')?.setValue(this.resumenCantidad);
+    this.cdr.detectChanges();
+  }
+
+  actualizarValor(val: string): void {
+    this.resumenValor = Number(val) || 100;
+    this.resumenTotal = this.resumenCantidad * this.resumenValor;
     this.cdr.detectChanges();
   }
 }

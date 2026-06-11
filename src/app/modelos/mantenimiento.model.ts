@@ -42,4 +42,5 @@ export interface MantenimientoLista {
 export interface CambiarEstadoMantenimiento {
   estado:          string;
   fechaRealizado?: string;
+  costoReal?:      number;
 }

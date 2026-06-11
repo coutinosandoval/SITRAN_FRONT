@@ -1,11 +1,8 @@
 <!-- LISTA DE MANTENIMIENTOS -->
 <div *ngIf="mostrarLista">
-
   <!-- Encabezado -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-tools"></i> Mantenimiento de Vehículos
-    </h4>
+    <h4 class="mb-0"><i class="bi bi-tools"></i> Mantenimiento de Vehículos</h4>
     <button class="btn btn-primary btn-sm" (click)="mostrarAgregar()">
       <i class="bi bi-plus-circle"></i> Programar Mantenimiento
     </button>
@@ -26,35 +23,40 @@
       <div class="row align-items-center g-2">
         <div class="col-md-4">
           <div class="input-group input-group-sm">
-            <input type="text" class="form-control"
+            <input
+              type="text"
+              class="form-control"
               placeholder="Buscar por vehículo o descripción..."
               [(ngModel)]="textoBusqueda"
               (input)="buscarEnTiempoReal()"
-              (keyup.enter)="buscar()">
+              (keyup.enter)="buscar()"
+            />
             <button class="btn btn-outline-primary" (click)="buscar()">
               <i class="bi bi-search"></i>
             </button>
           </div>
         </div>
         <div class="col-md-3">
-          <select class="form-select form-select-sm"
+          <select
+            class="form-select form-select-sm"
             [(ngModel)]="filtroVehiculo"
-            (change)="buscar()">
+            (change)="buscar()"
+          >
             <option value="0">Todos los vehículos</option>
             <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
           </select>
         </div>
         <div class="col-md-2">
-          <select class="form-select form-select-sm"
-            [(ngModel)]="filtroEstado"
-            (change)="buscar()">
+          <select class="form-select form-select-sm" [(ngModel)]="filtroEstado" (change)="buscar()">
             <option value="">Todos los estados</option>
             <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
           </select>
         </div>
         <div class="col-md-2">
-          <select class="form-select form-select-sm"
-            (change)="cambiarTamanioPagina(+$any($event.target).value)">
+          <select
+            class="form-select form-select-sm"
+            (change)="cambiarTamanioPagina(+$any($event.target).value)"
+          >
             <option value="5">5</option>
             <option value="10" selected>10</option>
             <option value="25">25</option>
@@ -62,8 +64,11 @@
           </select>
         </div>
         <div class="col-md-1">
-          <button class="btn btn-outline-secondary btn-sm w-100"
-            (click)="limpiarBusqueda()" title="Limpiar filtros">
+          <button
+            class="btn btn-outline-secondary btn-sm w-100"
+            (click)="limpiarBusqueda()"
+            title="Limpiar filtros"
+          >
             <i class="bi bi-x"></i>
           </button>
         </div>
@@ -104,42 +109,56 @@
             <tr *ngFor="let m of mantenimientos">
               <td>{{ m.descripcionVehiculo }}</td>
               <td>
-                <span class="badge"
+                <span
+                  class="badge"
                   [ngClass]="{
-                    'bg-info text-dark':   m.tipoMantenimiento === 'Preventivo',
+                    'bg-info text-dark': m.tipoMantenimiento === 'Preventivo',
                     'bg-warning text-dark': m.tipoMantenimiento === 'Correctivo',
-                    'bg-secondary':        m.tipoMantenimiento === 'Predictivo'
-                  }">
+                    'bg-secondary': m.tipoMantenimiento === 'Predictivo',
+                  }"
+                >
                   {{ m.tipoMantenimiento }}
                 </span>
               </td>
               <td>{{ m.descripcion }}</td>
-              <td>{{ m.fechaProgramada | date:'dd/MM/yyyy' }}</td>
-              <td>{{ m.fechaRealizado  | date:'dd/MM/yyyy' }}</td>
-              <td>Q. {{ m.costoReal | number:'1.2-2' }}</td>
+              <td>{{ m.fechaProgramada | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ m.fechaRealizado | date: 'dd/MM/yyyy' }}</td>
+              <td>Q. {{ m.costoReal | number: '1.2-2' }}</td>
               <td>
                 <span class="badge" [ngClass]="colorEstado(m.estado)">
                   {{ m.estado }}
                 </span>
               </td>
               <td class="text-center">
-                <button class="btn btn-success btn-sm me-1" title="Cambiar estado"
+                <button
+                  class="btn btn-success btn-sm me-1"
+                  title="Cambiar estado"
                   (click)="abrirCambiarEstado(m)"
-                  *ngIf="m.estado !== 'Completado' && m.estado !== 'Cancelado'">
+                  *ngIf="m.estado !== 'Completado' && m.estado !== 'Cancelado'"
+                >
                   <i class="bi bi-arrow-repeat"></i>
                 </button>
-                <button class="btn btn-info btn-sm me-1" title="Ver detalle"
-                  (click)="verDetalle(m)">
+                <button
+                  class="btn btn-info btn-sm me-1"
+                  title="Ver detalle"
+                  (click)="verDetalle(m)"
+                >
                   <i class="bi bi-eye"></i>
                 </button>
-                <button class="btn btn-warning btn-sm me-1" title="Editar"
+                <button
+                  class="btn btn-warning btn-sm me-1"
+                  title="Editar"
                   (click)="mostrarEditar(m)"
-                  *ngIf="m.estado === 'Programado'">
+                  *ngIf="m.estado === 'Programado'"
+                >
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" title="Cancelar"
+                <button
+                  class="btn btn-danger btn-sm"
+                  title="Cancelar"
                   (click)="cancelar(m.id)"
-                  *ngIf="m.estado === 'Programado'">
+                  *ngIf="m.estado === 'Programado'"
+                >
                   <i class="bi bi-x-circle"></i>
                 </button>
               </td>
@@ -150,8 +169,10 @@
     </div>
 
     <!-- Paginación -->
-    <div class="card-footer d-flex justify-content-between align-items-center"
-      *ngIf="totalPaginas > 1">
+    <div
+      class="card-footer d-flex justify-content-between align-items-center"
+      *ngIf="totalPaginas > 1"
+    >
       <span class="text-muted small">
         Página {{ paginaActual }} de {{ totalPaginas }} | {{ totalRegistros }} registros
       </span>
@@ -162,8 +183,7 @@
               <i class="bi bi-chevron-left"></i>
             </a>
           </li>
-          <li class="page-item" *ngFor="let p of paginas"
-            [class.active]="p === paginaActual">
+          <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
             <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
           </li>
           <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
@@ -179,7 +199,6 @@
 
 <!-- FORMULARIO AGREGAR / EDITAR -->
 <div *ngIf="mostrarFormulario">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">
       <i class="bi bi-tools"></i>
@@ -204,12 +223,14 @@
       </div>
       <div class="card-body">
         <div class="row">
-
           <div class="col-md-6 mb-3">
             <label class="form-label">Vehículo <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idVehiculo"
+            <select
+              class="form-select"
+              formControlName="idVehiculo"
               [class.is-invalid]="tieneError('idVehiculo')"
-              [attr.disabled]="modoEdicion ? true : null">
+              [attr.disabled]="modoEdicion ? true : null"
+            >
               <option value="">Seleccione un vehículo</option>
               <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
             </select>
@@ -217,9 +238,14 @@
           </div>
 
           <div class="col-md-6 mb-3">
-            <label class="form-label">Tipo de Mantenimiento <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="tipoMantenimiento"
-              [class.is-invalid]="tieneError('tipoMantenimiento')">
+            <label class="form-label"
+              >Tipo de Mantenimiento <span class="text-danger">*</span></label
+            >
+            <select
+              class="form-select"
+              formControlName="tipoMantenimiento"
+              [class.is-invalid]="tieneError('tipoMantenimiento')"
+            >
               <option value="">Seleccione un tipo</option>
               <option *ngFor="let t of tiposMantenimiento" [value]="t">{{ t }}</option>
             </select>
@@ -228,16 +254,18 @@
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Fecha Programada <span class="text-danger">*</span></label>
-            <input type="date" class="form-control"
+            <input
+              type="date"
+              class="form-control"
               formControlName="fechaProgramada"
-              [class.is-invalid]="tieneError('fechaProgramada')">
+              [class.is-invalid]="tieneError('fechaProgramada')"
+            />
             <div class="invalid-feedback">La fecha programada es requerida.</div>
           </div>
 
           <div class="col-md-4 mb-3" *ngIf="modoEdicion">
             <label class="form-label">Fecha Realizado</label>
-            <input type="date" class="form-control"
-              formControlName="fechaRealizado">
+            <input type="date" class="form-control" formControlName="fechaRealizado" />
           </div>
 
           <div class="col-md-4 mb-3" *ngIf="modoEdicion">
@@ -246,31 +274,36 @@
               <option *ngFor="let e of estados" [value]="e">{{ e }}</option>
             </select>
           </div>
-
+          <!-- Mensajes 
           <div class="col-md-4 mb-3">
             <label class="form-label">Costo Real (Q.)</label>
             <input type="number" class="form-control"
               formControlName="costoReal"
               placeholder="0.00" step="0.01" min="0">
           </div>
-
+-->
           <div class="col-md-12 mb-3">
             <label class="form-label">Descripción <span class="text-danger">*</span></label>
-            <input type="text" class="form-control"
+            <input
+              type="text"
+              class="form-control"
               formControlName="descripcion"
               [class.is-invalid]="tieneError('descripcion')"
-              placeholder="Descripción del mantenimiento">
+              placeholder="Descripción del mantenimiento"
+            />
             <div class="invalid-feedback">La descripción es requerida.</div>
           </div>
 
           <div class="col-md-12 mb-3">
             <label class="form-label">Observaciones</label>
-            <textarea class="form-control" rows="3"
+            <textarea
+              class="form-control"
+              rows="3"
               formControlName="observaciones"
-              placeholder="Observaciones adicionales...">
+              placeholder="Observaciones adicionales..."
+            >
             </textarea>
           </div>
-
         </div>
       </div>
     </div>
@@ -290,15 +323,14 @@
 
 <!-- DETALLE DEL MANTENIMIENTO -->
 <div *ngIf="mostrarDetalle && mantenimientoSeleccionado">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-tools"></i> Detalle del Mantenimiento
-    </h4>
+    <h4 class="mb-0"><i class="bi bi-tools"></i> Detalle del Mantenimiento</h4>
     <div class="d-flex gap-2">
-      <button class="btn btn-warning btn-sm"
+      <button
+        class="btn btn-warning btn-sm"
         *ngIf="mantenimientoSeleccionado.estado === 'Programado'"
-        (click)="mostrarEditar(mantenimientoSeleccionado)">
+        (click)="mostrarEditar(mantenimientoSeleccionado)"
+      >
         <i class="bi bi-pencil"></i> Editar
       </button>
       <button class="btn btn-secondary btn-sm" (click)="volverLista()">
@@ -309,31 +341,55 @@
 
   <div class="card shadow-sm">
     <div class="card-header bg-info text-white d-flex justify-content-between">
-      <span><strong>{{ mantenimientoSeleccionado.descripcionVehiculo }}</strong></span>
+      <span
+        ><strong>{{ mantenimientoSeleccionado.descripcionVehiculo }}</strong></span
+      >
       <span class="badge bg-light text-dark">{{ mantenimientoSeleccionado.estado }}</span>
     </div>
     <div class="card-body">
       <div class="row">
         <div class="col-md-6">
           <table class="table table-sm table-borderless">
-            <tr><th>Tipo:</th><td>{{ mantenimientoSeleccionado.tipoMantenimiento }}</td></tr>
-            <tr><th>Descripción:</th><td>{{ mantenimientoSeleccionado.descripcion }}</td></tr>
-            <tr><th>F. Programada:</th><td>{{ mantenimientoSeleccionado.fechaProgramada | date:'dd/MM/yyyy' }}</td></tr>
-            <tr><th>F. Realizado:</th><td>{{ mantenimientoSeleccionado.fechaRealizado | date:'dd/MM/yyyy' }}</td></tr>
+            <tr>
+              <th>Tipo:</th>
+              <td>{{ mantenimientoSeleccionado.tipoMantenimiento }}</td>
+            </tr>
+            <tr>
+              <th>Descripción:</th>
+              <td>{{ mantenimientoSeleccionado.descripcion }}</td>
+            </tr>
+            <tr>
+              <th>F. Programada:</th>
+              <td>{{ mantenimientoSeleccionado.fechaProgramada | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr>
+              <th>F. Realizado:</th>
+              <td>{{ mantenimientoSeleccionado.fechaRealizado | date: 'dd/MM/yyyy' }}</td>
+            </tr>
           </table>
         </div>
         <div class="col-md-6">
           <table class="table table-sm table-borderless">
-            <tr><th>Costo Real:</th><td>Q. {{ mantenimientoSeleccionado.costoReal | number:'1.2-2' }}</td></tr>
-            <tr><th>Fuente:</th><td>{{ mantenimientoSeleccionado.fuente || 'Manual' }}</td></tr>
-            <tr><th>Estado:</th>
+            <tr>
+              <th>Costo Real:</th>
+              <td>Q. {{ mantenimientoSeleccionado.costoReal | number: '1.2-2' }}</td>
+            </tr>
+            <tr>
+              <th>Fuente:</th>
+              <td>{{ mantenimientoSeleccionado.fuente || 'Manual' }}</td>
+            </tr>
+            <tr>
+              <th>Estado:</th>
               <td>
                 <span class="badge" [ngClass]="colorEstado(mantenimientoSeleccionado.estado)">
                   {{ mantenimientoSeleccionado.estado }}
                 </span>
               </td>
             </tr>
-            <tr><th>Observaciones:</th><td>{{ mantenimientoSeleccionado.observaciones || 'Sin observaciones' }}</td></tr>
+            <tr>
+              <th>Observaciones:</th>
+              <td>{{ mantenimientoSeleccionado.observaciones || 'Sin observaciones' }}</td>
+            </tr>
           </table>
         </div>
       </div>
@@ -345,16 +401,13 @@
 <div *ngIf="mostrarModalEstado" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-header-custom bg-primary text-white">
-      <h6 class="mb-0">
-        <i class="bi bi-arrow-repeat"></i> Cambiar Estado
-      </h6>
+      <h6 class="mb-0"><i class="bi bi-arrow-repeat"></i> Cambiar Estado</h6>
       <button class="btn-close btn-close-white" (click)="cerrarModalEstado()"></button>
     </div>
     <div class="modal-body-custom">
-
       <div class="alert alert-light border mb-3">
         <strong>{{ mantenimientoSeleccionado?.descripcionVehiculo }}</strong>
-        <br>
+        <br />
         <small class="text-muted">
           Estado actual:
           <span class="badge" [ngClass]="colorEstado(mantenimientoSeleccionado?.estado)">
@@ -367,24 +420,37 @@
         <label class="form-label fw-bold">Nuevo estado:</label>
         <div class="d-flex flex-column gap-2">
           <ng-container *ngFor="let estado of estados">
-  <div class="form-check" *ngIf="estado !== 'Cancelado'">
-    <input class="form-check-input" type="radio"
-      [id]="'estado_' + estado"
-      [value]="estado"
-      [(ngModel)]="nuevoEstado">
-    <label class="form-check-label" [for]="'estado_' + estado">
-      <span class="badge me-1" [ngClass]="colorEstado(estado)">{{ estado }}</span>
-    </label>
-  </div>
-</ng-container>
+            <div class="form-check" *ngIf="estado !== 'Cancelado'">
+              <input
+                class="form-check-input"
+                type="radio"
+                [id]="'estado_' + estado"
+                [value]="estado"
+                [(ngModel)]="nuevoEstado"
+              />
+              <label class="form-check-label" [for]="'estado_' + estado">
+                <span class="badge me-1" [ngClass]="colorEstado(estado)">{{ estado }}</span>
+              </label>
+            </div>
+          </ng-container>
         </div>
       </div>
 
       <div class="mb-3" *ngIf="nuevoEstado === 'Completado'">
         <label class="form-label">Fecha realizado</label>
-        <input type="date" class="form-control" [(ngModel)]="fechaRealizadoEstado">
+        <input type="date" class="form-control" [(ngModel)]="fechaRealizadoEstado" />
       </div>
-
+      <!-- Campo costo real solo cuando estado es Completado -->
+      <div class="mb-3" *ngIf="nuevoEstado === 'Completado'">
+        <label class="form-label">Costo Real (Q.)</label>
+        <input
+          type="number"
+          class="form-control"
+          [(ngModel)]="costoRealEstado"
+          min="0"
+          placeholder="0.00"
+        />
+      </div>
     </div>
     <div class="modal-footer-custom">
       <button class="btn btn-secondary btn-sm" (click)="cerrarModalEstado()">

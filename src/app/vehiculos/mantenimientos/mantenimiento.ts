@@ -1,20 +1,30 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MantenimientoService } from '../../servicios/mantenimiento.service';
-import { Mantenimiento, MantenimientoRequest, MantenimientoActualizar, CambiarEstadoMantenimiento } from '../../modelos/mantenimiento.model';
+import {
+  Mantenimiento,
+  MantenimientoRequest,
+  MantenimientoActualizar,
+  CambiarEstadoMantenimiento,
+} from '../../modelos/mantenimiento.model';
 import { CatalogoItem } from '../../modelos/vehiculo.model';
 
 @Component({
   selector: 'app-mantenimiento',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './mantenimiento.html'
- })
+  templateUrl: './mantenimiento.html',
+})
 export class MantenimientoComponent implements OnInit {
-
   // Lista de mantenimientos
   mantenimientos: Mantenimiento[] = [];
 
@@ -22,15 +32,16 @@ export class MantenimientoComponent implements OnInit {
   vehiculos: CatalogoItem[] = [];
 
   // Paginación
-  paginaActual:   number = 1;
-  tamanioPagina:  number = 10;
+  paginaActual: number = 1;
+  tamanioPagina: number = 10;
   totalRegistros: number = 0;
-  totalPaginas:   number = 0;
+  totalPaginas: number = 0;
+  costoRealEstado: number = 0;
 
   // Filtros
-  textoBusqueda:    string = '';
-  filtroVehiculo:   number = 0;
-  filtroEstado:     string = '';
+  textoBusqueda: string = '';
+  filtroVehiculo: number = 0;
+  filtroEstado: string = '';
   private busquedaSubject = new Subject<string>();
 
   // Tipos de mantenimiento
@@ -40,47 +51,44 @@ export class MantenimientoComponent implements OnInit {
   estados = ['Programado', 'En Proceso', 'Completado', 'Cancelado'];
 
   // Control de vistas
-  mostrarLista:      boolean = true;
+  mostrarLista: boolean = true;
   mostrarFormulario: boolean = false;
-  mostrarDetalle:    boolean = false;
-  modoEdicion:       boolean = false;
+  mostrarDetalle: boolean = false;
+  modoEdicion: boolean = false;
 
   // Mantenimiento seleccionado
   mantenimientoSeleccionado: Mantenimiento | null = null;
 
   // Modal cambiar estado
-  mostrarModalEstado:   boolean = false;
-  nuevoEstado:          string  = '';
-  fechaRealizadoEstado: string  = '';
+  mostrarModalEstado: boolean = false;
+  nuevoEstado: string = '';
+  fechaRealizadoEstado: string = '';
 
   // Formulario
   formulario: FormGroup;
 
   // Mensajes
-  mensajeExito: string  = '';
-  mensajeError: string  = '';
-  cargando:     boolean = false;
+  mensajeExito: string = '';
+  mensajeError: string = '';
+  cargando: boolean = false;
 
   constructor(
     private mantenimientoService: MantenimientoService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {
     this.formulario = this.fb.group({
-      idVehiculo:        ['', Validators.required],
+      idVehiculo: ['', Validators.required],
       tipoMantenimiento: ['', Validators.required],
-      fechaProgramada:   ['', Validators.required],
-      fechaRealizado:    [''],
-      descripcion:       ['', Validators.required],
-      observaciones:     [''],
-      costoReal:         [0],
-      estado:            ['Programado'],
+      fechaProgramada: ['', Validators.required],
+      fechaRealizado: [''],
+      descripcion: ['', Validators.required],
+      observaciones: [''],
+      // costoReal:         [0],
+      estado: ['Programado'],
     });
 
-    this.busquedaSubject.pipe(
-      debounceTime(400),
-      distinctUntilChanged()
-    ).subscribe(() => {
+    this.busquedaSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
       this.paginaActual = 1;
       this.cargarMantenimientos();
     });
@@ -94,35 +102,36 @@ export class MantenimientoComponent implements OnInit {
   // Carga la lista de mantenimientos
   cargarMantenimientos(): void {
     this.cargando = true;
-    this.mantenimientoService.obtener(
-      this.paginaActual,
-      this.tamanioPagina,
-      this.textoBusqueda,
-      this.filtroVehiculo || undefined,
-      this.filtroEstado || undefined
-    ).subscribe({
-      next: (data) => {
-        this.mantenimientos  = [...data.mantenimientos];
-        this.totalRegistros  = data.totalRegistros;
-        this.totalPaginas    = data.totalPaginas;
-        this.cargando        = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.mensajeError = 'Error al cargar mantenimientos.';
-        this.cargando     = false;
-        this.cdr.detectChanges();
-      }
-    });
+    this.mantenimientoService
+      .obtener(
+        this.paginaActual,
+        this.tamanioPagina,
+        this.textoBusqueda,
+        this.filtroVehiculo || undefined,
+        this.filtroEstado || undefined,
+      )
+      .subscribe({
+        next: (data) => {
+          this.mantenimientos = [...data.mantenimientos];
+          this.totalRegistros = data.totalRegistros;
+          this.totalPaginas = data.totalPaginas;
+          this.cargando = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.mensajeError = 'Error al cargar mantenimientos.';
+          this.cargando = false;
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   // Carga vehículos para el formulario
   cargarVehiculos(): void {
-    this.mantenimientoService.obtenerVehiculos()
-      .subscribe({
-        next: (data) => this.vehiculos = data,
-        error: () => console.error('Error al cargar vehículos')
-      });
+    this.mantenimientoService.obtenerVehiculos().subscribe({
+      next: (data) => (this.vehiculos = data),
+      error: () => console.error('Error al cargar vehículos'),
+    });
   }
 
   // Búsqueda en tiempo real
@@ -136,57 +145,61 @@ export class MantenimientoComponent implements OnInit {
   }
 
   limpiarBusqueda(): void {
-    this.textoBusqueda  = '';
+    this.textoBusqueda = '';
     this.filtroVehiculo = 0;
-    this.filtroEstado   = '';
-    this.paginaActual   = 1;
+    this.filtroEstado = '';
+    this.paginaActual = 1;
     this.cargarMantenimientos();
   }
 
   // Muestra formulario para agregar
   mostrarAgregar(): void {
-    this.modoEdicion       = false;
-    this.mostrarLista      = false;
+    this.modoEdicion = false;
+    this.mostrarLista = false;
     this.mostrarFormulario = true;
-    this.mostrarDetalle    = false;
+    this.mostrarDetalle = false;
     this.formulario.reset({ costoReal: 0, estado: 'Programado' });
     this.limpiarMensajes();
   }
 
   // Muestra formulario para editar
   mostrarEditar(mantenimiento: Mantenimiento): void {
-    this.modoEdicion                = true;
-    this.mantenimientoSeleccionado  = mantenimiento;
-    this.mostrarLista               = false;
-    this.mostrarFormulario          = true;
-    this.mostrarDetalle             = false;
+    this.modoEdicion = true;
+    this.mantenimientoSeleccionado = mantenimiento;
+    this.mostrarLista = false;
+    this.mostrarFormulario = true;
+    this.mostrarDetalle = false;
     this.limpiarMensajes();
 
     this.formulario.patchValue({
-      idVehiculo:        Number(mantenimiento.idVehiculo),
+      idVehiculo: Number(mantenimiento.idVehiculo),
       tipoMantenimiento: mantenimiento.tipoMantenimiento,
-      fechaProgramada:   mantenimiento.fechaProgramada ? mantenimiento.fechaProgramada.substring(0, 10) : '',
-      fechaRealizado:    mantenimiento.fechaRealizado  ? mantenimiento.fechaRealizado.substring(0, 10)  : '',
-      descripcion:       mantenimiento.descripcion,
-      observaciones:     mantenimiento.observaciones,
-      costoReal:         mantenimiento.costoReal,
-      estado:            mantenimiento.estado,
+      fechaProgramada: mantenimiento.fechaProgramada
+        ? mantenimiento.fechaProgramada.substring(0, 10)
+        : '',
+      fechaRealizado: mantenimiento.fechaRealizado
+        ? mantenimiento.fechaRealizado.substring(0, 10)
+        : '',
+      descripcion: mantenimiento.descripcion,
+      observaciones: mantenimiento.observaciones,
+      costoReal: mantenimiento.costoReal,
+      estado: mantenimiento.estado,
     });
   }
 
   // Muestra detalle
   verDetalle(mantenimiento: Mantenimiento): void {
     this.mantenimientoSeleccionado = mantenimiento;
-    this.mostrarLista              = false;
-    this.mostrarFormulario         = false;
-    this.mostrarDetalle            = true;
+    this.mostrarLista = false;
+    this.mostrarFormulario = false;
+    this.mostrarDetalle = true;
   }
 
   // Vuelve a la lista
   volverLista(): void {
-    this.mostrarLista      = true;
+    this.mostrarLista = true;
     this.mostrarFormulario = false;
-    this.mostrarDetalle    = false;
+    this.mostrarDetalle = false;
     this.limpiarMensajes();
   }
 
@@ -197,9 +210,13 @@ export class MantenimientoComponent implements OnInit {
       return;
     }
 
-    if (!confirm(this.modoEdicion
-      ? '¿Está seguro que desea actualizar este mantenimiento?'
-      : '¿Está seguro que desea registrar este mantenimiento?'))
+    if (
+      !confirm(
+        this.modoEdicion
+          ? '¿Está seguro que desea actualizar este mantenimiento?'
+          : '¿Está seguro que desea registrar este mantenimiento?',
+      )
+    )
       return;
 
     this.cargando = true;
@@ -208,51 +225,49 @@ export class MantenimientoComponent implements OnInit {
     if (this.modoEdicion && this.mantenimientoSeleccionado) {
       const datos: MantenimientoActualizar = {
         tipoMantenimiento: valores.tipoMantenimiento,
-        fechaProgramada:   valores.fechaProgramada   || undefined,
-        fechaRealizado:    valores.fechaRealizado    || undefined,
-        descripcion:       valores.descripcion,
-        observaciones:     valores.observaciones     || undefined,
-        costoReal:         valores.costoReal,
-        estado:            valores.estado,
+        fechaProgramada: valores.fechaProgramada || undefined,
+        fechaRealizado: valores.fechaRealizado || undefined,
+        descripcion: valores.descripcion,
+        observaciones: valores.observaciones || undefined,
+        costoReal: valores.costoReal,
+        estado: valores.estado,
       };
 
-      this.mantenimientoService.actualizar(this.mantenimientoSeleccionado.id, datos)
-        .subscribe({
-          next: () => {
-            this.cargando = false;
-            alert('Mantenimiento actualizado correctamente.');
-            this.volverLista();
-            this.cargarMantenimientos();
-          },
-          error: (err) => {
-            this.mensajeError = err.error?.mensaje || 'Error al actualizar.';
-            this.cargando     = false;
-          }
-        });
+      this.mantenimientoService.actualizar(this.mantenimientoSeleccionado.id, datos).subscribe({
+        next: () => {
+          this.cargando = false;
+          alert('Mantenimiento actualizado correctamente.');
+          this.volverLista();
+          this.cargarMantenimientos();
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al actualizar.';
+          this.cargando = false;
+        },
+      });
     } else {
       const datos: MantenimientoRequest = {
-        idVehiculo:        valores.idVehiculo,
+        idVehiculo: valores.idVehiculo,
         tipoMantenimiento: valores.tipoMantenimiento,
-        fechaProgramada:   valores.fechaProgramada   || undefined,
-        descripcion:       valores.descripcion,
-        observaciones:     valores.observaciones     || undefined,
-        fuente:            'Manual',
-        costoReal:         valores.costoReal,
+        fechaProgramada: valores.fechaProgramada || undefined,
+        descripcion: valores.descripcion,
+        observaciones: valores.observaciones || undefined,
+        fuente: 'Manual',
+        costoReal: valores.costoReal,
       };
 
-      this.mantenimientoService.agregar(datos)
-        .subscribe({
-          next: () => {
-            this.cargando = false;
-            alert('Mantenimiento registrado correctamente.');
-            this.volverLista();
-            this.cargarMantenimientos();
-          },
-          error: (err) => {
-            this.mensajeError = err.error?.mensaje || 'Error al registrar.';
-            this.cargando     = false;
-          }
-        });
+      this.mantenimientoService.agregar(datos).subscribe({
+        next: () => {
+          this.cargando = false;
+          alert('Mantenimiento registrado correctamente.');
+          this.volverLista();
+          this.cargarMantenimientos();
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al registrar.';
+          this.cargando = false;
+        },
+      });
     }
   }
 
@@ -260,24 +275,24 @@ export class MantenimientoComponent implements OnInit {
   cancelar(id: number): void {
     if (!confirm('¿Está seguro que desea cancelar este mantenimiento?')) return;
 
-    this.mantenimientoService.borrar(id)
-      .subscribe({
-        next: () => {
-          alert('Mantenimiento cancelado correctamente.');
-          this.cargarMantenimientos();
-        },
-        error: (err) => {
-          alert(err.error?.mensaje || 'Error al cancelar.');
-        }
-      });
+    this.mantenimientoService.borrar(id).subscribe({
+      next: () => {
+        alert('Mantenimiento cancelado correctamente.');
+        this.cargarMantenimientos();
+      },
+      error: (err) => {
+        alert(err.error?.mensaje || 'Error al cancelar.');
+      },
+    });
   }
 
   // Abre modal de cambiar estado
   abrirCambiarEstado(mantenimiento: Mantenimiento): void {
     this.mantenimientoSeleccionado = mantenimiento;
-    this.nuevoEstado               = mantenimiento.estado || 'Programado';
-    this.fechaRealizadoEstado      = '';
-    this.mostrarModalEstado        = true;
+    this.nuevoEstado = mantenimiento.estado || 'Programado';
+    this.fechaRealizadoEstado = '';
+    this.costoRealEstado = 0;
+    this.mostrarModalEstado = true;
   }
 
   // Cierra modal de cambiar estado
@@ -290,21 +305,21 @@ export class MantenimientoComponent implements OnInit {
     if (!this.mantenimientoSeleccionado) return;
 
     const dto: CambiarEstadoMantenimiento = {
-      estado:          this.nuevoEstado,
-      fechaRealizado:  this.fechaRealizadoEstado || undefined
+      estado: this.nuevoEstado,
+      fechaRealizado: this.fechaRealizadoEstado || undefined,
+      costoReal: this.nuevoEstado === 'Completado' ? this.costoRealEstado : undefined,
     };
 
-    this.mantenimientoService.cambiarEstado(this.mantenimientoSeleccionado.id, dto)
-      .subscribe({
-        next: () => {
-          alert('Estado actualizado correctamente.');
-          this.cerrarModalEstado();
-          this.cargarMantenimientos();
-        },
-        error: (err) => {
-          alert(err.error?.mensaje || 'Error al cambiar estado.');
-        }
-      });
+    this.mantenimientoService.cambiarEstado(this.mantenimientoSeleccionado.id, dto).subscribe({
+      next: () => {
+        alert('Estado actualizado correctamente.');
+        this.cerrarModalEstado();
+        this.cargarMantenimientos();
+      },
+      error: (err) => {
+        alert(err.error?.mensaje || 'Error al cambiar estado.');
+      },
+    });
   }
 
   // Cambiar página
@@ -317,7 +332,7 @@ export class MantenimientoComponent implements OnInit {
   // Cambiar tamaño de página
   cambiarTamanioPagina(tamano: number): void {
     this.tamanioPagina = tamano;
-    this.paginaActual  = 1;
+    this.paginaActual = 1;
     this.cargarMantenimientos();
   }
 
@@ -341,11 +356,16 @@ export class MantenimientoComponent implements OnInit {
   // Color del badge según estado
   colorEstado(estado?: string): string {
     switch (estado) {
-      case 'Programado':  return 'bg-primary';
-      case 'En Proceso':  return 'bg-warning text-dark';
-      case 'Completado':  return 'bg-success';
-      case 'Cancelado':   return 'bg-danger';
-      default:            return 'bg-secondary';
+      case 'Programado':
+        return 'bg-primary';
+      case 'En Proceso':
+        return 'bg-warning text-dark';
+      case 'Completado':
+        return 'bg-success';
+      case 'Cancelado':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
     }
   }
 }

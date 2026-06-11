@@ -227,6 +227,9 @@ export class SolicitudTalonarioComponent implements OnInit {
     this.resumenTotal = 0;
     this.cantidadCuponesInput = 0;
     this.formulario.reset({ valorCupon: 100 });
+    console.log('idSedeDelegado:', this.idSedeDelegado);
+    console.log('nombreSedeDelegado:', this.nombreSedeDelegado);
+    console.log('valores:', this.valores);
     if (this.esDelegado && this.idSedeDelegado) {
       this.formulario.patchValue({ idSede: this.idSedeDelegado });
       this.formulario.get('idSede')?.disable();

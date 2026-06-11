@@ -417,13 +417,13 @@
                 <td>
                   <span
                     class="badge"
-                    [ngClass]="cuponesDisponiblesDetalle(d) > 0 ? 'bg-primary' : 'bg-danger'"
-                    [style.cursor]="cuponesDisponiblesDetalle(d) > 0 ? 'pointer' : 'default'"
-                    (click)="cuponesDisponiblesDetalle(d) > 0 && toggleCuponesDisponibles(d.id)"
+                    [ngClass]="(d.cuponesDisponiblesReal ?? 0) > 0 ? 'bg-primary' : 'bg-danger'"
+                    [style.cursor]="(d.cuponesDisponiblesReal ?? 0) > 0 ? 'pointer' : 'default'"
+                    (click)="(d.cuponesDisponiblesReal ?? 0) > 0 && toggleCuponesDisponibles(d.id)"
                   >
                     {{
-                      cuponesDisponiblesDetalle(d) > 0
-                        ? cuponesDisponiblesDetalle(d)
+                      (d.cuponesDisponiblesReal ?? 0) > 0
+                        ? (d.cuponesDisponiblesReal ?? 0)
                         : 'Retornado a Bodega'
                     }}
                   </span>
@@ -452,7 +452,7 @@
                 <td class="text-center">
                   <button
                     class="btn btn-info btn-sm"
-                    *ngIf="cuponesDisponiblesDetalle(d) > 0 && d.estado !== 'Devuelto'"
+                    *ngIf="(d.cuponesDisponiblesReal ?? 0) > 0 && d.estado !== 'Devuelto'"
                     (click)="abrirDevolucion(d)"
                     title="Devolver cupones a Bodega"
                   >
@@ -605,14 +605,11 @@
                 <input
                   type="number"
                   class="form-control"
-                  formControlName="cantidadCupones"
-                  [class.is-invalid]="tieneError('cantidadCupones')"
-                  placeholder="Ej: 80"
+                  [(ngModel)]="cuponesAAsignar"
+                  [ngModelOptions]="{ standalone: true }"
+                  [max]="Math.min(talonarioAsignando!.saldo, cuponesRestantes)"
                   min="1"
-                  (input)="
-                    resumenCantidad = +$any($event.target).value;
-                    resumenTotal = resumenCantidad * resumenValor
-                  "
+                  placeholder="Ej: 80"
                 />
                 <small class="text-muted">
                   Máximo: {{ talonarioAsignando.saldo }} (saldo talonario) | Faltan:
@@ -820,13 +817,13 @@
             <td>
               <span
                 class="badge"
-                [ngClass]="cuponesDisponiblesDetalle(d) > 0 ? 'bg-primary' : 'bg-danger'"
-                [style.cursor]="cuponesDisponiblesDetalle(d) > 0 ? 'pointer' : 'default'"
-                (click)="cuponesDisponiblesDetalle(d) > 0 && toggleCuponesDisponibles(d.id)"
+                [ngClass]="(d.cuponesDisponiblesReal ?? 0) > 0 ? 'bg-primary' : 'bg-danger'"
+                [style.cursor]="(d.cuponesDisponiblesReal ?? 0) > 0 ? 'pointer' : 'default'"
+                (click)="(d.cuponesDisponiblesReal ?? 0) > 0 && toggleCuponesDisponibles(d.id)"
               >
                 {{
-                  cuponesDisponiblesDetalle(d) > 0
-                    ? cuponesDisponiblesDetalle(d)
+                  (d.cuponesDisponiblesReal ?? 0) > 0
+                    ? (d.cuponesDisponiblesReal ?? 0)
                     : 'Retornado a Bodega'
                 }}
               </span>

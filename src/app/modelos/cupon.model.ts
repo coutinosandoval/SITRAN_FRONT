@@ -206,6 +206,7 @@ export interface SolicitudTalonarioDetalle {
   fechaDevolucion?: string;
   estado?: string;
   cuponesEntregados?: number;
+  cuponesDisponiblesReal?: number;
 }
 
 /** DTO para asignar cupones de un talonario a una solicitud */

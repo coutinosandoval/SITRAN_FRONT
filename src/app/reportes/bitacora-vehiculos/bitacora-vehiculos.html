@@ -1,0 +1,131 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">
+    <i class="bi bi-arrow-left-right"></i> Reporte — Bitácora de Traslados de Vehículos
+  </h4>
+</div>
+
+<!-- Mensajes -->
+<div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+  <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+</div>
+
+<!-- FILTROS -->
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white">
+    <h6 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h6>
+  </div>
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">Vehículo</label>
+        <select class="form-select form-select-sm" [(ngModel)]="filtro.idVehiculo">
+          <option [ngValue]="undefined">Todos</option>
+          <option *ngFor="let v of vehiculos" [ngValue]="v.id">
+            {{ v.placa }} — {{ v.marca }} {{ v.modelo }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Sede (origen o destino)</label>
+        <select class="form-select form-select-sm" [(ngModel)]="filtro.idSede">
+          <option [ngValue]="undefined">Todas</option>
+          <option *ngFor="let s of sedes" [ngValue]="s.id">{{ s.nombre }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Fecha inicio</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="filtro.fechaInicio" />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Fecha fin</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="filtro.fechaFin" />
+      </div>
+
+      <div class="col-md-2 d-flex gap-2">
+        <button class="btn btn-primary btn-sm flex-fill" (click)="buscar()">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+        <button class="btn btn-secondary btn-sm" title="Limpiar filtros" (click)="limpiarFiltros()">
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTONES DE EXPORTACIÓN -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <span class="text-muted small">{{ registros.length }} registro(s)</span>
+  <div class="d-flex gap-2">
+    <button
+      class="btn btn-success btn-sm"
+      [disabled]="exportando || registros.length === 0"
+      (click)="exportarExcel()"
+    >
+      <i class="bi bi-file-earmark-excel"></i> Excel
+    </button>
+    <button
+      class="btn btn-danger btn-sm"
+      [disabled]="exportando || registros.length === 0"
+      (click)="exportarPdf()"
+    >
+      <i class="bi bi-file-earmark-pdf"></i> PDF
+    </button>
+    <button
+      class="btn btn-primary btn-sm"
+      [disabled]="exportando || registros.length === 0"
+      (click)="exportarWord()"
+    >
+      <i class="bi bi-file-earmark-word"></i> Word
+    </button>
+  </div>
+</div>
+
+<!-- TABLA -->
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Vehículo</th>
+            <th>Tipo</th>
+            <th>Fecha Movimiento</th>
+            <th>Sede Origen</th>
+            <th>Sede Destino</th>
+            <th>Observaciones</th>
+            <th>Registrado Por</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="cargando">
+            <td colspan="7" class="text-center py-4">
+              <div class="spinner-border spinner-border-sm text-primary"></div>
+              Cargando reporte...
+            </td>
+          </tr>
+          <tr *ngIf="!cargando && registros.length === 0">
+            <td colspan="7" class="text-center py-4 text-muted">
+              <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+              No se encontraron registros para los filtros seleccionados.
+            </td>
+          </tr>
+          <tr *ngFor="let r of registros">
+            <td>{{ r.descripcionVehiculo }}</td>
+            <td>
+              <span class="badge bg-secondary">{{ r.tipoMovimiento }}</span>
+            </td>
+            <td>{{ r.fechaMovimiento | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ r.nombreSedeOrigen || '—' }}</td>
+            <td>{{ r.nombreSedeDestino || '—' }}</td>
+            <td>{{ r.observaciones || '—' }}</td>
+            <td>{{ r.registradoPor }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

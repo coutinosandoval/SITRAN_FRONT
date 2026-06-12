@@ -14,7 +14,7 @@ import { ComisionComponent } from './comisiones/comision';
 import { SeguridadComponent } from './seguridad/seguridad';
 import { RegistroComponent } from './registro/registro';
 import { ReporteIAComponent } from './reportes/reporte-ia';
-
+import { BitacoraVehiculosComponent } from './reportes/bitacora-vehiculos/bitacora-vehiculos';
 
 
 export const routes: Routes = [
@@ -38,7 +38,7 @@ export const routes: Routes = [
   { path: 'seguridad/usuarios',              component: SeguridadComponent,          canActivate: [authGuard] },
   { path: 'seguridad/roles',                 component: SeguridadComponent,          canActivate: [authGuard] },
   { path: 'reportes-ia', component: ReporteIAComponent },
-  
+  { path: 'reportes/vehiculos', component: BitacoraVehiculosComponent, canActivate: [authGuard] },
   
 
     ]

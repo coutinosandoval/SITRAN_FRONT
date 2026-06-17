@@ -173,7 +173,7 @@ export class ComisionComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.esDelegado = this.authService.tieneRol('delegado');
+    this.esDelegado = this.authService.tienePermiso('GESTIONAR_COMISIONES_SEDE');
     this.idSedeDelegado = this.authService.obtenerIdUnidad();
 
     this.cargarComisiones();

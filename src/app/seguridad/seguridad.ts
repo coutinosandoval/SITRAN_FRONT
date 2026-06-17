@@ -52,9 +52,10 @@ export class SeguridadComponent implements OnInit {
         'VER_SOLICITUDES',
         'SOLICITAR_CUPONES',
         'GESTIONAR_SOLICITUDES_CUPONES',
+        'GESTIONAR_COMPRAS_TALONARIOS',
       ],
     },
-    { titulo: 'Comisiones', permisos: ['VER_COMISIONES'] },
+    { titulo: 'Comisiones', permisos: ['VER_COMISIONES', 'GESTIONAR_COMISIONES_SEDE'] },
     { titulo: 'Facturas', permisos: ['VER_FACTURAS'] },
     {
       titulo: 'Reportes',

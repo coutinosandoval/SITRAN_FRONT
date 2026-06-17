@@ -48,7 +48,7 @@ export class SolicitudTalonarioComponent implements OnInit {
 
   // ─── Roles ───
   esDelegado: boolean = false;
-  esCompras: boolean = false;
+  //esCompras: boolean = false;
   esBodega: boolean = false;
   idSedeDelegado: number | null = null;
   nombreSedeDelegado: string = '';
@@ -133,9 +133,8 @@ export class SolicitudTalonarioComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.esDelegado = this.authService.tieneRol('delegado');
-    this.esCompras = this.authService.tieneRol('compras');
-    this.esBodega = this.authService.tieneRol('bodega');
+    this.esDelegado = this.authService.tienePermiso('SOLICITAR_CUPONES');
+    this.esBodega = this.authService.tienePermiso('GESTIONAR_SOLICITUDES_CUPONES');
     this.idSedeDelegado = this.authService.obtenerIdUnidad();
 
     this.cargarSolicitudes();

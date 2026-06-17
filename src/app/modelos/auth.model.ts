@@ -11,8 +11,9 @@ export interface LoginResponse {
   usuarioSistema: string;
   roles: string[];
   expiracion: string;
-   idUnidad: number;
+  idUnidad: number;
   tipoLugar: string;
+  permisos: string[];
 }
 
 // Modelo que define la respuesta cuando ocurre un error

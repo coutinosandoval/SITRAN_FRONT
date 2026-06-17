@@ -1,130 +1,225 @@
 <aside class="sidebar">
-
   <!-- Logo -->
   <div class="sidebar-brand">
-    <img src="/favicon.png" alt="SITRAN" height="32">
+    <img src="/favicon.png" alt="SITRAN" height="32" />
     <span>SITRAN</span>
   </div>
 
   <!-- Menú -->
   <nav class="sidebar-menu">
-
-    <!-- Dashboard: todos -->
+    <!-- Dashboard: todos los usuarios autenticados -->
     <a routerLink="/dashboard" routerLinkActive="active" class="menu-item">
       <i class="bi bi-speedometer2"></i>
       <span>Dashboard</span>
     </a>
 
-    <!-- Vehículos: solo admin -->
-    <div class="menu-group" *ngIf="esAdmin">
+    <!-- Vehículos: por permiso -->
+    <div
+      class="menu-group"
+      *ngIf="
+        tienePermiso('VER_VEHICULOS') ||
+        tienePermiso('VER_MANTENIMIENTOS') ||
+        tienePermiso('VER_HISTORICO_KM')
+      "
+    >
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuVehiculos">
         <i class="bi bi-truck"></i>
         <span>Vehículos</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
       <div class="collapse" id="menuVehiculos">
-        <a routerLink="/vehiculos" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_VEHICULOS')"
+          routerLink="/vehiculos"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-truck"></i> Vehículos
         </a>
-        <a routerLink="/vehiculos/mantenimientos" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_MANTENIMIENTOS')"
+          routerLink="/vehiculos/mantenimientos"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-tools"></i> Mantenimientos
         </a>
-        <a routerLink="/vehiculos/historico-kilometraje" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_HISTORICO_KM')"
+          routerLink="/vehiculos/historico-kilometraje"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-speedometer"></i> Histórico Km
         </a>
       </div>
     </div>
 
-    <!-- Pilotos: solo admin -->
-    <a routerLink="/pilotos" routerLinkActive="active" class="menu-item" *ngIf="esAdmin">
+    <!-- Pilotos: por permiso -->
+    <a
+      routerLink="/pilotos"
+      routerLinkActive="active"
+      class="menu-item"
+      *ngIf="tienePermiso('VER_PILOTOS')"
+    >
       <i class="bi bi-person-badge"></i>
       <span>Pilotos</span>
     </a>
 
-    <!-- Cupones: admin, compras, delegado y bodega -->
-<div class="menu-group" *ngIf="esAdmin || esCompras || esDelegado || esBodega">
-  <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuCupones">
-    <i class="bi bi-fuel-pump"></i>
-    <span>Cupones</span>
-    <i class="bi bi-chevron-down ms-auto"></i>
-  </a>
-  <div class="collapse" id="menuCupones">
-    <!-- Talonarios: admin, compras y bodega -->
-    <a routerLink="/cupones/talonarios" routerLinkActive="active" class="menu-item submenu-item"
-      *ngIf="esAdmin || esCompras || esBodega">
-      <i class="bi bi-bookmarks"></i> Talonarios
-    </a>
-    <!-- Solicitudes: todos -->
-    <a routerLink="/cupones/solicitudes-talonario" routerLinkActive="active" class="menu-item submenu-item">
-      <i class="bi bi-file-earmark-text"></i> Solicitudes
-    </a>
-  </div>
-</div>
+    <!-- Cupones: por permiso -->
+    <div
+      class="menu-group"
+      *ngIf="tienePermiso('VER_TALONARIOS') || tienePermiso('VER_SOLICITUDES')"
+    >
+      <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuCupones">
+        <i class="bi bi-fuel-pump"></i>
+        <span>Cupones</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <div class="collapse" id="menuCupones">
+        <a
+          *ngIf="tienePermiso('VER_TALONARIOS')"
+          routerLink="/cupones/talonarios"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
+          <i class="bi bi-bookmarks"></i> Talonarios
+        </a>
+        <a
+          *ngIf="tienePermiso('VER_SOLICITUDES')"
+          routerLink="/cupones/solicitudes-talonario"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
+          <i class="bi bi-file-earmark-text"></i> Solicitudes
+        </a>
+      </div>
+    </div>
 
-    <!-- Comisiones: admin y delegado -->
-    <a routerLink="/comisiones" routerLinkActive="active" class="menu-item" *ngIf="esAdmin || esDelegado">
+    <!-- Comisiones: por permiso -->
+    <a
+      routerLink="/comisiones"
+      routerLinkActive="active"
+      class="menu-item"
+      *ngIf="tienePermiso('VER_COMISIONES')"
+    >
       <i class="bi bi-briefcase"></i>
       <span>Comisiones</span>
     </a>
 
-    <!-- Facturas: solo admin -->
-    <a routerLink="/facturas" routerLinkActive="active" class="menu-item" *ngIf="esAdmin">
+    <!-- Facturas: por permiso -->
+    <a
+      routerLink="/facturas"
+      routerLinkActive="active"
+      class="menu-item"
+      *ngIf="tienePermiso('VER_FACTURAS')"
+    >
       <i class="bi bi-receipt"></i>
       <span>Facturas</span>
     </a>
 
-    <!-- Reportes: solo admin -->
-    <div class="menu-group" *ngIf="esAdmin">
+    <!-- Reportes: por permiso -->
+    <div
+      class="menu-group"
+      *ngIf="
+        tienePermiso('VER_REPORTES_VEHICULOS') ||
+        tienePermiso('VER_REPORTES_PILOTOS') ||
+        tienePermiso('VER_REPORTES_COMISIONES') ||
+        tienePermiso('VER_REPORTES_CUPONES')
+      "
+    >
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuReportes">
         <i class="bi bi-bar-chart"></i>
         <span>Reportes</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
       <div class="collapse" id="menuReportes">
-        <a routerLink="/reportes/vehiculos" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_REPORTES_VEHICULOS')"
+          routerLink="/reportes/vehiculos"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-truck"></i> Vehículos
         </a>
-        <a routerLink="/reportes/pilotos" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_REPORTES_PILOTOS')"
+          routerLink="/reportes/pilotos"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-person-badge"></i> Pilotos
         </a>
-        <a routerLink="/reportes/comisiones" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_REPORTES_COMISIONES')"
+          routerLink="/reportes/comisiones"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-briefcase"></i> Comisiones
         </a>
-        <a routerLink="/reportes/cupones" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_REPORTES_CUPONES')"
+          routerLink="/reportes/cupones"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-fuel-pump"></i> Cupones
         </a>
       </div>
     </div>
 
-    <!-- Catálogos: solo admin -->
-    <a routerLink="/catalogos" routerLinkActive="active" class="menu-item" *ngIf="esAdmin">
+    <!-- Catálogos: por permiso -->
+    <a
+      routerLink="/catalogos"
+      routerLinkActive="active"
+      class="menu-item"
+      *ngIf="tienePermiso('VER_CATALOGOS')"
+    >
       <i class="bi bi-collection"></i>
       <span>Catálogos</span>
     </a>
 
-      <!-- reportes: solo admin -->
-<li *ngIf="esAdmin">
-  <a routerLink="/reportes-ia" routerLinkActive="active">
-    <i class="bi bi-robot"></i> Reportes IA
-  </a>
-</li>
-    <!-- Seguridad: solo admin -->
-    <div class="menu-group" *ngIf="esAdmin">
+    <!-- Reportes IA: por permiso -->
+    <a
+      routerLink="/reportes-ia"
+      routerLinkActive="active"
+      class="menu-item"
+      *ngIf="tienePermiso('VER_REPORTES_IA')"
+    >
+      <i class="bi bi-robot"></i>
+      <span>Reportes IA</span>
+    </a>
+
+    <!-- Seguridad: por permiso -->
+    <div
+      class="menu-group"
+      *ngIf="tienePermiso('VER_SEGURIDAD_USUARIOS') || tienePermiso('VER_SEGURIDAD_ROLES')"
+    >
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuSeguridad">
         <i class="bi bi-shield-lock"></i>
         <span>Seguridad</span>
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
       <div class="collapse" id="menuSeguridad">
-        <a routerLink="/seguridad/usuarios" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_SEGURIDAD_USUARIOS')"
+          routerLink="/seguridad/usuarios"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-people"></i> Usuarios
         </a>
-        <a routerLink="/seguridad/roles" routerLinkActive="active" class="menu-item submenu-item">
+        <a
+          *ngIf="tienePermiso('VER_SEGURIDAD_ROLES')"
+          routerLink="/seguridad/roles"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
           <i class="bi bi-person-gear"></i> Roles
         </a>
       </div>
     </div>
-
   </nav>
 
   <!-- Footer usuario -->
@@ -137,5 +232,4 @@
       </a>
     </div>
   </div>
-
 </aside>

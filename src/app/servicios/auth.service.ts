@@ -39,6 +39,7 @@ export class AuthService {
   sessionStorage.setItem('expiracion',     response.expiracion);
   sessionStorage.setItem('idUnidad',       response.idUnidad?.toString() || '');
   sessionStorage.setItem('tipoLugar',      response.tipoLugar || '');
+  sessionStorage.setItem('permisos', JSON.stringify(response.permisos || []));
 
   }
 
@@ -100,4 +101,17 @@ obtenerIdUnidad(): number | null {
 obtenerTipoLugar(): string {
   return sessionStorage.getItem('tipoLugar') || '';
 }
+
+// Obtiene los permisos del usuario autenticado
+obtenerPermisos(): string[] {
+  const permisos = sessionStorage.getItem('permisos');
+  return permisos ? JSON.parse(permisos) : [];
+}
+
+// Verifica si el usuario tiene un permiso específico
+tienePermiso(permiso: string): boolean {
+  return this.obtenerPermisos().some(p => p.toUpperCase() === permiso.toUpperCase());
+}
+
+
 }

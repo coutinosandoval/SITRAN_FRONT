@@ -1,0 +1,113 @@
+<div class="container-fluid py-3">
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">
+      <i class="bi bi-fuel-pump"></i> Libro de Control de Cupones de Combustible
+    </h4>
+  </div>
+
+  <!-- Alertas -->
+  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+
+  <!-- Formulario de filtros -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      <h6 class="mb-0"><i class="bi bi-funnel"></i> Parámetros del Reporte</h6>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+
+        <!-- Sede -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">ID Sede <span class="text-danger">*</span></label>
+          <input type="number" class="form-control"
+            [(ngModel)]="idSede"
+            placeholder="Ej: 21">
+          <div class="form-text">ID de la sede/delegación a consultar</div>
+        </div>
+
+        <!-- Denominación -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Denominación <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="denominacion">
+            <option *ngFor="let d of denominaciones" [value]="d.valor">{{ d.label }}</option>
+          </select>
+        </div>
+
+        <!-- Fecha inicio -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Fecha Inicio <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" [(ngModel)]="fechaInicio">
+        </div>
+
+        <!-- Fecha fin -->
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Fecha Fin <span class="text-danger">*</span></label>
+          <input type="date" class="form-control" [(ngModel)]="fechaFin">
+        </div>
+
+      </div>
+    </div>
+    <div class="card-footer d-flex justify-content-end gap-2">
+      <button class="btn btn-success" (click)="descargarLibroControl()" [disabled]="cargando">
+        <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!cargando" class="bi bi-file-earmark-excel me-1"></i>
+        {{ cargando ? 'Generando...' : 'Descargar Excel' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Información del reporte -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h6 class="card-title"><i class="bi bi-info-circle text-primary"></i> ¿Qué incluye este reporte?</h6>
+      <div class="row mt-3">
+        <div class="col-md-6">
+          <div class="d-flex align-items-start mb-2">
+            <i class="bi bi-arrow-down-circle-fill text-success me-2 mt-1"></i>
+            <div>
+              <strong>Ingresos de cupones</strong>
+              <p class="text-muted small mb-0">Registra cada traslado de Bodega a la sede, con rango de cupones y monto en Q.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex align-items-start mb-2">
+            <i class="bi bi-arrow-up-circle-fill text-danger me-2 mt-1"></i>
+            <div>
+              <strong>Egresos de cupones</strong>
+              <p class="text-muted small mb-0">Registra cada asignación a piloto/comisión, con unidad, placa y solicitante.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex align-items-start mb-2">
+            <i class="bi bi-calculator text-primary me-2 mt-1"></i>
+            <div>
+              <strong>Saldo acumulado</strong>
+              <p class="text-muted small mb-0">Saldo en Q y cupones en existencia actualizado fila por fila.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="d-flex align-items-start mb-2">
+            <i class="bi bi-bar-chart text-warning me-2 mt-1"></i>
+            <div>
+              <strong>Resumen por unidad</strong>
+              <p class="text-muted small mb-0">Segunda pestaña con consumo agrupado por Dirección/Unidad.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

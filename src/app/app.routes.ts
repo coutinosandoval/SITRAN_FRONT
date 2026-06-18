@@ -39,6 +39,11 @@ export const routes: Routes = [
   { path: 'seguridad/roles',                 component: SeguridadComponent,          canActivate: [authGuard] },
   { path: 'reportes-ia', component: ReporteIAComponent },
   { path: 'reportes/vehiculos', component: BitacoraVehiculosComponent, canActivate: [authGuard] },
+  {
+  path: 'reportes/cupones',
+  loadComponent: () =>
+    import('./reportes/reporte-cupones/reporte-cupones').then(m => m.ReporteCuponesComponent)
+},
   
 
     ]

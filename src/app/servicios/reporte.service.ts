@@ -49,4 +49,23 @@ export class ReporteService {
     const params = this.construirParametros(filtro);
     return this.http.get(`${this.apiUrl}/bitacora-vehiculos/word`, { params, responseType: 'blob' });
   }
+
+  // Descarga el Libro de Control de Cupones de Combustible en Excel
+descargarLibroControlCupones(
+  idSede: number,
+  fechaInicio: string,
+  fechaFin: string,
+  denominacion: number
+): Observable<Blob> {
+  const params = new HttpParams()
+    .set('idSede', idSede.toString())
+    .set('fechaInicio', fechaInicio)
+    .set('fechaFin', fechaFin)
+    .set('denominacion', denominacion.toString());
+
+  return this.http.get(`${this.apiUrl}/libro-control-cupones`, {
+    params,
+    responseType: 'blob'
+  });
+}
 }

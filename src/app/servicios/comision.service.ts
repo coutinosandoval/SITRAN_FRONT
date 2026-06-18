@@ -84,8 +84,11 @@ export class ComisionService {
     return this.http.get<CatalogoItem[]>(`${this.apiUrl}/unidades`);
   }
 
-  obtenerVehiculosDisponibles(fechaInicio: string, fechaFin: string): Observable<CatalogoItem[]> {
+  obtenerVehiculosDisponibles(fechaInicio: string, fechaFin: string, idSede?: number): Observable<CatalogoItem[]> {
     let params = new HttpParams().set('fechaInicio', fechaInicio).set('fechaFin', fechaFin);
+    if (idSede !== undefined && idSede !== null) {
+      params = params.set('idSede', idSede.toString());
+    }
     return this.http.get<CatalogoItem[]>(`${this.apiUrl}/vehiculos-disponibles`, { params });
   }
 

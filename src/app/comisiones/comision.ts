@@ -232,8 +232,9 @@ export class ComisionComponent implements OnInit {
     const fi = this.formulario.get('fechaInicio')?.value;
     const ff = this.formulario.get('fechaFin')?.value;
     if (!fi || !ff) return;
+    const idSede = this.esDelegado ? (this.idSedeDelegado ?? undefined) : undefined;
     this.comisionService
-      .obtenerVehiculosDisponibles(fi, ff)
+      .obtenerVehiculosDisponibles(fi, ff, idSede)
       .subscribe({ next: (data) => (this.vehiculos = data) });
     this.comisionService
       .obtenerPilotosDisponibles(fi, ff)
@@ -245,8 +246,9 @@ export class ComisionComponent implements OnInit {
     if (!this.comisionDetalle) return;
     const fi = this.comisionDetalle.comision.fechaInicio || '';
     const ff = this.comisionDetalle.comision.fechaFin || '';
+    const idSede = this.esDelegado ? (this.idSedeDelegado ?? undefined) : undefined;
     this.comisionService
-      .obtenerVehiculosDisponibles(fi, ff)
+      .obtenerVehiculosDisponibles(fi, ff, idSede)
       .subscribe({ next: (data) => (this.vehiculos = data) });
     this.comisionService
       .obtenerPilotosDisponibles(fi, ff)

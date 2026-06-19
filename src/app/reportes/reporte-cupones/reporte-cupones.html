@@ -1,10 +1,7 @@
 <div class="container-fluid py-3">
-
   <!-- Encabezado -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0">
-      <i class="bi bi-fuel-pump"></i> Libro de Control de Cupones de Combustible
-    </h4>
+    <h4 class="mb-0"><i class="bi bi-fuel-pump"></i> Libro de Control de Cupones de Combustible</h4>
   </div>
 
   <!-- Alertas -->
@@ -24,19 +21,41 @@
     </div>
     <div class="card-body">
       <div class="row g-3">
-
-        <!-- Sede -->
-        <div class="col-md-3">
-          <label class="form-label fw-semibold">ID Sede <span class="text-danger">*</span></label>
-          <input type="number" class="form-control"
-            [(ngModel)]="idSede"
-            placeholder="Ej: 21">
-          <div class="form-text">ID de la sede/delegación a consultar</div>
+        <!-- Sede con autocompletado -->
+        <div class="col-md-3 position-relative">
+          <label class="form-label fw-semibold">Sede <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="nombreSedeBusqueda"
+            (input)="buscarSede()"
+            (focus)="buscarSede()"
+            (blur)="ocultarSugerencias()"
+            placeholder="Escriba el nombre de la sede"
+            autocomplete="off"
+          />
+          <ul
+            class="list-group position-absolute w-100 shadow-sm"
+            style="z-index: 1000; max-height: 200px; overflow-y: auto"
+            *ngIf="mostrarSugerencias"
+          >
+            <li
+              class="list-group-item list-group-item-action"
+              style="cursor: pointer"
+              *ngFor="let s of sedesFiltradas"
+              (mousedown)="seleccionarSede(s)"
+            >
+              {{ s.nombre }}
+            </li>
+          </ul>
+          <div class="form-text">Sede/delegación a consultar</div>
         </div>
 
         <!-- Denominación -->
         <div class="col-md-3">
-          <label class="form-label fw-semibold">Denominación <span class="text-danger">*</span></label>
+          <label class="form-label fw-semibold"
+            >Denominación <span class="text-danger">*</span></label
+          >
           <select class="form-select" [(ngModel)]="denominacion">
             <option *ngFor="let d of denominaciones" [value]="d.valor">{{ d.label }}</option>
           </select>
@@ -44,20 +63,26 @@
 
         <!-- Fecha inicio -->
         <div class="col-md-3">
-          <label class="form-label fw-semibold">Fecha Inicio <span class="text-danger">*</span></label>
-          <input type="date" class="form-control" [(ngModel)]="fechaInicio">
+          <label class="form-label fw-semibold"
+            >Fecha Inicio <span class="text-danger">*</span></label
+          >
+          <input type="date" class="form-control" [(ngModel)]="fechaInicio" />
         </div>
 
         <!-- Fecha fin -->
+        <!-- Fecha fin -->
         <div class="col-md-3">
           <label class="form-label fw-semibold">Fecha Fin <span class="text-danger">*</span></label>
-          <input type="date" class="form-control" [(ngModel)]="fechaFin">
+          <input type="date" class="form-control" [(ngModel)]="fechaFin" [max]="fechaMaxima" />
         </div>
-
       </div>
     </div>
     <div class="card-footer d-flex justify-content-end gap-2">
-      <button class="btn btn-success" (click)="descargarLibroControl()" [disabled]="cargando">
+      <button
+        class="btn btn-success"
+        (click)="descargarLibroControl()"
+        [disabled]="cargando || !formularioValido"
+      >
         <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
         <i *ngIf="!cargando" class="bi bi-file-earmark-excel me-1"></i>
         {{ cargando ? 'Generando...' : 'Descargar Excel' }}
@@ -68,14 +93,18 @@
   <!-- Información del reporte -->
   <div class="card shadow-sm">
     <div class="card-body">
-      <h6 class="card-title"><i class="bi bi-info-circle text-primary"></i> ¿Qué incluye este reporte?</h6>
+      <h6 class="card-title">
+        <i class="bi bi-info-circle text-primary"></i> ¿Qué incluye este reporte?
+      </h6>
       <div class="row mt-3">
         <div class="col-md-6">
           <div class="d-flex align-items-start mb-2">
             <i class="bi bi-arrow-down-circle-fill text-success me-2 mt-1"></i>
             <div>
               <strong>Ingresos de cupones</strong>
-              <p class="text-muted small mb-0">Registra cada traslado de Bodega a la sede, con rango de cupones y monto en Q.</p>
+              <p class="text-muted small mb-0">
+                Registra cada traslado de Bodega a la sede, con rango de cupones y monto en Q.
+              </p>
             </div>
           </div>
         </div>
@@ -84,7 +113,9 @@
             <i class="bi bi-arrow-up-circle-fill text-danger me-2 mt-1"></i>
             <div>
               <strong>Egresos de cupones</strong>
-              <p class="text-muted small mb-0">Registra cada asignación a piloto/comisión, con unidad, placa y solicitante.</p>
+              <p class="text-muted small mb-0">
+                Registra cada asignación a piloto/comisión, con unidad, placa y solicitante.
+              </p>
             </div>
           </div>
         </div>
@@ -93,7 +124,9 @@
             <i class="bi bi-calculator text-primary me-2 mt-1"></i>
             <div>
               <strong>Saldo acumulado</strong>
-              <p class="text-muted small mb-0">Saldo en Q y cupones en existencia actualizado fila por fila.</p>
+              <p class="text-muted small mb-0">
+                Saldo en Q y cupones en existencia actualizado fila por fila.
+              </p>
             </div>
           </div>
         </div>
@@ -102,12 +135,13 @@
             <i class="bi bi-bar-chart text-warning me-2 mt-1"></i>
             <div>
               <strong>Resumen por unidad</strong>
-              <p class="text-muted small mb-0">Segunda pestaña con consumo agrupado por Dirección/Unidad.</p>
+              <p class="text-muted small mb-0">
+                Segunda pestaña con consumo agrupado por Dirección/Unidad.
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
 </div>

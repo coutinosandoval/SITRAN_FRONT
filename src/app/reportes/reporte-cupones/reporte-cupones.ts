@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReporteService } from '../../servicios/reporte.service';
 import { AuthService } from '../../servicios/auth.service';
+import { SedeService, Sede } from '../../servicios/sede.service';
 
 @Component({
   selector: 'app-reporte-cupones',
@@ -13,9 +14,16 @@ import { AuthService } from '../../servicios/auth.service';
 export class ReporteCuponesComponent implements OnInit {
   // ─── Filtros ───
   idSede: number = 0;
+  nombreSedeBusqueda: string = '';
   fechaInicio: string = '';
   fechaFin: string = '';
   denominacion: number = 100;
+  fechaMaxima: string = '';
+
+  // ─── Autocompletado de sede ───
+  sedes: Sede[] = [];
+  sedesFiltradas: Sede[] = [];
+  mostrarSugerencias: boolean = false;
 
   // ─── Estado ───
   cargando: boolean = false;
@@ -31,34 +39,46 @@ export class ReporteCuponesComponent implements OnInit {
   constructor(
     private reporteService: ReporteService,
     private authService: AuthService,
+    private sedeService: SedeService,
   ) {}
 
   ngOnInit(): void {
-    // Pre-cargar la sede del usuario si es Delegado
-    const idUnidad = this.authService.obtenerIdUnidad();
-    if (idUnidad) this.idSede = idUnidad;
+    this.sedeService.obtenerSedes().subscribe({
+      next: (data) => {
+        this.sedes = data;
+      },
+    });
 
-    // Fecha por defecto: mes actual
     const hoy = new Date();
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     this.fechaInicio = primerDia.toISOString().split('T')[0];
     this.fechaFin = hoy.toISOString().split('T')[0];
   }
 
-  // Descarga el Excel del Libro de Control
+  buscarSede(): void {
+    const texto = this.nombreSedeBusqueda.trim().toUpperCase();
+    if (!texto) {
+      this.sedesFiltradas = [];
+      this.mostrarSugerencias = false;
+      this.idSede = 0;
+      return;
+    }
+    this.sedesFiltradas = this.sedes.filter((s) => s.nombre.toUpperCase().includes(texto));
+    this.mostrarSugerencias = this.sedesFiltradas.length > 0;
+  }
+
+  seleccionarSede(sede: Sede): void {
+    this.idSede = sede.id;
+    this.nombreSedeBusqueda = sede.nombre;
+    this.mostrarSugerencias = false;
+  }
+
+  ocultarSugerencias(): void {
+    setTimeout(() => (this.mostrarSugerencias = false), 200);
+  }
+
   descargarLibroControl(): void {
-    if (!this.idSede) {
-      this.mensajeError = 'Debe ingresar un ID de sede.';
-      return;
-    }
-    if (!this.fechaInicio || !this.fechaFin) {
-      this.mensajeError = 'Debe seleccionar el rango de fechas.';
-      return;
-    }
-    if (new Date(this.fechaInicio) > new Date(this.fechaFin)) {
-      this.mensajeError = 'La fecha de inicio no puede ser mayor a la fecha fin.';
-      return;
-    }
+    if (!this.formularioValido) return;
 
     this.cargando = true;
     this.mensajeError = '';
@@ -83,6 +103,22 @@ export class ReporteCuponesComponent implements OnInit {
           this.cargando = false;
         },
       });
+  }
+
+  
+
+  // Determina si el formulario está completo y válido para habilitar el botón
+  get formularioValido(): boolean {
+    if (!this.idSede) return false;
+    if (!this.denominacion) return false;
+    if (!this.fechaInicio || !this.fechaFin) return false;
+    if (new Date(this.fechaInicio) > new Date(this.fechaFin)) return false;
+
+    const hoy = new Date();
+    hoy.setHours(23, 59, 59, 999);
+    if (new Date(this.fechaFin) > hoy) return false;
+
+    return true;
   }
 
   limpiarMensajes(): void {

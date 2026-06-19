@@ -189,6 +189,9 @@ export class TalonarioComponent implements OnInit {
     } else if (this.esCompras) {
       estado = this.filtroEstado || undefined;
       idSede = undefined;
+    } else if (this.esDelegado) {
+      estado = this.filtroEstado || undefined;
+      idSede = this.idSedeUsuario ?? undefined;
     }
 
     this.cuponService

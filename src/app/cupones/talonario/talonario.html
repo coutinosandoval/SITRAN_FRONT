@@ -99,9 +99,13 @@
                 </span>
               </td>
               <td>{{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
-              <td>{{ t.nombreSedeTraslado || '—' }}</td>
               <td>
-                <span class="badge" [ngClass]="colorEstado(t.estado)">
+                <span *ngIf="esDelegado">Cupones en su sede</span>
+                <span *ngIf="!esDelegado">{{ t.nombreSedeTraslado || '—' }}</span>
+              </td>
+              <td>
+                <span *ngIf="esDelegado" class="badge bg-success"> En su sede </span>
+                <span *ngIf="!esDelegado" class="badge" [ngClass]="colorEstado(t.estado)">
                   {{ nombreEstado(t.estado) }}
                 </span>
               </td>
@@ -987,5 +991,6 @@
   [maxNumero]="modalMaxNumero"
   [placeholderTexto]="modalPlaceholder"
   (aceptar)="onModalAceptar($event)"
-  (cancelar)="onModalCancelar()">
+  (cancelar)="onModalCancelar()"
+>
 </app-modal>

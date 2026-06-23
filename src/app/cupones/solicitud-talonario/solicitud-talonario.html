@@ -208,6 +208,7 @@
               class="form-select"
               formControlName="valorCupon"
               [class.is-invalid]="tieneError('valorCupon')"
+              (change)="actualizarResumen()"
             >
               <option *ngFor="let v of valores" [value]="v">Q{{ v }}.00 por cupón</option>
             </select>
@@ -224,6 +225,7 @@
               [class.is-invalid]="tieneError('cantidadCupones')"
               placeholder="Ej: 80"
               min="1"
+              (input)="actualizarResumen()"
             />
             <div class="invalid-feedback">Requerido. Debe ser mayor a 0.</div>
             <small class="text-muted">Ingrese la cantidad exacta de cupones que necesita.</small>
@@ -475,18 +477,36 @@
         <thead class="table-dark">
           <tr>
             <th>Talonario</th>
-            <th>Cupones Asignados</th>
             <th>Denominación</th>
+            <th>Asignados</th>
+            <th>Entregados en comisión</th>
+            <th>Disponibles</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let d of detalleSolicitud">
             <td>{{ d.nombreTalonario }}</td>
             <td>
+              <span class="badge bg-info text-dark">Q{{ d.valorCupon }}.00</span>
+            </td>
+            <td>
               <span class="badge bg-success">{{ d.cuponesAsignados }}</span>
             </td>
             <td>
-              <span class="badge bg-info text-dark">Q{{ d.valorCupon }}.00</span>
+              <span class="badge bg-warning text-dark">{{ d.cuponesEntregados ?? 0 }}</span>
+            </td>
+            <td>
+              <span
+                class="badge"
+                [ngClass]="{
+                  'bg-danger': (d.cuponesDisponibles ?? 0) === 0,
+                  'bg-warning text-dark':
+                    (d.cuponesDisponibles ?? 0) > 0 && (d.cuponesDisponibles ?? 0) <= 3,
+                  'bg-success': (d.cuponesDisponibles ?? 0) > 3,
+                }"
+              >
+                {{ d.cuponesDisponibles ?? 0 }}
+              </span>
             </td>
           </tr>
         </tbody>

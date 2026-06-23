@@ -152,6 +152,7 @@ export class SolicitudTalonarioComponent implements OnInit {
     // Actualizar resumen cuando cambia el formulario
     this.formulario.valueChanges.subscribe(() => {
       const val = this.formulario.getRawValue();
+      console.log('valueChanges:', val.cantidadCupones, val.valorCupon);
       this.resumenCantidad = Number(val.cantidadCupones) || 0;
       this.resumenValor = Number(val.valorCupon) || 100;
       this.resumenTotal = this.resumenCantidad * this.resumenValor;
@@ -539,10 +540,32 @@ export class SolicitudTalonarioComponent implements OnInit {
   }
 
   cuponesDisponiblesDetalle(detalle: SolicitudTalonarioDetalle): number {
-    return detalle.cuponesAsignados - detalle.cuponesDevueltos;
+    return detalle.cuponesDisponibles ?? detalle.cuponesAsignados - detalle.cuponesDevueltos;
   }
 
   detectarCambios(): void {
+    this.cdr.detectChanges();
+  }
+
+  get resumenCantidadCalc(): number {
+    const ctrl = this.formulario.get('cantidadCupones');
+    return Number(ctrl?.value ?? ctrl?.getRawValue?.() ?? 0) || 0;
+  }
+
+  get resumenValorCalc(): number {
+    return Number(this.formulario.get('valorCupon')?.value) || 100;
+  }
+
+  get resumenTotalCalc(): number {
+    return this.resumenCantidadCalc * this.resumenValorCalc;
+  }
+
+  actualizarResumen(): void {
+    const cantidad = Number(this.formulario.get('cantidadCupones')?.value) || 0;
+    const valor = Number(this.formulario.get('valorCupon')?.value) || 100;
+    this.resumenCantidad = cantidad;
+    this.resumenValor = valor;
+    this.resumenTotal = cantidad * valor;
     this.cdr.detectChanges();
   }
 }

@@ -78,7 +78,7 @@
       </a>
       <div class="collapse" id="menuCupones">
         <a
-          *ngIf="tienePermiso('VER_TALONARIOS')"
+          *ngIf="tienePermiso('VER_TALONARIOS') && !tienePermiso('SOLICITAR_CUPONES')"
           routerLink="/cupones/talonarios"
           routerLinkActive="active"
           class="menu-item submenu-item"
@@ -217,6 +217,9 @@
           class="menu-item submenu-item"
         >
           <i class="bi bi-person-gear"></i> Roles
+        </a>
+        <a *ngIf="tienePermiso('GESTIONAR_COMPRAS_TALONARIOS')" routerLink="/compras">
+          Compra de Cupones
         </a>
       </div>
     </div>

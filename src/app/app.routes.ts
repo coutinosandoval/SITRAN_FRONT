@@ -15,7 +15,7 @@ import { SeguridadComponent } from './seguridad/seguridad';
 import { RegistroComponent } from './registro/registro';
 import { ReporteIAComponent } from './reportes/reporte-ia';
 import { BitacoraVehiculosComponent } from './reportes/bitacora-vehiculos/bitacora-vehiculos';
-
+import { ComprasComponent } from './compras/compras';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -36,6 +36,7 @@ export const routes: Routes = [
   { path: 'cupones/solicitudes-talonario',   component: SolicitudTalonarioComponent, canActivate: [authGuard] },
   { path: 'comisiones',                      component: ComisionComponent,           canActivate: [authGuard] },
   { path: 'seguridad/usuarios',              component: SeguridadComponent,          canActivate: [authGuard] },
+  { path: 'compras', component: ComprasComponent, canActivate: [authGuard] },
   { path: 'seguridad/roles',                 component: SeguridadComponent,          canActivate: [authGuard] },
   { path: 'reportes-ia', component: ReporteIAComponent },
   { path: 'reportes/vehiculos', component: BitacoraVehiculosComponent, canActivate: [authGuard] },

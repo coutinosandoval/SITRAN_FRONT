@@ -274,4 +274,30 @@ export class CuponService {
       dto,
     );
   }
+
+  // ══════════════════════════════════════════════════════════════
+  // Agregar este método dentro de la clase CuponService
+  // en el archivo: src/app/servicios/cupon.service.ts
+  // Colócalo junto a los demás métodos existentes
+  // ══════════════════════════════════════════════════════════════
+
+  /** Registra una nueva compra de cupones con rangos del-al */
+  /** Registra una nueva compra de cupones con rangos del-al */
+  agregarCompra(dto: {
+    fechaCompra: string;
+    idExpendedor: number;
+    fechaEmision: string;
+    fechaVencimiento: string;
+    observaciones?: string;
+    detalles: {
+      denominacion: number;
+      numeroDel: number;
+      numeroAl: number;
+    }[];
+  }): Observable<{ idCompra: number; mensaje: string }> {
+    return this.http.post<{ idCompra: number; mensaje: string }>(
+      `${environment.apiUrl}/api/compras`,
+      dto,
+    );
+  }
 }

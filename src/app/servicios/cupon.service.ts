@@ -300,4 +300,19 @@ export class CuponService {
       dto,
     );
   }
+
+  /** Obtiene las compras del nuevo módulo */
+  obtenerCompras(
+    pagina: number = 1,
+    porPagina: number = 10,
+  ): Observable<{ total: number; pagina: number; porPagina: number; datos: any[] }> {
+    const params = new HttpParams()
+      .set('pagina', pagina.toString())
+      .set('porPagina', porPagina.toString());
+    return this.http.get<any>(`${environment.apiUrl}/api/compras`, { params });
+  }
+  /** Obtiene los rangos de una compra específica */
+  obtenerDetalleCompra(idCompra: number): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/api/compras/${idCompra}/detalle`);
+  }
 }

@@ -1,7 +1,10 @@
-<!-- LISTA DE TALONARIOS -->
+<!-- LISTA DE TALONARIOS / COMPRAS -->
 <div *ngIf="mostrarLista">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0"><i class="bi bi-bookmarks"></i> Talonarios</h4>
+    <h4 class="mb-0">
+      <i class="bi bi-bookmarks"></i>
+      {{ esCompras || esAdmin ? 'Compras de Cupones' : 'Talonarios' }}
+    </h4>
     <button class="btn btn-primary btn-sm" *ngIf="esAdmin || esCompras" (click)="mostrarAgregar()">
       <i class="bi bi-plus-circle"></i> Registrar Compra
     </button>
@@ -19,15 +22,6 @@
   <div class="card shadow-sm mb-3">
     <div class="card-body py-2">
       <div class="row align-items-center g-2">
-        <div class="col-md-4">
-          <select
-            class="form-select form-select-sm"
-            [(ngModel)]="filtroEstado"
-            (change)="filtrar()"
-          >
-            <option *ngFor="let e of estados" [value]="e.id">{{ e.nombre }}</option>
-          </select>
-        </div>
         <div class="col-md-2">
           <select
             class="form-select form-select-sm"
@@ -38,152 +32,289 @@
             <option value="25">25</option>
           </select>
         </div>
-        <div class="col-md-6 text-end">
-          <span class="text-muted small">{{ totalRegistros }} talonarios</span>
+        <div class="col-md-10 text-end">
+          <span class="text-muted small">
+            {{ totalRegistros }}
+            {{ esCompras || esAdmin ? 'compras' : 'talonarios' }}
+          </span>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="card shadow-sm">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover table-striped mb-0">
-          <thead class="table-dark">
-            <tr>
-              <th>#</th>
-              <th>Expendedor</th>
-              <th>Denominación</th>
-              <th>Rango</th>
-              <th>Cupones</th>
-              <th>Saldo</th>
-              <th>Vencimiento</th>
-              <th>Sede Asignada</th>
-              <th>Estado</th>
-              <th class="text-center">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="cargando">
-              <td colspan="10" class="text-center py-4">
-                <div class="spinner-border spinner-border-sm text-primary"></div>
-                Cargando talonarios...
-              </td>
-            </tr>
-            <tr *ngIf="!cargando && talonarios.length === 0">
-              <td colspan="10" class="text-center py-4 text-muted">
-                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                No se encontraron talonarios.
-              </td>
-            </tr>
-            <tr *ngFor="let t of talonarios">
-              <td>{{ t.id }}</td>
-              <td>{{ t.nombreExpendedor }}</td>
-              <td>
-                <span class="badge bg-info text-dark">Q{{ t.valorCupon }}.00</span>
-              </td>
-              <td>{{ t.numeradoDel }} — {{ t.numeradoAl }}</td>
-              <td>{{ t.cantidadCupones }}</td>
-              <td>
-                <span
-                  class="badge"
-                  [ngClass]="
-                    t.saldo === 0
-                      ? 'bg-danger'
-                      : t.saldo <= 10
-                        ? 'bg-warning text-dark'
-                        : 'bg-success'
-                  "
-                >
-                  {{ t.saldo }}
-                </span>
-              </td>
-              <td>{{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
-              <td>
-                <span *ngIf="esDelegado">Cupones en su sede</span>
-                <span *ngIf="!esDelegado">{{ t.nombreSedeTraslado || '—' }}</span>
-              </td>
-              <td>
-                <span *ngIf="esDelegado" class="badge bg-success">En su sede</span>
-                <span *ngIf="!esDelegado" class="badge" [ngClass]="colorEstado(t.estado)">
-                  {{ nombreEstado(t.estado) }}
-                </span>
-              </td>
-              <td class="text-center">
-                <button
-                  class="btn btn-info btn-sm me-1"
-                  title="Ver detalle"
-                  (click)="verDetalle(t)"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button
-                  class="btn btn-secondary btn-sm me-1"
-                  title="Info cupones"
-                  (click)="verCuponesInfo(t)"
-                >
-                  <i class="bi bi-info-circle"></i>
-                </button>
-                <button
-                  class="btn btn-primary btn-sm me-1"
-                  title="Trasladar a Bodega"
-                  *ngIf="(esAdmin || esCompras) && t.estado === 1"
-                  (click)="abrirTraslado(t)"
-                >
-                  <i class="bi bi-arrow-right-circle"></i>
-                </button>
-                <button
-                  class="btn btn-success btn-sm me-1"
-                  title="Trasladar a sede"
-                  *ngIf="esBodega && t.estado === 2"
-                  (click)="abrirTraslado(t)"
-                >
-                  <i class="bi bi-arrow-right-circle"></i>
-                </button>
-                <button
-                  class="btn btn-warning btn-sm me-1"
-                  title="Devolver a Compras"
-                  *ngIf="esBodega && t.estado === 4"
-                  (click)="abrirDevolucionCompras(t)"
-                >
-                  <i class="bi bi-arrow-return-left"></i>
-                </button>
-                <button
-                  class="btn btn-danger btn-sm me-1"
-                  title="Devolver a Proveedor"
-                  *ngIf="(esAdmin || esCompras) && t.estado === 5"
-                  (click)="abrirDevolucionProveedor(t)"
-                >
-                  <i class="bi bi-x-circle"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- Vista Compras/Admin — tabla con acordeón de rangos -->
+  <div *ngIf="esCompras || esAdmin">
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th></th>
+                <th>#</th>
+                <th>Fecha Compra</th>
+                <th>Expendedor</th>
+                <th>Total Cupones</th>
+                <th>Monto Total</th>
+                <th>Vencimiento</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="cargando">
+                <td colspan="9" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                  Cargando compras...
+                </td>
+              </tr>
+              <tr *ngIf="!cargando && compras.length === 0">
+                <td colspan="9" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                  No hay compras registradas.
+                </td>
+              </tr>
+              <ng-container *ngFor="let c of compras">
+                <!-- Fila principal de la compra -->
+                <tr (click)="toggleRangos(c)" style="cursor: pointer">
+                  <td class="text-center">
+                    <i class="bi" [ngClass]="c._expandido ? 'bi-chevron-up' : 'bi-chevron-down'">
+                    </i>
+                  </td>
+                  <td>{{ c.id }}</td>
+                  <td>{{ c.fechaCompra | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ c.expendedor }}</td>
+                  <td class="text-center fw-bold">
+                    {{ c.totalCupones | number }}
+                  </td>
+                  <td class="fw-bold text-success">Q{{ c.montoTotal | number }}.00</td>
+                  <td>{{ c.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      [ngClass]="c.estado === 'Activa' ? 'bg-success' : 'bg-danger'"
+                    >
+                      {{ c.estado }}
+                    </span>
+                  </td>
+                  <td class="text-center" (click)="$event.stopPropagation()">
+                    <button
+                      class="btn btn-info btn-sm"
+                      title="Ver detalle"
+                      (click)="toggleRangos(c)"
+                    >
+                      <i class="bi bi-list-ul"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Fila de rangos expandida -->
+                <tr *ngIf="c._expandido">
+                  <td colspan="9" class="p-0 bg-light">
+                    <div class="p-3">
+                      <div *ngIf="!c._rangos" class="text-center py-2">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                        Cargando rangos...
+                      </div>
+                      <table *ngIf="c._rangos" class="table table-sm table-bordered mb-0">
+                        <thead class="table-secondary">
+                          <tr>
+                            <th>Denominación</th>
+                            <th class="text-center">Del</th>
+                            <th class="text-center">Al</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-center">Disponibles</th>
+                            <th class="text-center">Monto</th>
+                            <th>Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let r of c._rangos">
+                            <td>
+                              <span class="badge bg-info text-dark">
+                                Q{{ r.denominacion }}.00
+                              </span>
+                            </td>
+                            <td class="text-center">{{ r.numeroDel }}</td>
+                            <td class="text-center">{{ r.numeroAl }}</td>
+                            <td class="text-center">{{ r.cantidad | number }}</td>
+                            <td class="text-center">{{ r.disponibles | number }}</td>
+                            <td class="text-center fw-bold text-success">
+                              Q{{ r.cantidad * r.denominacion | number }}.00
+                            </td>
+                            <td>
+                              <span
+                                class="badge"
+                                [ngClass]="
+                                  r.estado === 'Disponible' ? 'bg-success' : 'bg-secondary'
+                                "
+                              >
+                                {{ r.estado }}
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div
+        class="card-footer d-flex justify-content-between align-items-center"
+        *ngIf="totalPaginas > 1"
+      >
+        <span class="text-muted small">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="paginaActual === 1">
+              <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
+              <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+              <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
-    <div
-      class="card-footer d-flex justify-content-between align-items-center"
-      *ngIf="totalPaginas > 1"
-    >
-      <span class="text-muted small">Página {{ paginaActual }} de {{ totalPaginas }}</span>
-      <nav>
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item" [class.disabled]="paginaActual === 1">
-            <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
-              <i class="bi bi-chevron-left"></i>
-            </a>
-          </li>
-          <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
-            <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
-          </li>
-          <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
-            <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
-              <i class="bi bi-chevron-right"></i>
-            </a>
-          </li>
-        </ul>
-      </nav>
+  </div>
+
+  <!-- Vista Bodega/Delegado — tabla original de talonarios -->
+  <div *ngIf="!esCompras && !esAdmin">
+    <div class="card shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>Expendedor</th>
+                <th>Denominación</th>
+                <th>Rango</th>
+                <th>Cupones</th>
+                <th>Saldo</th>
+                <th>Vencimiento</th>
+                <th>Sede Asignada</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="cargando">
+                <td colspan="10" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                  Cargando talonarios...
+                </td>
+              </tr>
+              <tr *ngIf="!cargando && talonarios.length === 0">
+                <td colspan="10" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                  No se encontraron talonarios.
+                </td>
+              </tr>
+              <tr *ngFor="let t of talonarios">
+                <td>{{ t.id }}</td>
+                <td>{{ t.nombreExpendedor }}</td>
+                <td>
+                  <span class="badge bg-info text-dark">Q{{ t.valorCupon }}.00</span>
+                </td>
+                <td>{{ t.numeradoDel }} — {{ t.numeradoAl }}</td>
+                <td>{{ t.cantidadCupones }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [ngClass]="
+                      t.saldo === 0
+                        ? 'bg-danger'
+                        : t.saldo <= 10
+                          ? 'bg-warning text-dark'
+                          : 'bg-success'
+                    "
+                  >
+                    {{ t.saldo }}
+                  </span>
+                </td>
+                <td>{{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
+                <td>
+                  <span *ngIf="esDelegado">Cupones en su sede</span>
+                  <span *ngIf="!esDelegado">{{ t.nombreSedeTraslado || '—' }}</span>
+                </td>
+                <td>
+                  <span *ngIf="esDelegado" class="badge bg-success">En su sede</span>
+                  <span *ngIf="!esDelegado" class="badge" [ngClass]="colorEstado(t.estado)">
+                    {{ nombreEstado(t.estado) }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button
+                    class="btn btn-info btn-sm me-1"
+                    title="Ver detalle"
+                    (click)="verDetalle(t)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-secondary btn-sm me-1"
+                    title="Info cupones"
+                    (click)="verCuponesInfo(t)"
+                  >
+                    <i class="bi bi-info-circle"></i>
+                  </button>
+                  <button
+                    class="btn btn-success btn-sm me-1"
+                    title="Trasladar a sede"
+                    *ngIf="esBodega && t.estado === 2"
+                    (click)="abrirTraslado(t)"
+                  >
+                    <i class="bi bi-arrow-right-circle"></i>
+                  </button>
+                  <button
+                    class="btn btn-warning btn-sm me-1"
+                    title="Devolver a Compras"
+                    *ngIf="esBodega && t.estado === 4"
+                    (click)="abrirDevolucionCompras(t)"
+                  >
+                    <i class="bi bi-arrow-return-left"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div
+        class="card-footer d-flex justify-content-between align-items-center"
+        *ngIf="totalPaginas > 1"
+      >
+        <span class="text-muted small">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="paginaActual === 1">
+              <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
+              <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+              <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
     </div>
   </div>
 </div>

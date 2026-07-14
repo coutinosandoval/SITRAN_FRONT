@@ -18,6 +18,7 @@ import {
   AprobarSolicitud,
   RechazarSolicitud,
   BitacoraTalonario,
+  AsignarCuponesSolicitud,
 } from '../modelos/cupon.model';
 import {
   SolicitudTalonario,
@@ -26,7 +27,6 @@ import {
   AprobarSolicitudTalonario,
   RechazarSolicitudTalonario,
   SolicitudTalonarioDetalle,
-  AsignarCuponesSolicitud,
   DevolverCuponesBodega,
   TalonarioBodegaDisponible,
 } from '../modelos/cupon.model';
@@ -236,31 +236,25 @@ export class CuponService {
    * Asigna cupones de un talonario específico a una solicitud.
    * Puede llamarse múltiples veces para cubrir la cantidad solicitada.
    */
+  /** Flujo viejo — asigna cupones de talonario a solicitud */
   asignarCuponesSolicitud(idSolicitud: number, dto: AsignarCuponesSolicitud): Observable<any> {
     return this.http.post(
       `${this.apiUrl}/solicitudes-talonario/${idSolicitud}/asignar-cupones`,
       dto,
     );
   }
-  // Devolver cupones no usados de una comisión
-  devolverCuponesComision(idComision: number, idsCupones: number[]): Observable<any> {
-    const baseUrl = this.apiUrl.replace('/cupon', '');
-    return this.http.post(`${baseUrl}/comision/${idComision}/cupones/devolver`, { idsCupones });
-  }
-  /**
-   * Marca la solicitud como atendida una vez asignados todos los cupones.
-   */
-  marcarSolicitudAtendida(id: number): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/solicitudes-talonario/${id}/marcar-atendida`, {});
-  }
 
-  /**
-   * Obtiene el detalle de talonarios asignados a una solicitud.
-   * Usado por Sede para ver qué talonarios tiene y cuántos cupones.
-   */
-  obtenerDetalleSolicitud(id: number): Observable<SolicitudTalonarioDetalle[]> {
-    return this.http.get<SolicitudTalonarioDetalle[]>(
-      `${this.apiUrl}/solicitudes-talonario/${id}/detalle`,
+  /** Flujo nuevo — asigna rangos de cupones por monto */
+  asignarCuponesPorMonto(
+    idSolicitud: number,
+    dto: {
+      idCompraDetalle: number;
+      cantidad: number;
+    },
+  ): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(
+      `${environment.apiUrl}/api/solicitudes-cupones/${idSolicitud}/asignar-cupones`,
+      dto,
     );
   }
 
@@ -314,5 +308,91 @@ export class CuponService {
   /** Obtiene los rangos de una compra específica */
   obtenerDetalleCompra(idCompra: number): Observable<any[]> {
     return this.http.get<any[]>(`${environment.apiUrl}/api/compras/${idCompra}/detalle`);
+  }
+
+  // ============================================================
+  // AGREGAR estos métodos en cupon.service.ts
+  // dentro de la clase CuponService
+  // ============================================================
+
+  // ── Solicitudes de cupones ──────────────────────────────────
+
+  /** Lista de solicitudes filtrable por sede y estado */
+  obtenerSolicitudesCupones(
+    idSede?: number,
+    estado?: string,
+    pagina: number = 1,
+    porPagina: number = 10,
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('pagina', pagina.toString())
+      .set('porPagina', porPagina.toString());
+    if (idSede) params = params.set('idSede', idSede.toString());
+    if (estado) params = params.set('estado', estado);
+    return this.http.get<any>(`${environment.apiUrl}/api/solicitudes-cupones`, { params });
+  }
+
+  /** Detalle de cupones asignados a una solicitud */
+  obtenerDetalleSolicitud(idSolicitud: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/api/solicitudes-cupones/${idSolicitud}/detalle`,
+    );
+  }
+
+  marcarSolicitudAtendida(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/solicitudes-talonario/${id}/marcar-atendida`, {});
+  }
+
+  devolverCuponesComision(idComision: number, idsCupones: number[]): Observable<any> {
+    const baseUrl = this.apiUrl.replace('/cupon', '');
+    return this.http.post(`${baseUrl}/comision/${idComision}/cupones/devolver`, { idsCupones });
+  }
+  /** Rangos disponibles en Bodega para asignar */
+  obtenerRangosBodega(denominacion?: number): Observable<any[]> {
+    let params = new HttpParams();
+    if (denominacion) params = params.set('denominacion', denominacion.toString());
+    return this.http.get<any[]>(`${environment.apiUrl}/api/solicitudes-cupones/rangos-bodega`, {
+      params,
+    });
+  }
+
+  /** Delegado crea una solicitud por monto */
+  crearSolicitudCupones(dto: {
+    idSede: number;
+    monto: number;
+    motivo?: string;
+  }): Observable<{ idSolicitud: number; mensaje: string }> {
+    return this.http.post<{ idSolicitud: number; mensaje: string }>(
+      `${environment.apiUrl}/api/solicitudes-cupones`,
+      dto,
+    );
+  }
+
+  /** Autoridad Nacional autoriza o rechaza */
+  autorizarSolicitudCupones(
+    idSolicitud: number,
+    dto: {
+      aprobar: boolean;
+      observacion?: string;
+    },
+  ): Observable<{ mensaje: string }> {
+    return this.http.patch<{ mensaje: string }>(
+      `${environment.apiUrl}/api/solicitudes-cupones/${idSolicitud}/autorizar`,
+      dto,
+    );
+  }
+
+  /** Bodega finaliza la atención */
+  finalizarSolicitudCupones(
+    idSolicitud: number,
+    dto: {
+      nombreEntregador?: string;
+      nombreReceptor?: string;
+    },
+  ): Observable<{ mensaje: string }> {
+    return this.http.patch<{ mensaje: string }>(
+      `${environment.apiUrl}/api/solicitudes-cupones/${idSolicitud}/finalizar`,
+      dto,
+    );
   }
 }

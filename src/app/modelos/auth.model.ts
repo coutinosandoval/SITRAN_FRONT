@@ -20,3 +20,17 @@ export interface LoginResponse {
 export interface ErrorResponse {
   mensaje: string;
 }
+
+export interface LoginResponse {
+  token: string;
+  nombre: string;
+  usuarioSistema: string;
+  roles: string[];
+  expiracion: string;
+  idUnidad: number;
+  idSede?: number;    // ← agregar esta línea
+  tipoLugar: string;
+  permisos: string[];
+}
+
+

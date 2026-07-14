@@ -5,10 +5,9 @@ import { LoginRequest, LoginResponse } from '../modelos/auth.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
-
   private base = `${environment.apiUrl}/api/auth`;
 
   constructor(private http: HttpClient) {
@@ -32,15 +31,15 @@ export class AuthService {
   // Guarda el token y datos del usuario en sessionStorage
   // sessionStorage se borra automáticamente al cerrar el navegador
   guardarToken(response: LoginResponse): void {
- sessionStorage.setItem('token',          response.token);
-  sessionStorage.setItem('nombre',         response.nombre);
-  sessionStorage.setItem('usuarioSistema', response.usuarioSistema);
-  sessionStorage.setItem('roles',          JSON.stringify(response.roles));
-  sessionStorage.setItem('expiracion',     response.expiracion);
-  sessionStorage.setItem('idUnidad',       response.idUnidad?.toString() || '');
-  sessionStorage.setItem('tipoLugar',      response.tipoLugar || '');
-  sessionStorage.setItem('permisos', JSON.stringify(response.permisos || []));
-
+    sessionStorage.setItem('token', response.token);
+    sessionStorage.setItem('nombre', response.nombre);
+    sessionStorage.setItem('usuarioSistema', response.usuarioSistema);
+    sessionStorage.setItem('roles', JSON.stringify(response.roles));
+    sessionStorage.setItem('expiracion', response.expiracion);
+    sessionStorage.setItem('idUnidad', response.idUnidad?.toString() || '');
+    sessionStorage.setItem('idSede', response.idSede?.toString() || '');
+    sessionStorage.setItem('tipoLugar', response.tipoLugar || '');
+    sessionStorage.setItem('permisos', JSON.stringify(response.permisos || []));
   }
 
   // Elimina el token y datos del usuario
@@ -83,35 +82,38 @@ export class AuthService {
   }
 
   // Obtiene los roles del usuario autenticado
-obtenerRoles(): string[] {
-  const roles = sessionStorage.getItem('roles');
-  return roles ? JSON.parse(roles) : [];
-}
+  obtenerRoles(): string[] {
+    const roles = sessionStorage.getItem('roles');
+    return roles ? JSON.parse(roles) : [];
+  }
 
-// Verifica si el usuario tiene un rol específico
-tieneRol(rol: string): boolean {
-  return this.obtenerRoles().some(r => r.toLowerCase() === rol.toLowerCase());
-}
+  // Verifica si el usuario tiene un rol específico
+  tieneRol(rol: string): boolean {
+    return this.obtenerRoles().some((r) => r.toLowerCase() === rol.toLowerCase());
+  }
 
-obtenerIdUnidad(): number | null {
-  const val = sessionStorage.getItem('idUnidad');
-  return val ? parseInt(val) : null;
-}
+  obtenerIdUnidad(): number | null {
+    const val = sessionStorage.getItem('idUnidad');
+    return val ? parseInt(val) : null;
+  }
 
-obtenerTipoLugar(): string {
-  return sessionStorage.getItem('tipoLugar') || '';
-}
+  obtenerTipoLugar(): string {
+    return sessionStorage.getItem('tipoLugar') || '';
+  }
 
-// Obtiene los permisos del usuario autenticado
-obtenerPermisos(): string[] {
-  const permisos = sessionStorage.getItem('permisos');
-  return permisos ? JSON.parse(permisos) : [];
-}
+  // Obtiene los permisos del usuario autenticado
+  obtenerPermisos(): string[] {
+    const permisos = sessionStorage.getItem('permisos');
+    return permisos ? JSON.parse(permisos) : [];
+  }
 
-// Verifica si el usuario tiene un permiso específico
-tienePermiso(permiso: string): boolean {
-  return this.obtenerPermisos().some(p => p.toUpperCase() === permiso.toUpperCase());
-}
+  // Verifica si el usuario tiene un permiso específico
+  tienePermiso(permiso: string): boolean {
+    return this.obtenerPermisos().some((p) => p.toUpperCase() === permiso.toUpperCase());
+  }
 
-
+  obtenerIdSede(): number | null {
+    const val = sessionStorage.getItem('idSede');
+    return val ? parseInt(val) : null;
+  }
 }

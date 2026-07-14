@@ -88,6 +88,7 @@
                 <th>Nombre</th>
                 <th>Usuario</th>
                 <th>Correo</th>
+                <th>Sede</th>
                 <th>Unidad</th>
                 <th>Estado</th>
                 <th>Bloqueado</th>
@@ -114,7 +115,9 @@
                   <code>{{ u.nombreUsuario }}</code>
                 </td>
                 <td>{{ u.correo }}</td>
+                <td>{{ u.nombreSede || '—' }}</td>
                 <td>{{ u.nombreUnidad || '—' }}</td>
+
                 <td>
                   <span
                     class="badge"
@@ -301,7 +304,7 @@
         />
       </div>
       <div class="mb-3 position-relative">
-        <label class="form-label">Unidad / Sede</label>
+        <label class="form-label">Sede</label>
         <div class="input-group">
           <input
             type="text"
@@ -309,7 +312,7 @@
             [(ngModel)]="textoBusquedaLugar"
             (input)="filtrarLugares()"
             (focus)="filtrarLugares()"
-            placeholder="Buscar unidad o sede..."
+            placeholder="Buscar sede..."
             autocomplete="off"
           />
           <button
@@ -337,6 +340,13 @@
             <span class="badge bg-secondary">{{ l.tipo }}</span>
           </li>
         </ul>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Unidad <span class="text-muted small">(opcional)</span></label>
+        <select class="form-select" [(ngModel)]="formUsuario.idUnidad">
+          <option [ngValue]="undefined">— Sin unidad —</option>
+          <option *ngFor="let u of unidades" [value]="u.id">{{ u.nombre }}</option>
+        </select>
       </div>
       <div class="mb-3">
         <label class="form-label">Estado</label>

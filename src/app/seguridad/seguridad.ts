@@ -27,6 +27,7 @@ export class SeguridadComponent implements OnInit {
 
   // ─── Usuarios ───
   usuarios: Usuario[] = [];
+  // unidades: CatalogoItem[] = [];
   paginaUsuarios: number = 1;
   totalUsuarios: number = 0;
   totalPaginasUsuarios: number = 0;
@@ -53,6 +54,7 @@ export class SeguridadComponent implements OnInit {
         'SOLICITAR_CUPONES',
         'GESTIONAR_SOLICITUDES_CUPONES',
         'GESTIONAR_COMPRAS_TALONARIOS',
+        'AUTORIZAR_SOLICITUDES_CUPONES',
       ],
     },
     { titulo: 'Comisiones', permisos: ['VER_COMISIONES', 'GESTIONAR_COMISIONES_SEDE'] },
@@ -103,6 +105,7 @@ export class SeguridadComponent implements OnInit {
     clave: '',
     estado: 'Activo',
     idUnidad: undefined,
+    idSede: undefined,
   };
   formRol: RolCrear = { nombre: '', descripcion: '' };
 
@@ -132,16 +135,13 @@ export class SeguridadComponent implements OnInit {
 
   // Carga unidades para el formulario de usuario
   cargarUnidades(): void {
-    forkJoin({
-      unidades: this.catalogoService.obtenerUnidades(),
-      sedes: this.catalogoService.obtenerSedes(),
-    }).subscribe({
-      next: ({ unidades, sedes }) => {
-        this.lugaresDisponibles = [
-          ...unidades.map((u) => ({ ...u, tipo: 'Unidad' })),
-          ...sedes.map((s) => ({ ...s, tipo: 'Sede' })),
-        ];
+    this.catalogoService.obtenerSedes().subscribe({
+      next: (sedes) => {
+        this.lugaresDisponibles = sedes.map((s) => ({ ...s, tipo: 'Sede' }));
       },
+    });
+    this.catalogoService.obtenerUnidades().subscribe({
+      next: (data) => (this.unidades = data),
     });
   }
   // ─── Tab ───
@@ -211,23 +211,23 @@ export class SeguridadComponent implements OnInit {
       clave: '',
       estado: 'Activo',
       idUnidad: undefined,
+      idSede: undefined,
     };
     this.mostrarModalUsuario = true;
   }
 
   abrirEditarUsuario(u: Usuario): void {
-    console.log('Usuario:', JSON.stringify(u)); // ← agrega esta línea
     this.usuarioEditando = u;
     this.formUsuario = {
       correo: u.correo,
       estado: u.estado,
       idUnidad: u.idUnidad,
+      idSede: u.idSede,
       tipoLugar: u.tipoLugar,
     };
-    const lugar = this.lugaresDisponibles.find(
-      (l) => l.id === u.idUnidad && l.tipo.toUpperCase() === (u.tipoLugar || 'UNIDAD'),
-    );
-    this.textoBusquedaLugar = lugar?.nombre || '';
+    // Pre-llenar el buscador de sede
+    const sede = this.lugaresDisponibles.find((l) => l.id === u.idSede);
+    this.textoBusquedaLugar = sede?.nombre || '';
     this.mostrarDropdown = false;
     this.mostrarModalUsuario = true;
   }
@@ -244,6 +244,7 @@ export class SeguridadComponent implements OnInit {
           correo: this.formUsuario.correo,
           estado: this.formUsuario.estado,
           idUnidad: this.formUsuario.idUnidad,
+          idSede: this.formUsuario.idSede,
           tipoLugar: this.formUsuario.tipoLugar,
         })
         .subscribe({
@@ -438,14 +439,14 @@ export class SeguridadComponent implements OnInit {
   }
 
   seleccionarLugar(lugar: CatalogoItem & { tipo: string }): void {
-    this.formUsuario.idUnidad = lugar.id;
-    this.formUsuario.tipoLugar = lugar.tipo.toUpperCase();
+    this.formUsuario.idSede = lugar.id;
+    this.formUsuario.tipoLugar = 'SEDE';
     this.textoBusquedaLugar = lugar.nombre;
     this.mostrarDropdown = false;
   }
 
   limpiarLugar(): void {
-    this.formUsuario.idUnidad = undefined;
+    this.formUsuario.idSede = undefined;
     this.textoBusquedaLugar = '';
     this.mostrarDropdown = false;
   }

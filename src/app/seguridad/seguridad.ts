@@ -31,8 +31,10 @@ export class SeguridadComponent implements OnInit {
   paginaUsuarios: number = 1;
   totalUsuarios: number = 0;
   totalPaginasUsuarios: number = 0;
-  filtroEstado: string = '';
+  filtroEstado: string = 'Activo';
   filtroBusqueda: string = '';
+
+  intentoGuardar: boolean = false;
 
   // ─── Roles y permisos ───
   roles: Rol[] = [];
@@ -187,7 +189,7 @@ export class SeguridadComponent implements OnInit {
   }
 
   limpiarFiltrosUsuarios(): void {
-    this.filtroEstado = '';
+    this.filtroEstado = 'Activo';
     this.filtroBusqueda = '';
     this.filtrarUsuarios();
   }
@@ -203,6 +205,9 @@ export class SeguridadComponent implements OnInit {
   }
 
   abrirCrearUsuario(): void {
+    this.intentoGuardar = false; // ← aquí
+    this.usuarioEditando = null;
+
     this.usuarioEditando = null;
     this.formUsuario = {
       nombre: '',
@@ -217,6 +222,8 @@ export class SeguridadComponent implements OnInit {
   }
 
   abrirEditarUsuario(u: Usuario): void {
+    this.intentoGuardar = false; // ← aquí
+    this.usuarioEditando = u;
     this.usuarioEditando = u;
     this.formUsuario = {
       correo: u.correo,
@@ -237,8 +244,36 @@ export class SeguridadComponent implements OnInit {
   }
 
   guardarUsuario(): void {
+    // Validar campos obligatorios al crear
+    if (!this.usuarioEditando) {
+      if (!this.formUsuario.nombre) {
+        this.mensajeError = 'El nombre es obligatorio.';
+        return;
+      }
+      if (!this.formUsuario.usuario) {
+        this.mensajeError = 'El usuario es obligatorio.';
+        return;
+      }
+      if (!this.formUsuario.clave) {
+        this.mensajeError = 'La clave es obligatoria.';
+        return;
+      }
+    }
+
+    // Validar correo
+    const regexCorreo = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/i;
+    if (!this.formUsuario.correo || !regexCorreo.test(this.formUsuario.correo)) {
+      this.mensajeError = 'Ingrese un correo electrónico válido.';
+      return;
+    }
+
+    // Validar sede
+    if (!this.formUsuario.idSede) {
+      this.mensajeError = 'Debe seleccionar una sede.';
+      return;
+    }
+
     if (this.usuarioEditando) {
-      // Actualizar usuario existente
       this.seguridadService
         .actualizarUsuario(this.usuarioEditando.id, {
           correo: this.formUsuario.correo,
@@ -258,7 +293,6 @@ export class SeguridadComponent implements OnInit {
           },
         });
     } else {
-      // Crear nuevo usuario
       this.seguridadService.crearUsuario(this.formUsuario).subscribe({
         next: () => {
           this.mensajeExito = 'Usuario creado correctamente.';
@@ -439,12 +473,14 @@ export class SeguridadComponent implements OnInit {
   }
 
   seleccionarLugar(lugar: CatalogoItem & { tipo: string }): void {
-    this.formUsuario.idSede = lugar.id;
-    this.formUsuario.tipoLugar = 'SEDE';
+    this.formUsuario = {
+      ...this.formUsuario,
+      idSede: lugar.id,
+      tipoLugar: 'SEDE',
+    };
     this.textoBusquedaLugar = lugar.nombre;
     this.mostrarDropdown = false;
   }
-
   limpiarLugar(): void {
     this.formUsuario.idSede = undefined;
     this.textoBusquedaLugar = '';
@@ -454,5 +490,77 @@ export class SeguridadComponent implements OnInit {
   // Obtiene los objetos Permiso completos que pertenecen a un grupo, en el orden del catálogo
   permisosDeGrupo(nombres: string[]): Permiso[] {
     return this.permisos.filter((p) => nombres.includes(p.nombre!));
+  }
+  inactivarUsuario(u: Usuario): void {
+    if (!confirm(`¿Confirma inactivar al usuario ${u.nombreUsuario}?`)) return;
+    this.seguridadService
+      .actualizarUsuario(u.id, {
+        correo: u.correo,
+        estado: 'Inactivo',
+        idUnidad: u.idUnidad,
+        idSede: u.idSede,
+        tipoLugar: u.tipoLugar,
+      })
+      .subscribe({
+        next: () => {
+          this.mensajeExito = `Usuario ${u.nombreUsuario} inactivado.`;
+          this.cargarUsuarios();
+        },
+        error: () => {
+          this.mensajeError = 'Error al inactivar el usuario.';
+        },
+      });
+  }
+
+  activarUsuario(u: Usuario): void {
+    if (!confirm(`¿Confirma activar al usuario ${u.nombreUsuario}?`)) return;
+    this.seguridadService
+      .actualizarUsuario(u.id, {
+        correo: u.correo,
+        estado: 'Activo',
+        idUnidad: u.idUnidad,
+        idSede: u.idSede,
+        tipoLugar: u.tipoLugar,
+      })
+      .subscribe({
+        next: () => {
+          this.mensajeExito = `Usuario ${u.nombreUsuario} activado.`;
+          this.cargarUsuarios();
+        },
+        error: () => {
+          this.mensajeError = 'Error al activar el usuario.';
+        },
+      });
+  }
+
+  formularioInvalido(): boolean {
+    if (this.usuarioEditando) {
+      return !this.formUsuario.correo || !this.formUsuario.idSede;
+    }
+    return (
+      !this.formUsuario.nombre ||
+      !this.formUsuario.usuario ||
+      !this.formUsuario.correo ||
+      !this.formUsuario.clave ||
+      !this.formUsuario.idSede
+    );
+  }
+
+  esCorreoValido(correo: string): boolean {
+    const regex = /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/i;
+    return regex.test(correo);
+  }
+
+  inactivarRol(r: Rol): void {
+    if (!confirm(`¿Confirma inactivar el rol "${r.nombre}"?`)) return;
+    this.seguridadService.inactivarRol(r.id).subscribe({
+      next: () => {
+        this.mensajeExito = `Rol "${r.nombre}" inactivado correctamente.`;
+        this.cargarRoles();
+      },
+      error: () => {
+        this.mensajeError = 'Error al inactivar el rol.';
+      },
+    });
   }
 }

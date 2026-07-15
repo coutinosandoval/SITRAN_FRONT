@@ -146,6 +146,14 @@
                   >
                     <i class="bi bi-person-gear"></i>
                   </button>
+                  <button
+                    class="btn btn-danger btn-sm ms-1"
+                    title="Inactivar usuario"
+                    *ngIf="u.estado === 'Activo'"
+                    (click)="inactivarUsuario(u)"
+                  >
+                    <i class="bi bi-person-x"></i>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -238,11 +246,19 @@
                 <td>{{ r.creadoPor }}</td>
                 <td class="text-center">
                   <button
-                    class="btn btn-warning btn-sm"
+                    class="btn btn-warning btn-sm me-1"
                     title="Ver permisos"
                     (click)="abrirPermisosRol(r)"
                   >
                     <i class="bi bi-key"></i>
+                  </button>
+                  <button
+                    class="btn btn-danger btn-sm"
+                    title="Inactivar rol"
+                    *ngIf="r.estado === 'Activo'"
+                    (click)="inactivarRol(r)"
+                  >
+                    <i class="bi bi-trash"></i>
                   </button>
                 </td>
               </tr>
@@ -267,45 +283,69 @@
       </button>
     </div>
     <div class="modal-body-custom">
-      <div class="mb-3">
-        <label class="form-label">Nombre Completo</label>
+      <!-- Mensaje de error global -->
+      <div *ngIf="mensajeError" class="alert alert-danger py-2 mb-3">
+        <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+      </div>
+
+      <!-- Nombre -->
+      <div *ngIf="!usuarioEditando" class="mb-3">
+        <label class="form-label"> Nombre Completo <span class="text-danger">*</span> </label>
         <input
           type="text"
           class="form-control text-uppercase"
           [(ngModel)]="formUsuario.nombre"
+          [class.is-invalid]="intentoGuardar && !formUsuario.nombre"
           placeholder="Nombre completo"
         />
+        <div class="invalid-feedback">El nombre es obligatorio.</div>
       </div>
+
+      <!-- Usuario -->
       <div *ngIf="!usuarioEditando" class="mb-3">
-        <label class="form-label">Usuario</label>
+        <label class="form-label"> Usuario <span class="text-danger">*</span> </label>
         <input
           type="text"
           class="form-control"
           [(ngModel)]="formUsuario.usuario"
+          [class.is-invalid]="intentoGuardar && !formUsuario.usuario"
           placeholder="Nombre de usuario"
         />
+        <div class="invalid-feedback">El usuario es obligatorio.</div>
       </div>
+
+      <!-- Correo -->
       <div class="mb-3">
-        <label class="form-label">Correo</label>
+        <label class="form-label"> Correo <span class="text-danger">*</span> </label>
         <input
           type="email"
           class="form-control"
           [(ngModel)]="formUsuario.correo"
+          [class.is-invalid]="
+            intentoGuardar && (!formUsuario.correo || !esCorreoValido(formUsuario.correo))
+          "
           placeholder="correo@segeplan.gob.gt"
         />
+        <div class="invalid-feedback">Ingrese un correo electrónico válido.</div>
       </div>
+
+      <!-- Clave -->
       <div *ngIf="!usuarioEditando" class="mb-3">
-        <label class="form-label">Clave Temporal</label>
+        <label class="form-label"> Clave Temporal <span class="text-danger">*</span> </label>
         <input
           type="password"
           class="form-control"
           [(ngModel)]="formUsuario.clave"
+          [class.is-invalid]="intentoGuardar && !formUsuario.clave"
           placeholder="Clave inicial"
         />
+        <div class="invalid-feedback">La clave es obligatoria.</div>
       </div>
+
+      <!-- Sede -->
       <div class="mb-3 position-relative">
-        <label class="form-label">Sede</label>
-        <div class="input-group">
+        <label class="form-label"> Sede <span class="text-danger">*</span> </label>
+        <div class="input-group" [class.is-invalid]="intentoGuardar && !formUsuario.idSede">
           <input
             type="text"
             class="form-control"
@@ -314,6 +354,7 @@
             (focus)="filtrarLugares()"
             placeholder="Buscar sede..."
             autocomplete="off"
+            [class.is-invalid]="intentoGuardar && !formUsuario.idSede"
           />
           <button
             class="btn btn-outline-secondary"
@@ -324,7 +365,9 @@
             <i class="bi bi-x"></i>
           </button>
         </div>
-        <!-- Dropdown de resultados -->
+        <div class="text-danger small mt-1" *ngIf="intentoGuardar && !formUsuario.idSede">
+          Debe seleccionar una sede.
+        </div>
         <ul
           *ngIf="mostrarDropdown && lugaresFiltrados.length > 0"
           class="list-group position-absolute w-100 shadow-sm"
@@ -341,13 +384,17 @@
           </li>
         </ul>
       </div>
+
+      <!-- Unidad -->
       <div class="mb-3">
-        <label class="form-label">Unidad <span class="text-muted small">(opcional)</span></label>
+        <label class="form-label"> Unidad <span class="text-muted small">(opcional)</span> </label>
         <select class="form-select" [(ngModel)]="formUsuario.idUnidad">
           <option [ngValue]="undefined">— Sin unidad —</option>
-          <option *ngFor="let u of unidades" [value]="u.id">{{ u.nombre }}</option>
+          <option *ngFor="let u of unidades" [ngValue]="u.id">{{ u.nombre }}</option>
         </select>
       </div>
+
+      <!-- Estado -->
       <div class="mb-3">
         <label class="form-label">Estado</label>
         <select class="form-select" [(ngModel)]="formUsuario.estado">

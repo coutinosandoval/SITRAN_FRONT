@@ -1,0 +1,435 @@
+// ============================================================
+// solicitud-combustible.ts
+// Componente para gestión de solicitudes de combustible
+// Flujo: Solicitante crea → Jefe autoriza/entrega → Piloto devuelve
+// Ruta: src/app/cupones/solicitud-combustible/solicitud-combustible.ts
+// ============================================================
+
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule }                          from '@angular/common';
+import { FormsModule, ReactiveFormsModule,
+         FormBuilder, FormGroup, Validators }    from '@angular/forms';
+import { AuthService }                           from '../../servicios/auth.service';
+import { CuponService }                          from '../../servicios/cupon.service';
+import { ComisionService }                       from '../../servicios/comision.service';
+import { environment }                           from '../../../environments/environment';
+import { HttpClient, HttpParams }                from '@angular/common/http';
+
+@Component({
+  selector:    'app-solicitud-combustible',
+  standalone:  true,
+  imports:     [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './solicitud-combustible.html',
+})
+export class SolicitudCombustibleComponent implements OnInit {
+
+  // ─── Listas ───
+  solicitudes:        any[] = [];
+  vehiculos:          any[] = [];
+  pilotos:            any[] = [];
+  cuponesDisponibles: any[] = [];
+  detalleSolicitud:   any[] = [];
+
+  // ─── Paginación ───
+  paginaActual:   number = 1;
+  tamanioPagina:  number = 10;
+  totalRegistros: number = 0;
+  totalPaginas:   number = 0;
+  filtroEstado:   string = '';
+
+  // ─── Visibilidad ───
+  mostrarLista:      boolean = true;
+  mostrarFormulario: boolean = false;
+  mostrarDetalle:    boolean = false;
+
+  // ─── Detalle seleccionado ───
+  solicitudSeleccionada: any   = null;
+  idSolicitudActual:     number = 0;
+
+  // ─── Cupones a agregar ───
+  cuponesAgregados:  any[]  = [];
+  rangoSeleccionado: any    = null;
+  cantidadAsignar:   number = 0;
+
+  // ─── Modal devolución ───
+  mostrarModalDevolucion: boolean = false;
+  detalleSeleccionado:    any     = null;
+  cantidadDevolver:       number  = 0;
+
+  // ─── Roles ───
+  esSolicitante:     boolean      = false;
+  esJefeTransporte:  boolean      = false;
+  idSedeUsuario:     number | null = null;
+
+  // ─── Formulario ───
+  formulario:     FormGroup;
+  intentoGuardar: boolean = false;
+
+  // ─── Estado ───
+  cargando:     boolean = false;
+  mensajeExito: string  = '';
+  mensajeError: string  = '';
+
+  private apiUrl = `${environment.apiUrl}/api/solicitud-combustible`;
+
+  constructor(
+    private authService:    AuthService,
+    private cuponService:   CuponService,
+    private comisionService: ComisionService,
+    private fb:             FormBuilder,
+    private http:           HttpClient,
+    private cdr:            ChangeDetectorRef,
+  ) {
+    // Formulario de nueva solicitud
+    this.formulario = this.fb.group({
+      idVehiculo:   ['', Validators.required],
+      idPiloto:     ['', Validators.required],
+      solicitante:  ['', Validators.required],
+      observaciones: [''],
+    });
+  }
+
+  ngOnInit(): void {
+    // Determinar rol del usuario logueado
+    this.esSolicitante    = this.authService.tienePermiso('SOLICITAR_COMBUSTIBLE');
+    this.esJefeTransporte = this.authService.tienePermiso('GESTIONAR_COMBUSTIBLE');
+    this.idSedeUsuario    = this.authService.obtenerIdUnidad();
+    this.cargarSolicitudes();
+    this.cargarVehiculos();
+    this.cargarPilotos();
+    this.cargarCuponesDisponibles();
+  }
+
+  // ─── Carga de datos ──────────────────────────────────────
+
+  /** Carga lista de solicitudes filtradas por sede y estado */
+  cargarSolicitudes(): void {
+    this.cargando = true;
+    let params    = new HttpParams()
+      .set('pagina',    this.paginaActual.toString())
+      .set('porPagina', this.tamanioPagina.toString());
+
+    if (this.idSedeUsuario)
+      params = params.set('idSede', this.idSedeUsuario.toString());
+    if (this.filtroEstado)
+      params = params.set('estado', this.filtroEstado);
+
+    this.http.get<any>(this.apiUrl, { params }).subscribe({
+      next: (data) => {
+        this.solicitudes    = data.datos;
+        this.totalRegistros = data.total;
+        this.totalPaginas   = Math.ceil(data.total / this.tamanioPagina);
+        this.cargando       = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mensajeError = 'Error al cargar solicitudes.';
+        this.cargando     = false;
+      },
+    });
+  }
+
+  /** Carga vehículos disponibles */
+  cargarVehiculos(): void {
+    const hoy    = new Date().toISOString();
+    const manana = new Date(Date.now() + 86400000).toISOString();
+    this.comisionService
+      .obtenerVehiculosDisponibles(hoy, manana, this.idSedeUsuario ?? undefined)
+      .subscribe({ next: (data: any) => (this.vehiculos = data) });
+  }
+
+  /** Carga pilotos disponibles */
+  cargarPilotos(): void {
+    const hoy    = new Date().toISOString();
+    const manana = new Date(Date.now() + 86400000).toISOString();
+    this.comisionService
+      .obtenerPilotosDisponibles(hoy, manana)
+      .subscribe({ next: (data: any) => (this.pilotos = data) });
+  }
+
+  /** Carga cupones disponibles en la sede */
+  cargarCuponesDisponibles(): void {
+    this.cuponService
+      .obtenerTalonariosDisponibles(this.idSedeUsuario ?? undefined)
+      .subscribe({ next: (data: any) => (this.cuponesDisponibles = data) });
+  }
+
+  // ─── Nueva solicitud ─────────────────────────────────────
+
+  /** Abre el formulario de nueva solicitud */
+  nuevaSolicitud(): void {
+    this.mostrarLista      = false;
+    this.mostrarFormulario = true;
+    this.mostrarDetalle    = false;
+    this.formulario.reset();
+    this.cuponesAgregados  = [];
+    this.rangoSeleccionado = null;
+    this.cantidadAsignar   = 0;
+    this.intentoGuardar    = false;
+    this.limpiarMensajes();
+  }
+
+  /** Guarda la nueva solicitud y sus cupones */
+  guardar(): void {
+    this.intentoGuardar = true;
+    if (this.formulario.invalid) {
+      this.formulario.markAllAsTouched();
+      return;
+    }
+    if (this.cuponesAgregados.length === 0) {
+      this.mensajeError = 'Debe agregar al menos un rango de cupones.';
+      return;
+    }
+
+    this.cargando = true;
+    const v       = this.formulario.value;
+
+    // Paso 1: crear la solicitud
+    this.http.post<any>(this.apiUrl, {
+      idSede:       this.idSedeUsuario,
+      idVehiculo:   Number(v.idVehiculo),
+      idPiloto:     Number(v.idPiloto),
+      solicitante:  v.solicitante,
+      observaciones: v.observaciones || null,
+    }).subscribe({
+      next: (res) => {
+        const idSolicitud = res.id;
+        // Paso 2: agregar cupones en secuencia
+        this.agregarCuponesSecuencial(idSolicitud, 0);
+      },
+      error: (err) => {
+        this.mensajeError = err.error?.mensaje || 'Error al registrar la solicitud.';
+        this.cargando     = false;
+      },
+    });
+  }
+
+  /** Agrega cupones uno por uno en secuencia */
+  private agregarCuponesSecuencial(idSolicitud: number, index: number): void {
+    if (index >= this.cuponesAgregados.length) {
+      // Todos los cupones agregados
+      this.cargando     = false;
+      this.mensajeExito = `Solicitud #${idSolicitud} registrada correctamente.`;
+      this.volverLista();
+      this.cargarSolicitudes();
+      return;
+    }
+
+    const c = this.cuponesAgregados[index];
+    this.http.post<any>(`${this.apiUrl}/${idSolicitud}/detalle`, {
+      idSolCuponDet: c.rango.id,
+      denominacion:  c.rango.denominacion,
+      cantidad:      c.cantidad,
+      numeroDel:     c.rango.numeroDel,
+      numeroAl:      c.rango.numeroAl,
+    }).subscribe({
+      next: () => this.agregarCuponesSecuencial(idSolicitud, index + 1),
+      error: (err) => {
+        this.mensajeError = err.error?.mensaje || 'Error al agregar cupones.';
+        this.cargando     = false;
+      },
+    });
+  }
+
+  // ─── Cupones ─────────────────────────────────────────────
+
+  /** Selecciona un rango del combo */
+  seleccionarRango(id: any): void {
+    this.rangoSeleccionado = this.cuponesDisponibles.find(r => r.id == id) || null;
+    this.cantidadAsignar   = 0;
+  }
+
+  /** Agrega un rango al listado de cupones de la solicitud */
+  agregarCupon(): void {
+    if (!this.rangoSeleccionado || this.cantidadAsignar <= 0) {
+      this.mensajeError = 'Seleccione un rango e ingrese una cantidad válida.';
+      return;
+    }
+    this.cuponesAgregados.push({
+      rango:    { ...this.rangoSeleccionado },
+      cantidad: this.cantidadAsignar,
+    });
+    this.rangoSeleccionado = null;
+    this.cantidadAsignar   = 0;
+    this.mensajeError      = '';
+    this.cdr.detectChanges();
+  }
+
+  /** Elimina un cupón de la lista antes de guardar */
+  eliminarCupon(index: number): void {
+    this.cuponesAgregados.splice(index, 1);
+    this.cdr.detectChanges();
+  }
+
+  get totalCupones(): number {
+    return this.cuponesAgregados.reduce((a, c) => a + c.cantidad, 0);
+  }
+
+  get montoTotal(): number {
+    return this.cuponesAgregados.reduce(
+      (a, c) => a + c.cantidad * (c.rango.denominacion || 0), 0);
+  }
+
+  // ─── Ver detalle ─────────────────────────────────────────
+
+  /** Carga el detalle de una solicitud */
+  verDetalle(id: number): void {
+    this.cargando = true;
+    this.http.get<any>(`${this.apiUrl}/${id}`).subscribe({
+      next: (data) => {
+        this.solicitudSeleccionada = data;
+        this.http.get<any[]>(`${this.apiUrl}/${id}/detalle`).subscribe({
+          next: (det) => {
+            this.detalleSolicitud  = det;
+            this.mostrarLista      = false;
+            this.mostrarFormulario = false;
+            this.mostrarDetalle    = true;
+            this.cargando          = false;
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: () => {
+        this.mensajeError = 'Error al cargar el detalle.';
+        this.cargando     = false;
+      },
+    });
+  }
+
+  // ─── Autorizar ───────────────────────────────────────────
+
+  /** Autoriza la solicitud y genera PDF de entrega */
+  autorizar(id: number): void {
+    if (!confirm('¿Confirma autorizar y entregar los cupones al piloto?')) return;
+    this.cargando = true;
+
+    this.http.patch<any>(`${this.apiUrl}/${id}/autorizar`, {}).subscribe({
+      next: (res) => {
+        this.cargando     = false;
+        this.mensajeExito = 'Solicitud autorizada. Cupones entregados al piloto.';
+        this.cargarSolicitudes();
+        if (this.mostrarDetalle) this.verDetalle(id);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.mensajeError = err.error?.mensaje || 'Error al autorizar.';
+        this.cargando     = false;
+      },
+    });
+  }
+
+  // ─── Devolución ──────────────────────────────────────────
+
+  /** Abre modal para registrar devolución */
+  abrirDevolucion(det: any): void {
+    this.detalleSeleccionado = det;
+    this.cantidadDevolver    = 0;
+    this.mostrarModalDevolucion = true;
+    this.limpiarMensajes();
+  }
+
+  /** Confirma la devolución de cupones */
+  confirmarDevolucion(): void {
+    if (this.cantidadDevolver <= 0) {
+      this.mensajeError = 'Ingrese una cantidad válida.';
+      return;
+    }
+
+    this.cargando               = true;
+    this.mostrarModalDevolucion = false;
+
+    this.http.patch<any>(
+      `${this.apiUrl}/${this.solicitudSeleccionada.id}/devolver`,
+      { idDetalle: this.detalleSeleccionado.id, devueltos: this.cantidadDevolver }
+    ).subscribe({
+      next: () => {
+        this.cargando     = false;
+        this.mensajeExito = 'Cupones devueltos correctamente.';
+        this.verDetalle(this.solicitudSeleccionada.id);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.mensajeError = err.error?.mensaje || 'Error al registrar devolución.';
+        this.cargando     = false;
+      },
+    });
+  }
+
+  // ─── Finalizar ───────────────────────────────────────────
+
+  /** Finaliza la solicitud */
+  finalizar(id: number): void {
+    if (!confirm('¿Confirma finalizar esta solicitud?')) return;
+    this.cargando = true;
+
+    this.http.patch<any>(`${this.apiUrl}/${id}/finalizar`, {}).subscribe({
+      next: () => {
+        this.cargando     = false;
+        this.mensajeExito = 'Solicitud finalizada correctamente.';
+        this.cargarSolicitudes();
+        this.volverLista();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.mensajeError = err.error?.mensaje || 'Error al finalizar.';
+        this.cargando     = false;
+      },
+    });
+  }
+
+  // ─── PDF ─────────────────────────────────────────────────
+
+  /** Abre el PDF en nueva pestaña */
+  verPdf(urlPdf: string): void {
+    window.open(`${environment.apiUrl}${urlPdf}`, '_blank');
+  }
+
+  // ─── Navegación ──────────────────────────────────────────
+
+  volverLista(): void {
+    this.mostrarLista          = true;
+    this.mostrarFormulario     = false;
+    this.mostrarDetalle        = false;
+    this.solicitudSeleccionada = null;
+    this.detalleSolicitud      = [];
+    this.limpiarMensajes();
+  }
+
+  cambiarPagina(pagina: number): void {
+    if (pagina < 1 || pagina > this.totalPaginas) return;
+    this.paginaActual = pagina;
+    this.cargarSolicitudes();
+  }
+
+  filtrar(): void {
+    this.paginaActual = 1;
+    this.cargarSolicitudes();
+  }
+
+  get paginas(): number[] {
+    return Array.from({ length: this.totalPaginas }, (_, i) => i + 1);
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────
+
+  tieneError(campo: string): boolean {
+    const c = this.formulario.get(campo);
+    return !!(c && c.invalid && c.touched);
+  }
+
+  colorEstado(estado: string): string {
+    switch (estado) {
+      case 'Pendiente':   return 'bg-warning text-dark';
+      case 'Autorizada':  return 'bg-info text-dark';
+      case 'Entregada':   return 'bg-primary';
+      case 'Finalizada':  return 'bg-success';
+      case 'Cancelada':   return 'bg-danger';
+      default:            return 'bg-secondary';
+    }
+  }
+
+  limpiarMensajes(): void {
+    this.mensajeExito = '';
+    this.mensajeError = '';
+  }
+}

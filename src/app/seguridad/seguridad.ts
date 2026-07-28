@@ -71,6 +71,8 @@ export class SeguridadComponent implements OnInit {
         'VER_REPORTES_PILOTOS',
         'VER_REPORTES_COMISIONES',
         'VER_REPORTES_CUPONES',
+        'SOLICITAR_COMBUSTIBLE',
+        'GESTIONAR_COMBUSTIBLE',
       ],
     },
     { titulo: 'Catálogos', permisos: ['VER_CATALOGOS'] },

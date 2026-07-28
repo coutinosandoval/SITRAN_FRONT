@@ -860,4 +860,6 @@ export class ComisionComponent implements OnInit {
     this.modalVisible = true;
     this.modalAccion = () => this._ejecutarDevolucionCupones(seleccionados);
   }
+
+  
 }

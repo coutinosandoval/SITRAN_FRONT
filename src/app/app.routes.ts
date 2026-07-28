@@ -17,6 +17,7 @@ import { ReporteIAComponent } from './reportes/reporte-ia';
 import { BitacoraVehiculosComponent } from './reportes/bitacora-vehiculos/bitacora-vehiculos';
 import { ComprasComponent } from './compras/compras';
 import { SolicitudCuponesComponent } from './cupones/solicitud-cupones/solicitud-cupones';
+import { ComisionLocalComponent } from './comisiones/comision-local/comision-local';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -48,6 +49,7 @@ export const routes: Routes = [
         canActivate: [authGuard],
       },
       { path: 'comisiones', component: ComisionComponent, canActivate: [authGuard] },
+      { path: 'comision-local', component: ComisionLocalComponent, canActivate: [authGuard] },
       { path: 'seguridad/usuarios', component: SeguridadComponent, canActivate: [authGuard] },
       { path: 'compras', component: ComprasComponent, canActivate: [authGuard] },
       { path: 'seguridad/roles', component: SeguridadComponent, canActivate: [authGuard] },

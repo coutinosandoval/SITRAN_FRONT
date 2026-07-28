@@ -1,0 +1,744 @@
+<!-- ============================================================
+  comision-local.html
+  Vista de gestión de comisiones locales
+  Incluye: lista, formulario, detalle, modales
+  Ruta: src/app/comisiones/comision-local/comision-local.html
+============================================================ -->
+
+<!-- ── LISTA ──────────────────────────────────────────────── -->
+<div *ngIf="mostrarLista">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="bi bi-geo-alt"></i> Comisión Local</h4>
+    <!-- Solo Delegado puede crear -->
+    <button class="btn btn-primary btn-sm" *ngIf="esDelegado" (click)="mostrarNueva()">
+      <i class="bi bi-plus-circle"></i> Nueva Comisión Local
+    </button>
+  </div>
+
+  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="row align-items-center g-2">
+        <div class="col-md-3">
+          <select
+            class="form-select form-select-sm"
+            [(ngModel)]="filtroEstado"
+            (change)="filtrar()"
+          >
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Autorizada">Autorizada</option>
+            <option value="Rechazada">Rechazada</option>
+            <option value="Finalizada">Finalizada</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select
+            class="form-select form-select-sm"
+            (change)="tamanioPagina = +$any($event.target).value; filtrar()"
+          >
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+          </select>
+        </div>
+        <div class="col-md-7 text-end">
+          <span class="text-muted small">{{ totalRegistros }} comisiones locales</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Solicitante</th>
+              <th>Motivo</th>
+              <th>Vehículo</th>
+              <th>Piloto</th>
+              <th>Fecha Inicio</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargando">
+              <td colspan="8" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                Cargando...
+              </td>
+            </tr>
+            <tr *ngIf="!cargando && comisiones.length === 0">
+              <td colspan="8" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                No se encontraron comisiones locales.
+              </td>
+            </tr>
+            <tr *ngFor="let c of comisiones">
+              <td>{{ c.id }}</td>
+              <td>{{ c.solicitante }}</td>
+              <td
+                style="
+                  max-width: 180px;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                "
+                [title]="c.motivo"
+              >
+                {{ c.motivo }}
+              </td>
+              <td>
+                <span *ngIf="c.vehiculaPlaca || c.vehiculoPlaca">
+                  {{ c.vehiculoPlaca }}
+                </span>
+                <span *ngIf="!c.vehiculoPlaca" class="text-muted small fst-italic">
+                  Sin asignar
+                </span>
+              </td>
+              <td>
+                <span *ngIf="c.pilotoNombre">{{ c.pilotoNombre }}</span>
+                <span *ngIf="!c.pilotoNombre" class="text-muted small fst-italic">
+                  Sin asignar
+                </span>
+              </td>
+              <td>{{ c.fechaInicio | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                <span class="badge" [ngClass]="colorEstado(c.estado)">
+                  {{ c.estado }}
+                </span>
+              </td>
+              <td class="text-center">
+                <!-- Ver detalle -->
+                <button
+                  class="btn btn-info btn-sm me-1"
+                  title="Ver detalle"
+                  (click)="verDetalle(c.id)"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+                <!-- Editar asignación — Delegado, mientras Pendiente -->
+                <button
+                  class="btn btn-secondary btn-sm me-1"
+                  *ngIf="esDelegado && c.estado === 'Pendiente'"
+                  title="Editar vehículo y piloto"
+                  (click)="abrirAsignacion(c)"
+                >
+                  <i class="bi bi-truck"></i>
+                </button>
+                <!-- PDF -->
+                <button
+                  class="btn btn-warning btn-sm me-1"
+                  *ngIf="c.urlPdf"
+                  title="Ver PDF"
+                  (click)="verPdf(c.urlPdf)"
+                >
+                  <i class="bi bi-file-earmark-pdf"></i>
+                </button>
+                <!-- Autorizar — Autoridad Local, Pendiente -->
+                <button
+                  class="btn btn-success btn-sm me-1"
+                  *ngIf="esAutoridadLocal && c.estado === 'Pendiente'"
+                  title="Autorizar"
+                  (click)="autorizar(c.id)"
+                >
+                  <i class="bi bi-check-circle"></i>
+                </button>
+                <!-- Rechazar — Autoridad Local, Pendiente -->
+                <button
+                  class="btn btn-danger btn-sm me-1"
+                  *ngIf="esAutoridadLocal && c.estado === 'Pendiente'"
+                  title="Rechazar"
+                  (click)="abrirRechazo(c.id)"
+                >
+                  <i class="bi bi-x-circle"></i>
+                </button>
+                <!-- Cerrar — Delegado, Autorizada -->
+                <button
+                  class="btn btn-primary btn-sm"
+                  *ngIf="esDelegado && c.estado === 'Autorizada'"
+                  title="Cerrar comisión"
+                  (click)="abrirCierre(c.id)"
+                >
+                  <i class="bi bi-flag-fill"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div
+      class="card-footer d-flex justify-content-between align-items-center"
+      *ngIf="totalPaginas > 1"
+    >
+      <span class="text-muted small">
+        {{ totalRegistros }} comisiones — Página {{ paginaActual }} de {{ totalPaginas }}
+      </span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="paginaActual === 1">
+            <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+          <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
+            <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
+          </li>
+          <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+            <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- ── FORMULARIO NUEVA COMISIÓN LOCAL ───────────────────── -->
+<div *ngIf="mostrarFormulario" class="comision-container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="bi bi-geo-alt"></i> Nueva Comisión Local</h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <form [formGroup]="formulario" (ngSubmit)="guardar()">
+    <!-- Datos Generales -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-primary text-white">
+        <h6 class="mb-0"><i class="bi bi-card-list"></i> Datos Generales</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- Tipo fijo: Local -->
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Tipo de Comisión</label>
+            <input
+              type="text"
+              class="form-control fw-bold"
+              value="Local"
+              readonly
+              style="background: #e9ecef"
+            />
+          </div>
+
+          <!-- Solicitante -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label"> Solicitante <span class="text-danger">*</span> </label>
+            <input
+              type="text"
+              class="form-control text-uppercase"
+              formControlName="solicitante"
+              [class.is-invalid]="tieneError('solicitante')"
+              placeholder="Nombre del solicitante"
+            />
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <!-- Unidad -->
+          <div class="col-md-5 mb-3">
+            <label class="form-label"> Unidad <span class="text-danger">*</span> </label>
+            <select
+              class="form-select"
+              formControlName="idUnidad"
+              [class.is-invalid]="tieneError('idUnidad')"
+            >
+              <option value="">Seleccione una unidad</option>
+              <option *ngFor="let u of unidades" [value]="u.id">{{ u.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <!-- Departamento -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Departamento / Sección</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="departamentoSeccion"
+              placeholder="Departamento o sección"
+            />
+          </div>
+
+          <!-- Hora Salida -->
+          <div class="col-md-2 mb-3">
+            <label class="form-label"> Hora de Salida <span class="text-danger">*</span> </label>
+            <input
+              type="time"
+              class="form-control"
+              formControlName="horaSalida"
+              [class.is-invalid]="tieneError('horaSalida')"
+            />
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <!-- Fecha Inicio -->
+          <div class="col-md-3 mb-3">
+            <label class="form-label"> Fecha Inicio <span class="text-danger">*</span> </label>
+            <input
+              type="date"
+              class="form-control"
+              formControlName="fechaInicio"
+              [class.is-invalid]="tieneError('fechaInicio')"
+            />
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <!-- Motivo -->
+          <div class="col-md-12 mb-3">
+            <label class="form-label"> Motivo <span class="text-danger">*</span> </label>
+            <textarea
+              class="form-control"
+              rows="2"
+              formControlName="motivo"
+              [class.is-invalid]="tieneError('motivo')"
+              placeholder="Describa el motivo de la comisión local..."
+            ></textarea>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <!-- Observaciones -->
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea
+              class="form-control"
+              rows="2"
+              formControlName="observaciones"
+              placeholder="Observaciones adicionales..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vehículo y Piloto -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="bi bi-truck"></i> Vehículo y Piloto</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- Vehículo -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label"> Vehículo <span class="text-danger">*</span> </label>
+            <select
+              class="form-select"
+              formControlName="idVehiculo"
+              [class.is-invalid]="tieneError('idVehiculo')"
+            >
+              <option value="">Seleccione un vehículo</option>
+              <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <!-- Piloto -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label"> Piloto <span class="text-danger">*</span> </label>
+            <select
+              class="form-select"
+              formControlName="idPiloto"
+              [class.is-invalid]="tieneError('idPiloto')"
+            >
+              <option value="">Seleccione un piloto</option>
+              <option *ngFor="let p of pilotos" [value]="p.id">{{ p.nombre }}</option>
+            </select>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+
+          <!-- Km Inicial -->
+          <div class="col-md-4 mb-3">
+            <label class="form-label">
+              Kilometraje Inicial <span class="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="kmInicial"
+              [class.is-invalid]="tieneError('kmInicial')"
+              placeholder="Km actuales del vehículo"
+            />
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Autoridad Firmante -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-secondary text-white">
+        <h6 class="mb-0"><i class="bi bi-person-badge"></i> Autoridad Firmante</h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Nombre</label>
+            <input
+              type="text"
+              class="form-control text-uppercase"
+              formControlName="autoridad1Nombre"
+              placeholder="Nombre de la autoridad"
+            />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Cargo</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="autoridad1Cargo"
+              placeholder="Cargo"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-secondary" (click)="volverLista()">
+        <i class="bi bi-x-circle"></i> Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="cargando">
+        <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!cargando" class="bi bi-save"></i>
+        Registrar Comisión Local
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- ── DETALLE ────────────────────────────────────────────── -->
+<div *ngIf="mostrarDetalle && comisionSeleccionada">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-geo-alt"></i>
+      Comisión Local #{{ comisionSeleccionada.id }}
+    </h4>
+    <div class="d-flex gap-2">
+      <button
+        class="btn btn-warning btn-sm"
+        *ngIf="comisionSeleccionada.urlPdf"
+        (click)="verPdf(comisionSeleccionada.urlPdf)"
+      >
+        <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+      </button>
+      <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="mensajeExito" class="alert alert-success">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div
+      class="card-header d-flex justify-content-between align-items-center bg-primary text-white"
+    >
+      <strong>{{ comisionSeleccionada.solicitante }}</strong>
+      <span class="badge bg-light" [ngClass]="colorEstado(comisionSeleccionada.estado)">
+        {{ comisionSeleccionada.estado }}
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr>
+              <th>Sede:</th>
+              <td>{{ comisionSeleccionada.sedeNombre }}</td>
+            </tr>
+            <tr>
+              <th>Unidad:</th>
+              <td>{{ comisionSeleccionada.unidadNombre || '—' }}</td>
+            </tr>
+            <tr>
+              <th>Departamento:</th>
+              <td>{{ comisionSeleccionada.departamento || '—' }}</td>
+            </tr>
+            <tr>
+              <th>Fecha inicio:</th>
+              <td>{{ comisionSeleccionada.fechaInicio | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr>
+              <th>Hora salida:</th>
+              <td>{{ comisionSeleccionada.horaSalida }}</td>
+            </tr>
+            <tr>
+              <th>Vehículo:</th>
+              <td>
+                {{ comisionSeleccionada.vehiculoPlaca || '—' }}
+                {{
+                  comisionSeleccionada.vehiculoNombre
+                    ? '— ' + comisionSeleccionada.vehiculoNombre
+                    : ''
+                }}
+              </td>
+            </tr>
+            <tr>
+              <th>Piloto:</th>
+              <td>{{ comisionSeleccionada.pilotoNombre || '—' }}</td>
+            </tr>
+            <tr>
+              <th>Km inicial:</th>
+              <td>{{ comisionSeleccionada.kmInicial || '—' }}</td>
+            </tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <table class="table table-sm table-borderless">
+            <tr>
+              <th>Motivo:</th>
+              <td>{{ comisionSeleccionada.motivo }}</td>
+            </tr>
+            <tr>
+              <th>Observaciones:</th>
+              <td>{{ comisionSeleccionada.observaciones || '—' }}</td>
+            </tr>
+            <tr>
+              <th>Autoridad firmante:</th>
+              <td>{{ comisionSeleccionada.autoridadNombre || '—' }}</td>
+            </tr>
+            <tr>
+              <th>Cargo:</th>
+              <td>{{ comisionSeleccionada.autoridadCargo || '—' }}</td>
+            </tr>
+            <tr>
+              <th>Creado por:</th>
+              <td>{{ comisionSeleccionada.creadoPor }}</td>
+            </tr>
+            <tr *ngIf="comisionSeleccionada.fechaFin">
+              <th>Fecha fin:</th>
+              <td>{{ comisionSeleccionada.fechaFin | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr *ngIf="comisionSeleccionada.kmFinal">
+              <th>Km final:</th>
+              <td>{{ comisionSeleccionada.kmFinal }}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Datos de autorización -->
+      <div
+        *ngIf="comisionSeleccionada.estado === 'Autorizada'"
+        class="alert alert-success mt-2 mb-0"
+      >
+        <i class="bi bi-check-circle"></i>
+        Autorizado por <strong>{{ comisionSeleccionada.autorizadoPor }}</strong> el
+        {{ comisionSeleccionada.fechaAutorizacion | date: 'dd/MM/yyyy HH:mm' }}
+      </div>
+
+      <!-- Motivo de rechazo -->
+      <div *ngIf="comisionSeleccionada.estado === 'Rechazada'" class="alert alert-danger mt-2 mb-0">
+        <i class="bi bi-x-circle"></i>
+        <strong>Rechazada:</strong> {{ comisionSeleccionada.motivoRechazo }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones de acción en detalle -->
+  <div class="d-flex justify-content-end gap-2">
+    <!-- Autorizar/Rechazar — Autoridad Local -->
+    <ng-container *ngIf="esAutoridadLocal && comisionSeleccionada.estado === 'Pendiente'">
+      <button class="btn btn-danger" (click)="abrirRechazo(comisionSeleccionada.id)">
+        <i class="bi bi-x-circle"></i> Rechazar
+      </button>
+      <button class="btn btn-success" (click)="autorizar(comisionSeleccionada.id)">
+        <i class="bi bi-check-circle"></i> Autorizar
+      </button>
+    </ng-container>
+    <!-- Cerrar — Delegado -->
+    <button
+      class="btn btn-primary"
+      *ngIf="esDelegado && comisionSeleccionada.estado === 'Autorizada'"
+      (click)="abrirCierre(comisionSeleccionada.id)"
+    >
+      <i class="bi bi-flag-fill"></i> Cerrar Comisión
+    </button>
+  </div>
+</div>
+
+<!-- ── MODAL RECHAZO ──────────────────────────────────────── -->
+<div *ngIf="mostrarModalRechazo" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header-custom bg-danger text-white">
+      <h6 class="mb-0"><i class="bi bi-x-circle"></i> Rechazar Comisión Local</h6>
+      <button class="btn btn-sm btn-light" (click)="mostrarModalRechazo = false">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body-custom">
+      <div *ngIf="mensajeError" class="alert alert-danger py-2">
+        <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+      </div>
+      <div class="mb-3">
+        <label class="form-label"> Motivo del rechazo <span class="text-danger">*</span> </label>
+        <textarea
+          class="form-control"
+          rows="3"
+          [(ngModel)]="motivoRechazo"
+          placeholder="Describa el motivo del rechazo..."
+        ></textarea>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary btn-sm" (click)="mostrarModalRechazo = false">
+        Cancelar
+      </button>
+      <button class="btn btn-danger btn-sm" (click)="confirmarRechazo()">
+        <i class="bi bi-x-circle"></i> Confirmar Rechazo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL ASIGNACIÓN VEHÍCULO/PILOTO ──────────────────── -->
+<div *ngIf="mostrarModalAsignacion" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header-custom bg-secondary text-white">
+      <h6 class="mb-0"><i class="bi bi-truck"></i> Editar Vehículo y Piloto</h6>
+      <button class="btn btn-sm btn-light" (click)="mostrarModalAsignacion = false">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body-custom">
+      <form [formGroup]="formularioAsignacion">
+        <div class="mb-3">
+          <label class="form-label"> Vehículo <span class="text-danger">*</span> </label>
+          <select
+            class="form-select"
+            formControlName="idVehiculo"
+            [class.is-invalid]="tieneError('idVehiculo', formularioAsignacion)"
+          >
+            <option value="">Seleccione un vehículo</option>
+            <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
+          </select>
+          <div class="invalid-feedback">Requerido.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"> Piloto <span class="text-danger">*</span> </label>
+          <select
+            class="form-select"
+            formControlName="idPiloto"
+            [class.is-invalid]="tieneError('idPiloto', formularioAsignacion)"
+          >
+            <option value="">Seleccione un piloto</option>
+            <option *ngFor="let p of pilotos" [value]="p.id">{{ p.nombre }}</option>
+          </select>
+          <div class="invalid-feedback">Requerido.</div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label"> Kilometraje Inicial <span class="text-danger">*</span> </label>
+          <input
+            type="number"
+            class="form-control"
+            formControlName="kmInicial"
+            [class.is-invalid]="tieneError('kmInicial', formularioAsignacion)"
+            placeholder="Km actuales del vehículo"
+          />
+          <div class="invalid-feedback">Requerido.</div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary btn-sm" (click)="mostrarModalAsignacion = false">
+        Cancelar
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="guardarAsignacion()">
+        <i class="bi bi-save"></i> Guardar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL CIERRE ───────────────────────────────────────── -->
+<div *ngIf="mostrarModalCierre" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header-custom bg-primary text-white">
+      <h6 class="mb-0"><i class="bi bi-flag-fill"></i> Cerrar Comisión Local</h6>
+      <button class="btn btn-sm btn-light" (click)="mostrarModalCierre = false">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body-custom">
+      <form [formGroup]="formularioCierre">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label"> Fecha Fin <span class="text-danger">*</span> </label>
+            <input
+              type="date"
+              class="form-control"
+              formControlName="fechaFin"
+              [class.is-invalid]="tieneError('fechaFin', formularioCierre)"
+            />
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label"> Hora de Retorno <span class="text-danger">*</span> </label>
+            <input
+              type="time"
+              class="form-control"
+              formControlName="horaRetorno"
+              [class.is-invalid]="tieneError('horaRetorno', formularioCierre)"
+            />
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label"> Kilometraje Final <span class="text-danger">*</span> </label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="kmFinal"
+              [class.is-invalid]="tieneError('kmFinal', formularioCierre)"
+              placeholder="Km finales del vehículo"
+            />
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Observaciones de cierre</label>
+            <textarea
+              class="form-control"
+              rows="2"
+              formControlName="observacionesCierre"
+              placeholder="Observaciones adicionales al cerrar..."
+            ></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary btn-sm" (click)="mostrarModalCierre = false">
+        Cancelar
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="confirmarCierre()">
+        <i class="bi bi-flag-fill"></i> Confirmar Cierre
+      </button>
+    </div>
+  </div>
+</div>

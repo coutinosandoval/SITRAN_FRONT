@@ -59,7 +59,10 @@ export class SeguridadComponent implements OnInit {
         'AUTORIZAR_SOLICITUDES_CUPONES',
       ],
     },
-    { titulo: 'Comisiones', permisos: ['VER_COMISIONES', 'GESTIONAR_COMISIONES_SEDE'] },
+    {
+      titulo: 'Comisiones',
+      permisos: ['VER_COMISIONES', 'GESTIONAR_COMISIONES_SEDE', 'GESTIONAR_COMISIONES_LOCALES'],
+    },
     { titulo: 'Facturas', permisos: ['VER_FACTURAS'] },
     {
       titulo: 'Reportes',

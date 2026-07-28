@@ -84,7 +84,11 @@ export class ComisionService {
     return this.http.get<CatalogoItem[]>(`${this.apiUrl}/unidades`);
   }
 
-  obtenerVehiculosDisponibles(fechaInicio: string, fechaFin: string, idSede?: number): Observable<CatalogoItem[]> {
+  obtenerVehiculosDisponibles(
+    fechaInicio: string,
+    fechaFin: string,
+    idSede?: number,
+  ): Observable<CatalogoItem[]> {
     let params = new HttpParams().set('fechaInicio', fechaInicio).set('fechaFin', fechaFin);
     if (idSede !== undefined && idSede !== null) {
       params = params.set('idSede', idSede.toString());
@@ -132,5 +136,94 @@ export class ComisionService {
     idPiloto: number,
   ): Observable<any> {
     return this.http.patch(`${this.apiUrl}/${idComision}/reasignar`, { idVehiculo, idPiloto });
+  }
+
+  // ── Comisión Local ──────────────────────────────────────────
+
+  /** Obtiene lista de comisiones locales filtradas por sede y estado */
+  obtenerComisionesLocales(
+    idSede?: number,
+    estado?: string,
+    pagina: number = 1,
+    porPagina: number = 10,
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('pagina', pagina.toString())
+      .set('porPagina', porPagina.toString());
+    if (idSede) params = params.set('idSede', idSede.toString());
+    if (estado) params = params.set('estado', estado);
+    return this.http.get<any>(`${environment.apiUrl}/api/comision-local`, { params });
+  }
+
+  /** Obtiene una comisión local por ID */
+  obtenerComisionLocalPorId(id: number): Observable<any> {
+    return this.http.get<any>(`${environment.apiUrl}/api/comision-local/${id}`);
+  }
+
+  /** Registra una nueva comisión local */
+  crearComisionLocal(dto: {
+    idSede?: number;
+    solicitante?: string;
+    idUnidad?: number;
+    departamento?: string;
+    fechaInicio?: string;
+    horaSalida?: string;
+    idVehiculo?: number; // ← agregar
+    idPiloto?: number; // ← agregar
+    kmInicial?: number; // ← agregar
+    motivo?: string;
+    observaciones?: string;
+    autoridadNombre?: string;
+    autoridadCargo?: string;
+  }): Observable<{ id: number; mensaje: string }> {
+    return this.http.post<{ id: number; mensaje: string }>(
+      `${environment.apiUrl}/api/comision-local`,
+      dto,
+    );
+  }
+
+  /** Autoriza o rechaza una comisión local */
+  autorizarComisionLocal(
+    id: number,
+    dto: {
+      aprobar: boolean;
+      motivoRechazo?: string;
+    },
+  ): Observable<{ mensaje: string; urlPdf?: string }> {
+    return this.http.patch<{ mensaje: string; urlPdf?: string }>(
+      `${environment.apiUrl}/api/comision-local/${id}/autorizar`,
+      dto,
+    );
+  }
+
+  // ── Actualizar asignación de comisión local ─────────────────
+  actualizarAsignacionLocal(
+    id: number,
+    dto: {
+      idVehiculo?: number;
+      idPiloto?: number;
+      kmInicial?: number;
+    },
+  ): Observable<{ mensaje: string }> {
+    return this.http.patch<{ mensaje: string }>(
+      `${environment.apiUrl}/api/comision-local/${id}/asignacion`,
+      dto,
+    );
+  }
+
+  // ── Cerrar comisión local ───────────────────────────────────
+  cerrarComisionLocal(
+    id: number,
+    dto: {
+      fechaFin?: string;
+      horaRetorno?: string;
+      kmFinal?: number;
+      observacionesCierre?: string;
+    },
+  ): Observable<{ mensaje: string }> {
+    return this.http.patch<{ mensaje: string }>(
+      `${environment.apiUrl}/api/comision-local/${id}/cerrar`,
+      dto,
+    );
   }
 }

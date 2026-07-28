@@ -356,16 +356,17 @@ export class SolicitudCuponesComponent implements OnInit {
         });
     }
 
-    this.cargando = false;
+    this.asignacionesPendientes = [];
     this.mensajeExito = 'Cupones asignados correctamente.';
-    this.detalleSolicitud = [];
+
+    // Recargar detalle ANTES de limpiar y detectar cambios
     this.cuponService.obtenerDetalleSolicitud(this.solicitudSeleccionada!.id!).subscribe({
       next: (data: any) => {
         this.detalleSolicitud = data;
+        this.cargando = false;
+        this.cdr.detectChanges();
       },
     });
-    this.asignacionesPendientes = [];
-    this.cdr.detectChanges();
   }
 
   finalizar(): void {

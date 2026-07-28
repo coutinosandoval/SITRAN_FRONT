@@ -115,15 +115,30 @@
     </div>
 
     <!-- Comisiones: por permiso -->
-    <a
-      routerLink="/comisiones"
-      routerLinkActive="active"
-      class="menu-item"
-      *ngIf="tienePermiso('VER_COMISIONES')"
+    <!-- Movimiento de Vehículos: por permiso -->
+    <div
+      class="menu-group"
+      *ngIf="tienePermiso('VER_COMISIONES') || tienePermiso('GESTIONAR_COMISIONES_LOCALES')"
     >
-      <i class="bi bi-briefcase"></i>
-      <span>Comisiones</span>
-    </a>
+      <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuMovimientos">
+        <i class="bi bi-truck"></i>
+        <span>Movimiento de Vehículos</span>
+        <i class="bi bi-chevron-down ms-auto"></i>
+      </a>
+      <div class="collapse" id="menuMovimientos">
+        <a routerLink="/comisiones" routerLinkActive="active" class="menu-item submenu-item">
+          <i class="bi bi-briefcase"></i> Comisiones
+        </a>
+        <a
+          routerLink="/comision-local"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+          *ngIf="tienePermiso('VER_COMISIONES') || tienePermiso('GESTIONAR_COMISIONES_LOCALES')"
+        >
+          <i class="bi bi-geo-alt"></i> Comisión Local
+        </a>
+      </div>
+    </div>
 
     <!-- Facturas: por permiso -->
     <a

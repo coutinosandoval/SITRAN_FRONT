@@ -28,6 +28,7 @@ export class ReporteCombustibleComponent implements OnInit {
   fechaIni: string = '';
   fechaFin: string = '';
   tipoReporte: string = 'consolidado'; // 'consolidado' | 'detalle'
+  datosDetalleVehiculo: any[] = [];
 
   // ─── Estado ───────────────────────────────────────────────
   cargando: boolean = false;
@@ -44,6 +45,34 @@ export class ReporteCombustibleComponent implements OnInit {
 
   get totalMonto(): number {
     return this.datosConsolidado.reduce((a, r) => a + (Number(r['MONTO_TOTAL']) || 0), 0);
+  }
+  /** Agrupa datos de detalle vehículo por placa */
+  get datosAgrupadosPorVehiculo(): any[] {
+    const grupos: any[] = [];
+    const mapa = new Map<string, any>();
+
+    for (const r of this.datosDetalleVehiculo) {
+      const placa = r['VEHICULO_PLACA'];
+      if (!mapa.has(placa)) {
+        mapa.set(placa, {
+          placa: placa,
+          nombre: r['VEHICULO_NOMBRE'],
+          sede: r['SEDE_NOMBRE'],
+          comisiones: [],
+          totalKm: 0,
+          totalCupones: 0,
+          totalMonto: 0,
+        });
+      }
+      const grupo = mapa.get(placa);
+      grupo.comisiones.push(r);
+      grupo.totalKm += Number(r['KM_RECORRIDOS']) || 0;
+      grupo.totalCupones += Number(r['CUPONES_UTILIZADOS']) || 0;
+      grupo.totalMonto += Number(r['MONTO_COMBUSTIBLE']) || 0;
+    }
+
+    mapa.forEach((v) => grupos.push(v));
+    return grupos;
   }
 
   private apiUrl = `${environment.apiUrl}/api/reporte`;
@@ -74,8 +103,10 @@ export class ReporteCombustibleComponent implements OnInit {
   generarReporte(): void {
     if (this.tipoReporte === 'consolidado') {
       this.cargarConsolidado();
-    } else {
+    } else if (this.tipoReporte === 'detalle') {
       this.cargarDetalle();
+    } else if (this.tipoReporte === 'vehiculo') {
+      this.cargarDetalleVehiculo();
     }
   }
 
@@ -133,31 +164,33 @@ export class ReporteCombustibleComponent implements OnInit {
 
   /** Descarga el reporte en Excel */
   descargarExcel(): void {
-    const params = new HttpParams()
-      .set('fechaIni', this.fechaIni)
-      .set('fechaFin', this.fechaFin)
-      .set('idSede', this.idSedeUsuario?.toString() || '');
+    let endpoint = '';
 
-    const tipo = this.tipoReporte === 'consolidado' ? 'consolidado' : 'detalle';
+    if (this.tipoReporte === 'consolidado') {
+      endpoint = 'combustible/consolidado/excel';
+    } else if (this.tipoReporte === 'detalle') {
+      endpoint = 'combustible/detalle/excel';
+    } else if (this.tipoReporte === 'vehiculo') {
+      endpoint = 'vehiculo/detalle/excel';
+    }
 
-    this.http
-      .get(
-        `${this.apiUrl}/combustible/${tipo}/excel`, // ← agregar combustible
-        { params, responseType: 'blob' },
-      )
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `${tipo}_combustible_${this.fechaIni}_${this.fechaFin}.xlsx`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-        },
-        error: () => {
-          this.mensajeError = 'Error al descargar el Excel.';
-        },
-      });
+    let params = new HttpParams().set('fechaIni', this.fechaIni).set('fechaFin', this.fechaFin);
+
+    if (this.idSedeUsuario) params = params.set('idSede', this.idSedeUsuario.toString());
+
+    this.http.get(`${this.apiUrl}/${endpoint}`, { params, responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${this.tipoReporte}_${this.fechaIni}_${this.fechaFin}.xlsx`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.mensajeError = 'Error al descargar el Excel.';
+      },
+    });
   }
 
   /** Genera lista de números de cupones desde un inicio y cantidad */
@@ -167,5 +200,27 @@ export class ReporteCombustibleComponent implements OnInit {
       cupones.push(desde + i);
     }
     return cupones.join(', ');
+  }
+
+  /** Carga el reporte detallado por vehículo con comisiones */
+  cargarDetalleVehiculo(): void {
+    this.cargando = true;
+    this.mensajeError = '';
+
+    let params = new HttpParams().set('fechaIni', this.fechaIni).set('fechaFin', this.fechaFin);
+
+    if (this.idSedeUsuario) params = params.set('idSede', this.idSedeUsuario.toString());
+
+    this.http.get<any[]>(`${this.apiUrl}/vehiculo/detalle`, { params }).subscribe({
+      next: (data) => {
+        this.datosDetalleVehiculo = data;
+        this.cargando = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mensajeError = 'Error al cargar el reporte de vehículos.';
+        this.cargando = false;
+      },
+    });
   }
 }

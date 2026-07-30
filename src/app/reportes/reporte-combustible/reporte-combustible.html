@@ -25,6 +25,7 @@
           <select class="form-select form-select-sm" [(ngModel)]="tipoReporte">
             <option value="consolidado">Consolidado por vehículo</option>
             <option value="detalle">Detalle por vehículo</option>
+            <option value="vehiculo">Detalle por vehículo con comisiones</option>
           </select>
         </div>
 
@@ -208,4 +209,90 @@
       </div>
     </div>
   </div>
+  <!-- ── REPORTE DETALLE VEHÍCULO CON COMISIONES ────────── -->
+  <!-- ── REPORTE DETALLE VEHÍCULO CON COMISIONES AGRUPADO ── -->
+<div *ngIf="tipoReporte === 'vehiculo'">
+  <div *ngIf="cargando" class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+    Cargando...
+  </div>
+
+  <div *ngIf="!cargando && datosDetalleVehiculo.length === 0"
+    class="card shadow-sm">
+    <div class="card-body text-center py-4 text-muted">
+      <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+      No hay datos para el período seleccionado.
+    </div>
+  </div>
+
+  <!-- Un card por vehículo -->
+  <div *ngFor="let grupo of datosAgrupadosPorVehiculo" class="card shadow-sm mb-3">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+      <span>
+        <i class="bi bi-truck me-2"></i>
+        <strong>{{ grupo.placa }}</strong> — {{ grupo.nombre }}
+      </span>
+      <span class="text-white small">{{ grupo.sede }}</span>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm table-hover mb-0">
+        <thead class="table-secondary">
+          <tr>
+            <th>#Comisión</th>
+            <th>Tipo</th>
+            <th>Destino</th>
+            <th>Fecha</th>
+            <th class="text-center">Km Inicial</th>
+            <th class="text-center">Km Final</th>
+            <th class="text-center">Recorrido</th>
+            <th class="text-center">Cupones</th>
+            <th class="text-end">Monto</th>
+            <th class="text-end">Q/Km</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of grupo.comisiones">
+            <td><strong>#{{ c['ID_COMISION'] }}</strong></td>
+            <td>
+              <span class="badge"
+                [ngClass]="c['TIPO_COMISION'] === 'Nacional' ? 'bg-primary' : 'bg-secondary'">
+                {{ c['TIPO_COMISION'] }}
+              </span>
+            </td>
+            <td>{{ c['DESTINO'] }}</td>
+            <td>{{ c['FECHA_INICIO'] | date: 'dd/MM/yyyy' }}</td>
+            <td class="text-center">{{ c['KILOMETRAJE_INICIAL'] | number }}</td>
+            <td class="text-center">{{ c['KILOMETRAJE_FINAL'] | number }}</td>
+            <td class="text-center fw-bold">{{ c['KM_RECORRIDOS'] | number }} km</td>
+            <td class="text-center">{{ c['CUPONES_UTILIZADOS'] }}</td>
+            <td class="text-end fw-bold text-success">
+              {{ formatoQ(c['MONTO_COMBUSTIBLE']) }}
+            </td>
+            <td class="text-end">
+              <span *ngIf="+c['ESTIMADO_Q_KM'] > 0" class="text-info fw-bold">
+                Q{{ c['ESTIMADO_Q_KM'] }}/km
+              </span>
+              <span *ngIf="+c['ESTIMADO_Q_KM'] === 0" class="text-muted">—</span>
+            </td>
+          </tr>
+        </tbody>
+        <!-- Subtotales por vehículo -->
+        <tfoot class="table-dark">
+          <tr>
+            <td colspan="6" class="fw-bold">TOTAL {{ grupo.placa }}</td>
+            <td class="text-center fw-bold">{{ grupo.totalKm | number }} km</td>
+            <td class="text-center fw-bold">{{ grupo.totalCupones }}</td>
+            <td class="text-end fw-bold text-success">{{ formatoQ(grupo.totalMonto) }}</td>
+            <td class="text-end fw-bold text-info">
+              <span *ngIf="grupo.totalKm > 0">
+                Q{{ (grupo.totalMonto / grupo.totalKm).toFixed(2) }}/km
+              </span>
+              <span *ngIf="grupo.totalKm === 0">—</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
 </div>

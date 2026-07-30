@@ -26,8 +26,6 @@ export interface Vehiculo {
   nombreSede?: string;
   estado: number;
   estadoDisponibilidad?: string;
-
-
 }
 
 // Modelo para crear o editar un vehículo
@@ -62,6 +60,7 @@ export interface VehiculoLista {
 export interface CatalogoItem {
   id: number;
   nombre: string;
+  kilometraje?: number;
 }
 
 // Modelo para catálogos del formulario

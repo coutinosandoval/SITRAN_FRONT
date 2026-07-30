@@ -58,6 +58,7 @@ export class ComisionComponent implements OnInit {
   mostrarDevolucionCupones: boolean = false;
   cuponesADevolver: number = 0;
   totalSeleccionados: number = 0;
+  kmInicialVehiculo: number = 0;
   // URL del PDF de combustible vinculado a la comisión
   urlPdfCombustible: string = '';
   solicitudCombustibleDetalle: any[] = [];
@@ -150,6 +151,13 @@ export class ComisionComponent implements OnInit {
     private ngZone: NgZone,
     private http: HttpClient,
   ) {
+    this.formularioChecklist = this.fb.group({
+      idVehiculo: ['', Validators.required],
+      idPiloto: ['', Validators.required],
+      fechaRevision: ['', Validators.required],
+      horaRevision: ['', Validators.required],
+      observaciones: [''],
+    });
     // Formulario nueva comisión
     this.formulario = this.fb.group({
       tipoComision: ['', Validators.required],
@@ -176,15 +184,6 @@ export class ComisionComponent implements OnInit {
       kilometrajeFinal: ['', Validators.required],
       fechaRetorno: ['', Validators.required],
       horaRetorno: ['', Validators.required],
-      observaciones: [''],
-    });
-    // Formulario checklist / asignación vehículo
-    this.formularioChecklist = this.fb.group({
-      idVehiculo: ['', Validators.required],
-      idPiloto: ['', Validators.required],
-      fechaRevision: ['', Validators.required],
-      horaRevision: ['', Validators.required],
-      kilometrajInicial: ['', Validators.required],
       observaciones: [''],
     });
   }
@@ -555,18 +554,18 @@ export class ComisionComponent implements OnInit {
     if (!confirm('¿Confirma asignar vehículo y piloto? La comisión pasará a En Curso.')) return;
 
     const v = this.formularioChecklist.value;
+
+    // Declarar dto con los campos del formulario
     const dto: ChecklistComision = {
       idVehiculo: Number(v.idVehiculo),
       idPiloto: Number(v.idPiloto),
       fechaRevision: v.fechaRevision,
       horaRevision: v.horaRevision,
-      kilometrajInicial: Number(v.kilometrajInicial),
       observaciones: v.observaciones,
     };
 
     this.comisionService.registrarChecklist(this.comisionDetalle!.comision.id, dto).subscribe({
       next: () => {
-        // Si necesita combustible y hay cupones, crear solicitud
         if (this.necesitaCombustible && this.cuponesChecklistAgregados.length > 0) {
           this._crearSolicitudCombustibleChecklist(
             this.comisionDetalle!.comision.id,
@@ -1048,7 +1047,9 @@ export class ComisionComponent implements OnInit {
   /** Carga el PDF de combustible vinculado a la comisión */
   cargarPdfCombustible(idComision: number): void {
     this.http
-      .get<any>(`${environment.apiUrl}/api/solicitud-combustible?idComision=${idComision}`)
+      .get<any>(
+        `${environment.apiUrl}/api/solicitud-combustible?idComision=${idComision}&porPagina=100`,
+      )
       .subscribe({
         next: (data: any) => {
           if (data.datos && data.datos.length > 0) {
@@ -1056,6 +1057,10 @@ export class ComisionComponent implements OnInit {
             this.tieneCuponesAsignados = true;
             this.cargarDetalleCombustible(data.datos[0].id);
             this.cdr.detectChanges();
+          } else {
+            // No hay solicitud de combustible para esta comisión
+            this.urlPdfCombustible = '';
+            this.tieneCuponesAsignados = false;
           }
         },
       });
@@ -1147,6 +1152,13 @@ export class ComisionComponent implements OnInit {
   /** Marca/desmarca cupón en pantalla de finalización */
   toggleCuponFinalizacion(cupon: { numero: number; seleccionado: boolean }): void {
     cupon.seleccionado = !cupon.seleccionado;
+    this.cdr.detectChanges();
+  }
+  /** Carga el kilometraje actual del vehículo seleccionado */
+  onVehiculoSeleccionado(idVehiculo: any): void {
+    const vehiculo = this.vehiculos.find((v: any) => v.id == Number(idVehiculo));
+    console.log('Vehículo:', vehiculo);
+    this.kmInicialVehiculo = vehiculo ? vehiculo.kilometraje || 0 : 0;
     this.cdr.detectChanges();
   }
 }

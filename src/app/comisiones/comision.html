@@ -984,6 +984,7 @@
               class="form-select"
               formControlName="idVehiculo"
               [class.is-invalid]="tieneError('idVehiculo', formularioChecklist)"
+              (change)="onVehiculoSeleccionado($any($event.target).value)"
             >
               <option value="">Seleccione un vehículo disponible</option>
               <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
@@ -1002,9 +1003,21 @@
               <option value="">Seleccione un piloto disponible</option>
               <option *ngFor="let p of pilotos" [value]="p.id">{{ p.nombre }}</option>
             </select>
+
             <div class="invalid-feedback">Requerido.</div>
           </div>
-
+          <!-- Kilometraje inicial — solo lectura -->
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Kilometraje Inicial</label>
+            <input
+              type="text"
+              class="form-control fw-bold"
+              [value]="kmInicialVehiculo | number"
+              readonly
+              style="background: #e9ecef"
+            />
+            <small class="text-muted">Km actuales del vehículo</small>
+          </div>
           <!-- Fecha de Salida -->
           <div class="col-md-3 mb-3">
             <label class="form-label">Fecha de Salida</label>
@@ -1020,19 +1033,6 @@
           </div>
 
           <!-- Kilometraje Inicial -->
-          <div class="col-md-3 mb-3">
-            <label class="form-label">
-              Kilometraje Inicial <span class="text-danger">*</span>
-            </label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="kilometrajInicial"
-              [class.is-invalid]="tieneError('kilometrajInicial', formularioChecklist)"
-              placeholder="Km actuales del vehículo"
-            />
-            <div class="invalid-feedback">Requerido.</div>
-          </div>
 
           <!-- ¿Necesita combustible? -->
           <div class="col-md-3 mb-3 d-flex align-items-end">

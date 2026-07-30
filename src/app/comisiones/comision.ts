@@ -23,6 +23,8 @@ import { CatalogoItem } from '../modelos/vehiculo.model';
 import { AuthService } from '../servicios/auth.service';
 import { ModalComponent } from '../shared/modal/modal';
 import { NgZone } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-comision',
@@ -56,7 +58,13 @@ export class ComisionComponent implements OnInit {
   mostrarDevolucionCupones: boolean = false;
   cuponesADevolver: number = 0;
   totalSeleccionados: number = 0;
-
+  // URL del PDF de combustible vinculado a la comisión
+  urlPdfCombustible: string = '';
+  solicitudCombustibleDetalle: any[] = [];
+  idSolicitudCombustible: number = 0;
+  mostrarModalDevolucionComb: boolean = false;
+  detalleDevolucionComb: any = null;
+  cantidadDevolverComb: number = 0;
   // ─── Tipos ───
   tipos = ['Local', 'Nacional', 'Regional'];
 
@@ -103,6 +111,15 @@ export class ComisionComponent implements OnInit {
   mensajeError: string = '';
   cargando: boolean = false;
 
+  // ─── Combustible en checklist ───
+  necesitaCombustible: boolean = false;
+  cuponesChecklistAgregados: any[] = [];
+  rangoChecklistSeleccionado: any = null;
+  cantidadChecklistAsignar: number = 0;
+  cuponesDisponiblesChecklist: any[] = [];
+  // Cupones individuales para devolución
+  cuponesIndividualesDevolucion: { numero: number; seleccionado: boolean }[] = [];
+
   // ─── Modal estado ───
   mostrarModalEstado: boolean = false;
   nuevoEstado: number = 0;
@@ -131,6 +148,7 @@ export class ComisionComponent implements OnInit {
     public cdr: ChangeDetectorRef,
     private authService: AuthService,
     private ngZone: NgZone,
+    private http: HttpClient,
   ) {
     // Formulario nueva comisión
     this.formulario = this.fb.group({
@@ -167,7 +185,6 @@ export class ComisionComponent implements OnInit {
       fechaRevision: ['', Validators.required],
       horaRevision: ['', Validators.required],
       kilometrajInicial: ['', Validators.required],
-      montoCombustible: ['', [Validators.required, Validators.min(50)]],
       observaciones: [''],
     });
   }
@@ -324,6 +341,7 @@ export class ComisionComponent implements OnInit {
         this.mostrarAsignarCupones = false;
         this.cargarCuponesComision();
         this.cdr.detectChanges();
+        this.cargarPdfCombustible(id);
       },
       error: () => {
         this.mensajeError = 'Error al cargar el detalle.';
@@ -534,13 +552,6 @@ export class ComisionComponent implements OnInit {
       return;
     }
 
-    // Validar que el monto sea múltiplo de Q50
-    const monto = Number(this.formularioChecklist.get('montoCombustible')?.value);
-    if (monto % 50 !== 0) {
-      this.mensajeError = 'El monto de combustible debe ser múltiplo de Q50.00';
-      return;
-    }
-
     if (!confirm('¿Confirma asignar vehículo y piloto? La comisión pasará a En Curso.')) return;
 
     const v = this.formularioChecklist.value;
@@ -550,20 +561,96 @@ export class ComisionComponent implements OnInit {
       fechaRevision: v.fechaRevision,
       horaRevision: v.horaRevision,
       kilometrajInicial: Number(v.kilometrajInicial),
-      montoCombustible: Number(v.montoCombustible),
       observaciones: v.observaciones,
     };
 
     this.comisionService.registrarChecklist(this.comisionDetalle!.comision.id, dto).subscribe({
       next: () => {
-        this.mensajeExito = 'Vehículo y piloto asignados. Comisión en curso.';
-        this.verDetalle(this.comisionDetalle!.comision.id);
-        this.cargarEstadisticas();
+        // Si necesita combustible y hay cupones, crear solicitud
+        if (this.necesitaCombustible && this.cuponesChecklistAgregados.length > 0) {
+          this._crearSolicitudCombustibleChecklist(
+            this.comisionDetalle!.comision.id,
+            Number(v.idVehiculo),
+            Number(v.idPiloto),
+          );
+        } else {
+          this.mensajeExito = 'Vehículo y piloto asignados. Comisión en curso.';
+          this.verDetalle(this.comisionDetalle!.comision.id);
+          this.cargarEstadisticas();
+        }
       },
       error: (err) => {
         this.mensajeError = err.error?.mensaje || 'Error al registrar.';
       },
     });
+  }
+
+  /** Crea solicitud de combustible vinculada a la comisión */
+  private _crearSolicitudCombustibleChecklist(
+    idComision: number,
+    idVehiculo: number,
+    idPiloto: number,
+  ): void {
+    // Crear la solicitud de combustible con los datos de la comisión
+    this.http
+      .post<any>(`${environment.apiUrl}/api/solicitud-combustible`, {
+        idSede: this.idSedeDelegado,
+        idVehiculo: idVehiculo,
+        idPiloto: idPiloto,
+        solicitante: this.comisionDetalle!.comision.solicitante,
+        observaciones: 'Combustible asignado desde comisión #' + idComision,
+        idComision: idComision,
+      })
+      .subscribe({
+        next: (res) => {
+          // Agregar cupones en secuencia
+          this._agregarCuponesChecklistSecuencial(res.id, 0);
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al crear solicitud de combustible.';
+        },
+      });
+  }
+
+  /** Agrega cupones de checklist en secuencia */
+  private _agregarCuponesChecklistSecuencial(idSolicitud: number, index: number): void {
+    if (index >= this.cuponesChecklistAgregados.length) {
+      // Autorizar automáticamente — la comisión ya fue autorizada
+      this.http
+        .patch<any>(`${environment.apiUrl}/api/solicitud-combustible/${idSolicitud}/autorizar`, {})
+        .subscribe({
+          next: () => {
+            this.mensajeExito = 'Vehículo, piloto y cupones asignados. Comisión en curso.';
+            this.cuponesChecklistAgregados = [];
+            this.necesitaCombustible = false;
+            this.verDetalle(this.comisionDetalle!.comision.id);
+            this.cargarEstadisticas();
+          },
+          error: () => {
+            this.mensajeExito = 'Checklist guardado. Error al autorizar combustible.';
+            this.verDetalle(this.comisionDetalle!.comision.id);
+          },
+        });
+      return;
+    }
+
+    const c = this.cuponesChecklistAgregados[index];
+    this.http
+      .post<any>(`${environment.apiUrl}/api/solicitud-combustible/${idSolicitud}/detalle`, {
+        idSolCuponDet: c.rango.id,
+        denominacion: c.rango.denominacion,
+        cantidad: c.cantidad,
+        numeroDel: c.rango.numeroDel,
+        numeroAl: c.rango.numeroAl,
+      })
+      .subscribe({
+        next: () => this._agregarCuponesChecklistSecuencial(idSolicitud, index + 1),
+        error: (err) => {
+          console.error('Error al autorizar combustible:', err);
+          this.mensajeExito = 'Checklist guardado. Error al autorizar combustible.';
+          this.verDetalle(this.comisionDetalle!.comision.id);
+        },
+      });
   }
 
   // ─── Asignación de cupones ───
@@ -740,6 +827,8 @@ export class ComisionComponent implements OnInit {
       return;
     }
 
+    if (!confirm('¿Confirma finalizar esta comisión?')) return;
+
     const v = this.formularioFinalizar.value;
     const dto = {
       kilometrajeFinal: Number(v.kilometrajeFinal),
@@ -748,8 +837,50 @@ export class ComisionComponent implements OnInit {
       observaciones: v.observaciones,
     };
 
-    if (!confirm('¿Confirma finalizar esta comisión?')) return;
+    // Primero procesar devoluciones de cupones si hay seleccionados
+    const devoluciones = this.solicitudCombustibleDetalle
+      .map((d) => ({
+        idDetalle: d.id,
+        devueltos: (d._cupones || []).filter((c: any) => c.seleccionado).length,
+      }))
+      .filter((d) => d.devueltos > 0);
 
+    if (devoluciones.length > 0) {
+      // Procesar devoluciones en secuencia antes de finalizar
+      this._procesarDevolucionesYFinalizar(devoluciones, 0, dto);
+    } else {
+      // Sin devoluciones — finalizar directamente
+      this._ejecutarFinalizacion(dto);
+    }
+  }
+
+  /** Procesa devoluciones de cupones en secuencia y luego finaliza */
+  private _procesarDevolucionesYFinalizar(
+    devoluciones: { idDetalle: number; devueltos: number }[],
+    index: number,
+    dto: any,
+  ): void {
+    if (index >= devoluciones.length) {
+      this._ejecutarFinalizacion(dto);
+      return;
+    }
+
+    const d = devoluciones[index];
+    this.http
+      .patch<any>(
+        `${environment.apiUrl}/api/solicitud-combustible/${this.idSolicitudCombustible}/devolver`,
+        { idDetalle: d.idDetalle, devueltos: d.devueltos },
+      )
+      .subscribe({
+        next: () => this._procesarDevolucionesYFinalizar(devoluciones, index + 1, dto),
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al registrar devolución.';
+        },
+      });
+  }
+
+  /** Ejecuta la finalización de la comisión */
+  private _ejecutarFinalizacion(dto: any): void {
     this.comisionService.finalizarComision(this.comisionDetalle!.comision.id, dto).subscribe({
       next: () => {
         alert('Comisión finalizada correctamente.');
@@ -860,6 +991,162 @@ export class ComisionComponent implements OnInit {
     this.modalVisible = true;
     this.modalAccion = () => this._ejecutarDevolucionCupones(seleccionados);
   }
+  /** Carga cupones disponibles para el checklist */
+  cargarCuponesChecklist(): void {
+    this.cuponService
+      .obtenerTalonariosDisponibles(this.idSedeDelegado ?? undefined)
+      .subscribe({ next: (data: any) => (this.cuponesDisponiblesChecklist = data) });
+  }
 
-  
+  /** Selecciona rango de cupones en checklist */
+  seleccionarRangoChecklist(id: any): void {
+    this.rangoChecklistSeleccionado =
+      this.cuponesDisponiblesChecklist.find((r: any) => r.id == id) || null;
+    this.cantidadChecklistAsignar = 0;
+  }
+
+  /** Agrega cupones al listado del checklist */
+  /** Agrega cupones al listado del checklist con validación de disponibilidad */
+  agregarCuponChecklist(): void {
+    if (!this.rangoChecklistSeleccionado || this.cantidadChecklistAsignar <= 0) {
+      this.mensajeError = 'Seleccione un rango e ingrese una cantidad válida.';
+      return;
+    }
+
+    // Validar que no supere la disponibilidad
+    const disponibles = this.rangoChecklistSeleccionado.disponibles;
+    if (this.cantidadChecklistAsignar > disponibles) {
+      this.mensajeError = `No hay suficientes cupones. Solo hay ${disponibles} disponibles en este rango.`;
+      return;
+    }
+
+    this.cuponesChecklistAgregados.push({
+      rango: { ...this.rangoChecklistSeleccionado },
+      cantidad: this.cantidadChecklistAsignar,
+    });
+    this.rangoChecklistSeleccionado = null;
+    this.cantidadChecklistAsignar = 0;
+    this.mensajeError = '';
+  }
+
+  /** Elimina cupón del listado del checklist */
+  eliminarCuponChecklist(index: number): void {
+    this.cuponesChecklistAgregados.splice(index, 1);
+  }
+
+  get totalCuponesChecklist(): number {
+    return this.cuponesChecklistAgregados.reduce((a: number, c: any) => a + c.cantidad, 0);
+  }
+
+  get montoTotalChecklist(): number {
+    return this.cuponesChecklistAgregados.reduce(
+      (a: number, c: any) => a + c.cantidad * (c.rango.denominacion || 0),
+      0,
+    );
+  }
+
+  /** Carga el PDF de combustible vinculado a la comisión */
+  cargarPdfCombustible(idComision: number): void {
+    this.http
+      .get<any>(`${environment.apiUrl}/api/solicitud-combustible?idComision=${idComision}`)
+      .subscribe({
+        next: (data: any) => {
+          if (data.datos && data.datos.length > 0) {
+            this.urlPdfCombustible = data.datos[0].urlPdf || '';
+            this.tieneCuponesAsignados = true;
+            this.cargarDetalleCombustible(data.datos[0].id);
+            this.cdr.detectChanges();
+          }
+        },
+      });
+  }
+  /** Abre el PDF de combustible */
+  verPdfCombustible(): void {
+    window.open(`${environment.apiUrl}${this.urlPdfCombustible}`, '_blank');
+  }
+
+  /** Carga detalle de cupones de la solicitud de combustible */
+  cargarDetalleCombustible(idSolicitud: number): void {
+    this.idSolicitudCombustible = idSolicitud;
+    this.http
+      .get<any[]>(`${environment.apiUrl}/api/solicitud-combustible/${idSolicitud}/detalle`)
+      .subscribe({
+        next: (data) => {
+          this.solicitudCombustibleDetalle = data;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  /** Abre modal para devolver cupones de combustible */
+  /** Abre modal con cupones individuales del rango para devolución */
+  abrirDevolucionCombustible(det: any): void {
+    this.detalleDevolucionComb = det;
+    this.mostrarModalDevolucionComb = true;
+
+    // Generar solo los cupones entregados (cantidad), desde numeroDel
+    this.cuponesIndividualesDevolucion = [];
+    for (let i = det.numeroDel; i < det.numeroDel + det.cantidad; i++) {
+      this.cuponesIndividualesDevolucion.push({
+        numero: i,
+        seleccionado: false,
+      });
+    }
+  }
+
+  /** Marca/desmarca un cupón individual */
+  toggleCuponDevolucion(cupon: { numero: number; seleccionado: boolean }): void {
+    cupon.seleccionado = !cupon.seleccionado;
+    this.cdr.detectChanges();
+  }
+
+  get totalCuponesDevolucion(): number {
+    return this.cuponesIndividualesDevolucion.filter((c) => c.seleccionado).length;
+  }
+
+  /** Confirma devolución de cupones de combustible */
+  /** Confirma devolución con cupones individuales seleccionados */
+  confirmarDevolucionCombustible(): void {
+    const seleccionados = this.cuponesIndividualesDevolucion.filter((c) => c.seleccionado).length;
+
+    if (seleccionados === 0) {
+      this.mensajeError = 'Seleccione al menos un cupón.';
+      return;
+    }
+
+    this.mostrarModalDevolucionComb = false;
+
+    this.http
+      .patch<any>(
+        `${environment.apiUrl}/api/solicitud-combustible/${this.idSolicitudCombustible}/devolver`,
+        { idDetalle: this.detalleDevolucionComb.id, devueltos: seleccionados },
+      )
+      .subscribe({
+        next: () => {
+          this.mensajeExito = `${seleccionados} cupones devueltos correctamente.`;
+          this.cargarDetalleCombustible(this.idSolicitudCombustible);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al devolver cupones.';
+        },
+      });
+  }
+
+  /** Genera lista de cupones individuales para un rango — usado en finalización */
+  generarCuponesIndividuales(det: any): { numero: number; seleccionado: boolean }[] {
+    if (!det._cupones) {
+      det._cupones = [];
+      for (let i = det.numeroDel; i < det.numeroDel + det.cantidad; i++) {
+        det._cupones.push({ numero: i, seleccionado: false });
+      }
+    }
+    return det._cupones;
+  }
+
+  /** Marca/desmarca cupón en pantalla de finalización */
+  toggleCuponFinalizacion(cupon: { numero: number; seleccionado: boolean }): void {
+    cupon.seleccionado = !cupon.seleccionado;
+    this.cdr.detectChanges();
+  }
 }

@@ -721,7 +721,9 @@
   <div *ngIf="comisionDetalle.comision.idEstado === 4" class="card shadow-sm mb-3">
     <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
       <h6 class="mb-0"><i class="bi bi-fuel-pump"></i> Cupones de Combustible</h6>
-
+      <button class="btn btn-danger btn-sm" *ngIf="urlPdfCombustible" (click)="verPdfCombustible()">
+        <i class="bi bi-file-earmark-pdf"></i> Hoja de Entrega
+      </button>
       <button
         *ngIf="comisionDetalle.comision.idEstado === 4"
         class="btn btn-warning btn-sm"
@@ -731,18 +733,15 @@
       </button>
       <button
         class="btn btn-warning btn-sm"
+        *ngIf="!tieneCuponesAsignados"
         (click)="abrirAsignarCupones()"
-        [disabled]="tieneCuponesAsignados"
       >
         <i class="bi" [ngClass]="mostrarAsignarCupones ? 'bi-chevron-up' : 'bi-plus-circle'"></i>
-        {{
-          tieneCuponesAsignados
-            ? 'Cupones Ya Asignados'
-            : mostrarAsignarCupones
-              ? 'Ocultar'
-              : 'Asignar Cupones'
-        }}
+        {{ mostrarAsignarCupones ? 'Ocultar' : 'Asignar Cupones' }}
       </button>
+      <span *ngIf="tieneCuponesAsignados" class="badge bg-success">
+        <i class="bi bi-check-circle"></i> Cupones asignados
+      </span>
     </div>
     <div *ngIf="mostrarAsignarCupones" class="card-body border-bottom">
       <div class="row align-items-end g-2">
@@ -800,7 +799,9 @@
 
   <!-- ─── DEVOLUCIÓN DE CUPONES — solo comisiones Finalizadas con cupones ─── -->
   <div
-    *ngIf="comisionDetalle.comision.idEstado === 5 && cuponesComision.length > 0"
+    *ngIf="
+      comisionDetalle.comision.idEstado === 5 && (cuponesComision.length > 0 || urlPdfCombustible)
+    "
     class="card shadow-sm mb-3"
   >
     <div class="card-header bg-info text-dark d-flex justify-content-between align-items-center">
@@ -844,70 +845,106 @@
           </tr>
         </tbody>
       </table>
-    </div>
-  </div>
 
-  <!-- ─── REASIGNAR PILOTO/VEHÍCULO ─── -->
-  <div *ngIf="mostrarReasignar" class="card shadow-sm mb-3">
-    <div class="card-header bg-warning text-dark">
-      <h6 class="mb-0"><i class="bi bi-arrow-repeat"></i> Cambiar Piloto / Vehículo</h6>
-    </div>
-    <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-5">
-          <label class="form-label">Nuevo Vehículo</label>
-          <select class="form-select" [(ngModel)]="idVehiculoReasignar">
-            <option [ngValue]="0">Seleccione un vehículo...</option>
-            <option *ngFor="let v of vehiculos" [ngValue]="v.id">{{ v.nombre }}</option>
-          </select>
-        </div>
-        <div class="col-md-5">
-          <label class="form-label">Nuevo Piloto</label>
-          <select class="form-select" [(ngModel)]="idPilotoReasignar">
-            <option [ngValue]="0">Seleccione un piloto...</option>
-            <option *ngFor="let p of pilotos" [ngValue]="p.id">{{ p.nombre }}</option>
-          </select>
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-warning w-100" (click)="reasignarPilotoVehiculo()">
-            <i class="bi bi-check-circle"></i> Confirmar
-          </button>
-        </div>
-      </div>
-      <div class="mt-2">
-        <button class="btn btn-secondary btn-sm" (click)="mostrarReasignar = false">
-          Cancelar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Historial -->
-  <div class="card shadow-sm mb-3">
-    <div class="card-header bg-dark text-white">
-      <h6 class="mb-0"><i class="bi bi-clock-history"></i> Historial de Acciones</h6>
-    </div>
-    <div class="card-body">
-      <div *ngIf="historial.length === 0" class="text-muted small text-center py-2">
-        No hay historial registrado.
-      </div>
-      <div *ngFor="let h of historial" class="timeline-item">
-        <div class="d-flex justify-content-between">
-          <strong>{{ h.accion }}</strong>
-          <small class="text-muted">{{ h.fechaRegistro | date: 'dd/MM/yyyy HH:mm' }}</small>
-        </div>
-        <div class="text-muted small">{{ h.detalle }}</div>
-        <div *ngIf="h.valorAnterior || h.valorNuevo" class="mt-1">
-          <span *ngIf="h.valorAnterior" class="badge bg-secondary me-1">{{ h.valorAnterior }}</span>
-          <i *ngIf="h.valorAnterior && h.valorNuevo" class="bi bi-arrow-right text-muted mx-1"></i>
-          <span *ngIf="h.valorNuevo" class="badge bg-primary">{{ h.valorNuevo }}</span>
-        </div>
-        <small class="text-muted">Por: {{ h.usuario }}</small>
+      <!-- Devolución cupones de combustible (nuevo modelo) -->
+      <div *ngIf="urlPdfCombustible && solicitudCombustibleDetalle.length > 0" class="mt-3">
+        <p class="fw-bold small mb-2">Cupones de combustible entregados:</p>
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Denominación</th>
+              <th class="text-center">Del</th>
+              <th class="text-center">Al</th>
+              <th class="text-center">Entregados</th>
+              <th class="text-center">Devueltos</th>
+              <th class="text-center">Devolver</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of solicitudCombustibleDetalle">
+              <td>
+                <span class="badge bg-info text-dark">Q{{ d.denominacion }}.00</span>
+              </td>
+              <td class="text-center">{{ d.numeroDel }}</td>
+              <td class="text-center">{{ d.numeroAl }}</td>
+              <td class="text-center">{{ d.cantidad }}</td>
+              <td class="text-center text-warning fw-bold">{{ d.devueltos }}</td>
+              <td class="text-center">
+                <button
+                  class="btn btn-outline-warning btn-sm"
+                  *ngIf="d.devueltos < d.cantidad"
+                  (click)="abrirDevolucionCombustible(d)"
+                >
+                  <i class="bi bi-arrow-return-left"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ─── REASIGNAR PILOTO/VEHÍCULO ─── -->
+<div *ngIf="mostrarReasignar" class="card shadow-sm mb-3">
+  <div class="card-header bg-warning text-dark">
+    <h6 class="mb-0"><i class="bi bi-arrow-repeat"></i> Cambiar Piloto / Vehículo</h6>
+  </div>
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-5">
+        <label class="form-label">Nuevo Vehículo</label>
+        <select class="form-select" [(ngModel)]="idVehiculoReasignar">
+          <option [ngValue]="0">Seleccione un vehículo...</option>
+          <option *ngFor="let v of vehiculos" [ngValue]="v.id">{{ v.nombre }}</option>
+        </select>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label">Nuevo Piloto</label>
+        <select class="form-select" [(ngModel)]="idPilotoReasignar">
+          <option [ngValue]="0">Seleccione un piloto...</option>
+          <option *ngFor="let p of pilotos" [ngValue]="p.id">{{ p.nombre }}</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button class="btn btn-warning w-100" (click)="reasignarPilotoVehiculo()">
+          <i class="bi bi-check-circle"></i> Confirmar
+        </button>
+      </div>
+    </div>
+    <div class="mt-2">
+      <button class="btn btn-secondary btn-sm" (click)="mostrarReasignar = false">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Historial -->
+<div class="card shadow-sm mb-3">
+  <div class="card-header bg-dark text-white">
+    <h6 class="mb-0"><i class="bi bi-clock-history"></i> Historial de Acciones</h6>
+  </div>
+  <div class="card-body">
+    <div *ngIf="historial.length === 0" class="text-muted small text-center py-2">
+      No hay historial registrado.
+    </div>
+    <div *ngFor="let h of historial" class="timeline-item">
+      <div class="d-flex justify-content-between">
+        <strong>{{ h.accion }}</strong>
+        <small class="text-muted">{{ h.fechaRegistro | date: 'dd/MM/yyyy HH:mm' }}</small>
+      </div>
+      <div class="text-muted small">{{ h.detalle }}</div>
+      <div *ngIf="h.valorAnterior || h.valorNuevo" class="mt-1">
+        <span *ngIf="h.valorAnterior" class="badge bg-secondary me-1">{{ h.valorAnterior }}</span>
+        <i *ngIf="h.valorAnterior && h.valorNuevo" class="bi bi-arrow-right text-muted mx-1"></i>
+        <span *ngIf="h.valorNuevo" class="badge bg-primary">{{ h.valorNuevo }}</span>
+      </div>
+      <small class="text-muted">Por: {{ h.usuario }}</small>
+    </div>
+  </div>
+</div>
+
+<!-- ASIGNAR VEHÍCULO Y PILOTO -->
 <!-- ASIGNAR VEHÍCULO Y PILOTO -->
 <div *ngIf="mostrarChecklist && comisionDetalle" class="comision-container">
   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -926,18 +963,21 @@
   </div>
 
   <div class="alert alert-info mb-3">
-    <strong>Destino:</strong> {{ comisionDetalle.comision.destino }} — <strong>Fecha:</strong>
+    <strong>Destino:</strong> {{ comisionDetalle.comision.destino }} —
+    <strong>Fecha:</strong>
     {{ comisionDetalle.comision.fechaInicio | date: 'dd/MM/yyyy' }} al
     {{ comisionDetalle.comision.fechaFin | date: 'dd/MM/yyyy' }}
   </div>
 
   <form [formGroup]="formularioChecklist" (ngSubmit)="guardarChecklist()">
+    <!-- Datos de Asignación -->
     <div class="card shadow-sm mb-3">
       <div class="card-header bg-primary text-white">
         <h6 class="mb-0"><i class="bi bi-truck"></i> Datos de Asignación</h6>
       </div>
       <div class="card-body">
         <div class="row">
+          <!-- Vehículo -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Vehículo <span class="text-danger">*</span></label>
             <select
@@ -950,6 +990,8 @@
             </select>
             <div class="invalid-feedback">Requerido.</div>
           </div>
+
+          <!-- Piloto -->
           <div class="col-md-6 mb-3">
             <label class="form-label">Piloto <span class="text-danger">*</span></label>
             <select
@@ -962,18 +1004,26 @@
             </select>
             <div class="invalid-feedback">Requerido.</div>
           </div>
+
+          <!-- Fecha de Salida -->
           <div class="col-md-3 mb-3">
             <label class="form-label">Fecha de Salida</label>
             <input type="date" class="form-control" formControlName="fechaRevision" readonly />
             <small class="text-muted">Tomada de la comisión</small>
           </div>
+
+          <!-- Hora de Salida -->
           <div class="col-md-3 mb-3">
             <label class="form-label">Hora de Salida</label>
             <input type="time" class="form-control" formControlName="horaRevision" readonly />
             <small class="text-muted">Tomada de la comisión</small>
           </div>
+
+          <!-- Kilometraje Inicial -->
           <div class="col-md-3 mb-3">
-            <label class="form-label">Kilometraje Inicial <span class="text-danger">*</span></label>
+            <label class="form-label">
+              Kilometraje Inicial <span class="text-danger">*</span>
+            </label>
             <input
               type="number"
               class="form-control"
@@ -983,20 +1033,43 @@
             />
             <div class="invalid-feedback">Requerido.</div>
           </div>
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Monto Combustible <span class="text-danger">*</span></label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="montoCombustible"
-              [class.is-invalid]="tieneError('montoCombustible', formularioChecklist)"
-              placeholder="Ej: 100, 150, 200..."
-              step="50"
-              min="50"
-            />
-            <div class="invalid-feedback">Requerido. Mínimo Q50.00</div>
-            <small class="text-muted">Debe ser múltiplo de Q50.00</small>
+
+          <!-- ¿Necesita combustible? -->
+          <div class="col-md-3 mb-3 d-flex align-items-end">
+            <div class="w-100">
+              <label class="form-label fw-bold">¿Necesita combustible?</label>
+              <div class="d-flex gap-3 mt-1">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="necesitaCombustible"
+                    id="combNo"
+                    [value]="false"
+                    [(ngModel)]="necesitaCombustible"
+                    [ngModelOptions]="{ standalone: true }"
+                    checked
+                  />
+                  <label class="form-check-label" for="combNo">No</label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="necesitaCombustible"
+                    id="combSi"
+                    [value]="true"
+                    [(ngModel)]="necesitaCombustible"
+                    [ngModelOptions]="{ standalone: true }"
+                    (change)="cargarCuponesChecklist()"
+                  />
+                  <label class="form-check-label" for="combSi">Sí</label>
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Observaciones -->
           <div class="col-md-12 mb-3">
             <label class="form-label">Observaciones</label>
             <textarea
@@ -1009,6 +1082,104 @@
         </div>
       </div>
     </div>
+
+    <!-- Sección Cupones — visible solo si necesita combustible -->
+    <div *ngIf="necesitaCombustible" class="card shadow-sm mb-3">
+      <div class="card-header bg-success text-white d-flex justify-content-between">
+        <h6 class="mb-0"><i class="bi bi-ticket-perforated"></i> Cupones de Combustible</h6>
+        <span class="badge bg-light text-success">
+          {{ totalCuponesChecklist }} cupones · Q{{ montoTotalChecklist | number }}.00
+        </span>
+      </div>
+      <div class="card-body">
+        <!-- Selector de rango -->
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-md-6">
+            <label class="form-label form-label-sm">Rango disponible en sede</label>
+            <select
+              class="form-select form-select-sm"
+              (change)="seleccionarRangoChecklist($any($event.target).value)"
+            >
+              <option value="">— Seleccione un rango —</option>
+              <option *ngFor="let r of cuponesDisponiblesChecklist" [value]="r.id">
+                {{ r.nombre }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm">Cantidad</label>
+            <input
+              type="number"
+              class="form-control form-control-sm"
+              [(ngModel)]="cantidadChecklistAsignar"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Cantidad"
+              min="1"
+            />
+          </div>
+          <div class="col-md-3">
+            <button
+              type="button"
+              class="btn btn-success btn-sm w-100"
+              (click)="agregarCuponChecklist()"
+            >
+              <i class="bi bi-plus-circle"></i> Agregar
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de cupones agregados -->
+        <div *ngIf="cuponesChecklistAgregados.length === 0" class="text-muted small fst-italic">
+          No se han agregado cupones aún.
+        </div>
+
+        <table
+          *ngIf="cuponesChecklistAgregados.length > 0"
+          class="table table-sm table-bordered mb-0"
+        >
+          <thead class="table-secondary">
+            <tr>
+              <th>Denominación</th>
+              <th class="text-center">Cantidad</th>
+              <th class="text-center">Monto</th>
+              <th class="text-center">Eliminar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of cuponesChecklistAgregados; let i = index">
+              <td>
+                <span class="badge bg-info text-dark"> Q{{ c.rango.denominacion }}.00 </span>
+              </td>
+              <td class="text-center">{{ c.cantidad }}</td>
+              <td class="text-center fw-bold text-success">
+                Q{{ c.cantidad * (c.rango.denominacion || 0) | number }}.00
+              </td>
+              <td class="text-center">
+                <button
+                  type="button"
+                  class="btn btn-outline-danger btn-sm"
+                  (click)="eliminarCuponChecklist(i)"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot class="table-dark">
+            <tr>
+              <td class="fw-bold">Total</td>
+              <td class="text-center fw-bold">{{ totalCuponesChecklist }}</td>
+              <td class="text-center fw-bold text-success">
+                Q{{ montoTotalChecklist | number }}.00
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Botones -->
     <div class="d-flex justify-content-end gap-2">
       <button type="button" class="btn btn-secondary" (click)="volverDetalle()">
         <i class="bi bi-x-circle"></i> Cancelar
@@ -1102,6 +1273,45 @@
         </div>
       </div>
     </div>
+
+    <!-- Devolución de cupones de combustible al finalizar -->
+    <div *ngIf="solicitudCombustibleDetalle.length > 0" class="card shadow-sm mb-3">
+      <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0">
+          <i class="bi bi-arrow-return-left"></i> Devolución de Cupones de Combustible
+        </h6>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          Si el piloto devuelve cupones no utilizados, selecciónelos antes de confirmar la
+          finalización.
+        </p>
+        <div *ngFor="let d of solicitudCombustibleDetalle" class="mb-4">
+          <p class="fw-bold mb-2">
+            <span class="badge bg-info text-dark me-2">Q{{ d.denominacion }}.00</span>
+            Del {{ d.numeroDel }} al {{ d.numeroAl }} — {{ d.cantidad }} entregados
+          </p>
+          <div class="row g-2">
+            <div class="col-3" *ngFor="let n of generarCuponesIndividuales(d)">
+              <div
+                class="form-check border rounded p-2"
+                [class.bg-warning]="n.seleccionado"
+                (click)="toggleCuponFinalizacion(n)"
+                style="cursor: pointer"
+              >
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [checked]="n.seleccionado"
+                  readonly
+                />
+                <label class="form-check-label fw-bold">{{ n.numero }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="d-flex justify-content-end gap-2">
       <button type="button" class="btn btn-secondary" (click)="volverDetalle()">
         <i class="bi bi-x-circle"></i> Cancelar
@@ -1139,6 +1349,57 @@
       <button class="btn btn-secondary btn-sm" (click)="cerrarModalEstado()">Cancelar</button>
       <button class="btn btn-primary btn-sm" (click)="confirmarCambioEstado()">
         <i class="bi bi-check-circle"></i> Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DEVOLUCIÓN CUPONES COMBUSTIBLE -->
+<div *ngIf="mostrarModalDevolucionComb" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header-custom bg-warning text-dark">
+      <h6 class="mb-0"><i class="bi bi-arrow-return-left"></i> Devolver Cupones de Combustible</h6>
+      <button class="btn btn-sm btn-light" (click)="mostrarModalDevolucionComb = false">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body-custom">
+      <div *ngIf="detalleDevolucionComb" class="mb-3">
+        <p class="mb-2">
+          Denominación: <strong>Q{{ detalleDevolucionComb.denominacion }}.00</strong> — Entregados:
+          <strong>{{ detalleDevolucionComb.cantidad }}</strong>
+        </p>
+        <p class="text-muted small">Seleccione los cupones que el piloto devuelve:</p>
+        <!-- Lista de cupones individuales con checkbox -->
+        <div class="row g-2">
+          <div class="col-4" *ngFor="let n of cuponesIndividualesDevolucion">
+            <div
+              class="form-check border rounded p-2"
+              [class.bg-warning]="n.seleccionado"
+              (click)="toggleCuponDevolucion(n)"
+              style="cursor: pointer"
+            >
+              <input class="form-check-input" type="checkbox" [checked]="n.seleccionado" readonly />
+              <label class="form-check-label fw-bold">{{ n.numero }}</label>
+            </div>
+          </div>
+        </div>
+        <p class="mt-2 text-muted small">
+          Seleccionados: <strong>{{ totalCuponesDevolucion }}</strong>
+        </p>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary btn-sm" (click)="mostrarModalDevolucionComb = false">
+        Cancelar
+      </button>
+      <button
+        class="btn btn-warning btn-sm"
+        [disabled]="totalCuponesDevolucion === 0"
+        (click)="confirmarDevolucionCombustible()"
+      >
+        <i class="bi bi-arrow-return-left"></i>
+        Confirmar Devolución ({{ totalCuponesDevolucion }})
       </button>
     </div>
   </div>

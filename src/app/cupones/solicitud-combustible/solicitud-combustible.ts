@@ -6,94 +6,98 @@
 // ============================================================
 
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule }                          from '@angular/common';
-import { FormsModule, ReactiveFormsModule,
-         FormBuilder, FormGroup, Validators }    from '@angular/forms';
-import { AuthService }                           from '../../servicios/auth.service';
-import { CuponService }                          from '../../servicios/cupon.service';
-import { ComisionService }                       from '../../servicios/comision.service';
-import { environment }                           from '../../../environments/environment';
-import { HttpClient, HttpParams }                from '@angular/common/http';
+import { CommonModule } from '@angular/common';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
+import { AuthService } from '../../servicios/auth.service';
+import { CuponService } from '../../servicios/cupon.service';
+import { ComisionService } from '../../servicios/comision.service';
+import { environment } from '../../../environments/environment';
+import { HttpClient, HttpParams } from '@angular/common/http';
 
 @Component({
-  selector:    'app-solicitud-combustible',
-  standalone:  true,
-  imports:     [CommonModule, FormsModule, ReactiveFormsModule],
+  selector: 'app-solicitud-combustible',
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './solicitud-combustible.html',
 })
 export class SolicitudCombustibleComponent implements OnInit {
-
   // ─── Listas ───
-  solicitudes:        any[] = [];
-  vehiculos:          any[] = [];
-  pilotos:            any[] = [];
+  solicitudes: any[] = [];
+  vehiculos: any[] = [];
+  pilotos: any[] = [];
   cuponesDisponibles: any[] = [];
-  detalleSolicitud:   any[] = [];
+  detalleSolicitud: any[] = [];
 
   // ─── Paginación ───
-  paginaActual:   number = 1;
-  tamanioPagina:  number = 10;
+  paginaActual: number = 1;
+  tamanioPagina: number = 10;
   totalRegistros: number = 0;
-  totalPaginas:   number = 0;
-  filtroEstado:   string = '';
+  totalPaginas: number = 0;
+  filtroEstado: string = '';
 
   // ─── Visibilidad ───
-  mostrarLista:      boolean = true;
+  mostrarLista: boolean = true;
   mostrarFormulario: boolean = false;
-  mostrarDetalle:    boolean = false;
+  mostrarDetalle: boolean = false;
 
   // ─── Detalle seleccionado ───
-  solicitudSeleccionada: any   = null;
-  idSolicitudActual:     number = 0;
+  solicitudSeleccionada: any = null;
+  idSolicitudActual: number = 0;
 
   // ─── Cupones a agregar ───
-  cuponesAgregados:  any[]  = [];
-  rangoSeleccionado: any    = null;
-  cantidadAsignar:   number = 0;
+  cuponesAgregados: any[] = [];
+  rangoSeleccionado: any = null;
+  cantidadAsignar: number = 0;
 
   // ─── Modal devolución ───
   mostrarModalDevolucion: boolean = false;
-  detalleSeleccionado:    any     = null;
-  cantidadDevolver:       number  = 0;
+  detalleSeleccionado: any = null;
+  cantidadDevolver: number = 0;
 
   // ─── Roles ───
-  esSolicitante:     boolean      = false;
-  esJefeTransporte:  boolean      = false;
-  idSedeUsuario:     number | null = null;
+  esSolicitante: boolean = false;
+  esJefeTransporte: boolean = false;
+  idSedeUsuario: number | null = null;
 
   // ─── Formulario ───
-  formulario:     FormGroup;
+  formulario: FormGroup;
   intentoGuardar: boolean = false;
 
   // ─── Estado ───
-  cargando:     boolean = false;
-  mensajeExito: string  = '';
-  mensajeError: string  = '';
+  cargando: boolean = false;
+  mensajeExito: string = '';
+  mensajeError: string = '';
 
   private apiUrl = `${environment.apiUrl}/api/solicitud-combustible`;
 
   constructor(
-    private authService:    AuthService,
-    private cuponService:   CuponService,
+    private authService: AuthService,
+    private cuponService: CuponService,
     private comisionService: ComisionService,
-    private fb:             FormBuilder,
-    private http:           HttpClient,
-    private cdr:            ChangeDetectorRef,
+    private fb: FormBuilder,
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
   ) {
     // Formulario de nueva solicitud
     this.formulario = this.fb.group({
-      idVehiculo:   ['', Validators.required],
-      idPiloto:     ['', Validators.required],
-      solicitante:  ['', Validators.required],
+      idVehiculo: ['', Validators.required],
+      idPiloto: ['', Validators.required],
+      solicitante: ['', Validators.required],
       observaciones: [''],
     });
   }
 
   ngOnInit(): void {
     // Determinar rol del usuario logueado
-    this.esSolicitante    = this.authService.tienePermiso('SOLICITAR_COMBUSTIBLE');
+    this.esSolicitante = this.authService.tienePermiso('SOLICITAR_COMBUSTIBLE');
     this.esJefeTransporte = this.authService.tienePermiso('GESTIONAR_COMBUSTIBLE');
-    this.idSedeUsuario    = this.authService.obtenerIdUnidad();
+    this.idSedeUsuario = this.authService.obtenerIdUnidad();
     this.cargarSolicitudes();
     this.cargarVehiculos();
     this.cargarPilotos();
@@ -105,33 +109,31 @@ export class SolicitudCombustibleComponent implements OnInit {
   /** Carga lista de solicitudes filtradas por sede y estado */
   cargarSolicitudes(): void {
     this.cargando = true;
-    let params    = new HttpParams()
-      .set('pagina',    this.paginaActual.toString())
+    let params = new HttpParams()
+      .set('pagina', this.paginaActual.toString())
       .set('porPagina', this.tamanioPagina.toString());
 
-    if (this.idSedeUsuario)
-      params = params.set('idSede', this.idSedeUsuario.toString());
-    if (this.filtroEstado)
-      params = params.set('estado', this.filtroEstado);
+    if (this.idSedeUsuario) params = params.set('idSede', this.idSedeUsuario.toString());
+    if (this.filtroEstado) params = params.set('estado', this.filtroEstado);
 
     this.http.get<any>(this.apiUrl, { params }).subscribe({
       next: (data) => {
-        this.solicitudes    = data.datos;
+        this.solicitudes = data.datos;
         this.totalRegistros = data.total;
-        this.totalPaginas   = Math.ceil(data.total / this.tamanioPagina);
-        this.cargando       = false;
+        this.totalPaginas = Math.ceil(data.total / this.tamanioPagina);
+        this.cargando = false;
         this.cdr.detectChanges();
       },
       error: () => {
         this.mensajeError = 'Error al cargar solicitudes.';
-        this.cargando     = false;
+        this.cargando = false;
       },
     });
   }
 
   /** Carga vehículos disponibles */
   cargarVehiculos(): void {
-    const hoy    = new Date().toISOString();
+    const hoy = new Date().toISOString();
     const manana = new Date(Date.now() + 86400000).toISOString();
     this.comisionService
       .obtenerVehiculosDisponibles(hoy, manana, this.idSedeUsuario ?? undefined)
@@ -140,7 +142,7 @@ export class SolicitudCombustibleComponent implements OnInit {
 
   /** Carga pilotos disponibles */
   cargarPilotos(): void {
-    const hoy    = new Date().toISOString();
+    const hoy = new Date().toISOString();
     const manana = new Date(Date.now() + 86400000).toISOString();
     this.comisionService
       .obtenerPilotosDisponibles(hoy, manana)
@@ -158,14 +160,14 @@ export class SolicitudCombustibleComponent implements OnInit {
 
   /** Abre el formulario de nueva solicitud */
   nuevaSolicitud(): void {
-    this.mostrarLista      = false;
+    this.mostrarLista = false;
     this.mostrarFormulario = true;
-    this.mostrarDetalle    = false;
+    this.mostrarDetalle = false;
     this.formulario.reset();
-    this.cuponesAgregados  = [];
+    this.cuponesAgregados = [];
     this.rangoSeleccionado = null;
-    this.cantidadAsignar   = 0;
-    this.intentoGuardar    = false;
+    this.cantidadAsignar = 0;
+    this.intentoGuardar = false;
     this.limpiarMensajes();
   }
 
@@ -182,33 +184,35 @@ export class SolicitudCombustibleComponent implements OnInit {
     }
 
     this.cargando = true;
-    const v       = this.formulario.value;
+    const v = this.formulario.value;
 
     // Paso 1: crear la solicitud
-    this.http.post<any>(this.apiUrl, {
-      idSede:       this.idSedeUsuario,
-      idVehiculo:   Number(v.idVehiculo),
-      idPiloto:     Number(v.idPiloto),
-      solicitante:  v.solicitante,
-      observaciones: v.observaciones || null,
-    }).subscribe({
-      next: (res) => {
-        const idSolicitud = res.id;
-        // Paso 2: agregar cupones en secuencia
-        this.agregarCuponesSecuencial(idSolicitud, 0);
-      },
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al registrar la solicitud.';
-        this.cargando     = false;
-      },
-    });
+    this.http
+      .post<any>(this.apiUrl, {
+        idSede: this.idSedeUsuario,
+        idVehiculo: Number(v.idVehiculo),
+        idPiloto: Number(v.idPiloto),
+        solicitante: v.solicitante,
+        observaciones: v.observaciones || null,
+      })
+      .subscribe({
+        next: (res) => {
+          const idSolicitud = res.id;
+          // Paso 2: agregar cupones en secuencia
+          this.agregarCuponesSecuencial(idSolicitud, 0);
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al registrar la solicitud.';
+          this.cargando = false;
+        },
+      });
   }
 
   /** Agrega cupones uno por uno en secuencia */
   private agregarCuponesSecuencial(idSolicitud: number, index: number): void {
     if (index >= this.cuponesAgregados.length) {
       // Todos los cupones agregados
-      this.cargando     = false;
+      this.cargando = false;
       this.mensajeExito = `Solicitud #${idSolicitud} registrada correctamente.`;
       this.volverLista();
       this.cargarSolicitudes();
@@ -216,42 +220,53 @@ export class SolicitudCombustibleComponent implements OnInit {
     }
 
     const c = this.cuponesAgregados[index];
-    this.http.post<any>(`${this.apiUrl}/${idSolicitud}/detalle`, {
-      idSolCuponDet: c.rango.id,
-      denominacion:  c.rango.denominacion,
-      cantidad:      c.cantidad,
-      numeroDel:     c.rango.numeroDel,
-      numeroAl:      c.rango.numeroAl,
-    }).subscribe({
-      next: () => this.agregarCuponesSecuencial(idSolicitud, index + 1),
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al agregar cupones.';
-        this.cargando     = false;
-      },
-    });
+    this.http
+      .post<any>(`${this.apiUrl}/${idSolicitud}/detalle`, {
+        idSolCuponDet: c.rango.id,
+        denominacion: c.rango.denominacion,
+        cantidad: c.cantidad,
+        numeroDel: c.rango.numeroDel,
+        numeroAl: c.rango.numeroAl,
+      })
+      .subscribe({
+        next: () => this.agregarCuponesSecuencial(idSolicitud, index + 1),
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al agregar cupones.';
+          this.cargando = false;
+        },
+      });
   }
 
   // ─── Cupones ─────────────────────────────────────────────
 
   /** Selecciona un rango del combo */
   seleccionarRango(id: any): void {
-    this.rangoSeleccionado = this.cuponesDisponibles.find(r => r.id == id) || null;
-    this.cantidadAsignar   = 0;
+    this.rangoSeleccionado = this.cuponesDisponibles.find((r) => r.id == id) || null;
+    this.cantidadAsignar = 0;
   }
 
   /** Agrega un rango al listado de cupones de la solicitud */
+  /** Agrega cupones con validación de disponibilidad */
   agregarCupon(): void {
     if (!this.rangoSeleccionado || this.cantidadAsignar <= 0) {
       this.mensajeError = 'Seleccione un rango e ingrese una cantidad válida.';
       return;
     }
+
+    // Validar disponibilidad
+    const disponibles = this.rangoSeleccionado.disponibles;
+    if (this.cantidadAsignar > disponibles) {
+      this.mensajeError = `No hay suficientes cupones. Solo hay ${disponibles} disponibles en este rango.`;
+      return;
+    }
+
     this.cuponesAgregados.push({
-      rango:    { ...this.rangoSeleccionado },
+      rango: { ...this.rangoSeleccionado },
       cantidad: this.cantidadAsignar,
     });
     this.rangoSeleccionado = null;
-    this.cantidadAsignar   = 0;
-    this.mensajeError      = '';
+    this.cantidadAsignar = 0;
+    this.mensajeError = '';
     this.cdr.detectChanges();
   }
 
@@ -266,8 +281,7 @@ export class SolicitudCombustibleComponent implements OnInit {
   }
 
   get montoTotal(): number {
-    return this.cuponesAgregados.reduce(
-      (a, c) => a + c.cantidad * (c.rango.denominacion || 0), 0);
+    return this.cuponesAgregados.reduce((a, c) => a + c.cantidad * (c.rango.denominacion || 0), 0);
   }
 
   // ─── Ver detalle ─────────────────────────────────────────
@@ -280,18 +294,18 @@ export class SolicitudCombustibleComponent implements OnInit {
         this.solicitudSeleccionada = data;
         this.http.get<any[]>(`${this.apiUrl}/${id}/detalle`).subscribe({
           next: (det) => {
-            this.detalleSolicitud  = det;
-            this.mostrarLista      = false;
+            this.detalleSolicitud = det;
+            this.mostrarLista = false;
             this.mostrarFormulario = false;
-            this.mostrarDetalle    = true;
-            this.cargando          = false;
+            this.mostrarDetalle = true;
+            this.cargando = false;
             this.cdr.detectChanges();
           },
         });
       },
       error: () => {
         this.mensajeError = 'Error al cargar el detalle.';
-        this.cargando     = false;
+        this.cargando = false;
       },
     });
   }
@@ -305,7 +319,7 @@ export class SolicitudCombustibleComponent implements OnInit {
 
     this.http.patch<any>(`${this.apiUrl}/${id}/autorizar`, {}).subscribe({
       next: (res) => {
-        this.cargando     = false;
+        this.cargando = false;
         this.mensajeExito = 'Solicitud autorizada. Cupones entregados al piloto.';
         this.cargarSolicitudes();
         if (this.mostrarDetalle) this.verDetalle(id);
@@ -313,7 +327,7 @@ export class SolicitudCombustibleComponent implements OnInit {
       },
       error: (err) => {
         this.mensajeError = err.error?.mensaje || 'Error al autorizar.';
-        this.cargando     = false;
+        this.cargando = false;
       },
     });
   }
@@ -323,7 +337,7 @@ export class SolicitudCombustibleComponent implements OnInit {
   /** Abre modal para registrar devolución */
   abrirDevolucion(det: any): void {
     this.detalleSeleccionado = det;
-    this.cantidadDevolver    = 0;
+    this.cantidadDevolver = 0;
     this.mostrarModalDevolucion = true;
     this.limpiarMensajes();
   }
@@ -335,24 +349,26 @@ export class SolicitudCombustibleComponent implements OnInit {
       return;
     }
 
-    this.cargando               = true;
+    this.cargando = true;
     this.mostrarModalDevolucion = false;
 
-    this.http.patch<any>(
-      `${this.apiUrl}/${this.solicitudSeleccionada.id}/devolver`,
-      { idDetalle: this.detalleSeleccionado.id, devueltos: this.cantidadDevolver }
-    ).subscribe({
-      next: () => {
-        this.cargando     = false;
-        this.mensajeExito = 'Cupones devueltos correctamente.';
-        this.verDetalle(this.solicitudSeleccionada.id);
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al registrar devolución.';
-        this.cargando     = false;
-      },
-    });
+    this.http
+      .patch<any>(`${this.apiUrl}/${this.solicitudSeleccionada.id}/devolver`, {
+        idDetalle: this.detalleSeleccionado.id,
+        devueltos: this.cantidadDevolver,
+      })
+      .subscribe({
+        next: () => {
+          this.cargando = false;
+          this.mensajeExito = 'Cupones devueltos correctamente.';
+          this.verDetalle(this.solicitudSeleccionada.id);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al registrar devolución.';
+          this.cargando = false;
+        },
+      });
   }
 
   // ─── Finalizar ───────────────────────────────────────────
@@ -364,7 +380,7 @@ export class SolicitudCombustibleComponent implements OnInit {
 
     this.http.patch<any>(`${this.apiUrl}/${id}/finalizar`, {}).subscribe({
       next: () => {
-        this.cargando     = false;
+        this.cargando = false;
         this.mensajeExito = 'Solicitud finalizada correctamente.';
         this.cargarSolicitudes();
         this.volverLista();
@@ -372,7 +388,7 @@ export class SolicitudCombustibleComponent implements OnInit {
       },
       error: (err) => {
         this.mensajeError = err.error?.mensaje || 'Error al finalizar.';
-        this.cargando     = false;
+        this.cargando = false;
       },
     });
   }
@@ -387,11 +403,11 @@ export class SolicitudCombustibleComponent implements OnInit {
   // ─── Navegación ──────────────────────────────────────────
 
   volverLista(): void {
-    this.mostrarLista          = true;
-    this.mostrarFormulario     = false;
-    this.mostrarDetalle        = false;
+    this.mostrarLista = true;
+    this.mostrarFormulario = false;
+    this.mostrarDetalle = false;
     this.solicitudSeleccionada = null;
-    this.detalleSolicitud      = [];
+    this.detalleSolicitud = [];
     this.limpiarMensajes();
   }
 
@@ -419,12 +435,18 @@ export class SolicitudCombustibleComponent implements OnInit {
 
   colorEstado(estado: string): string {
     switch (estado) {
-      case 'Pendiente':   return 'bg-warning text-dark';
-      case 'Autorizada':  return 'bg-info text-dark';
-      case 'Entregada':   return 'bg-primary';
-      case 'Finalizada':  return 'bg-success';
-      case 'Cancelada':   return 'bg-danger';
-      default:            return 'bg-secondary';
+      case 'Pendiente':
+        return 'bg-warning text-dark';
+      case 'Autorizada':
+        return 'bg-info text-dark';
+      case 'Entregada':
+        return 'bg-primary';
+      case 'Finalizada':
+        return 'bg-success';
+      case 'Cancelada':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
     }
   }
 

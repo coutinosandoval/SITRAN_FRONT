@@ -457,4 +457,10 @@ export class SolicitudCuponesComponent implements OnInit {
   verPdf(urlPdf: string): void {
     window.open(`https://localhost:7069${urlPdf}`, '_blank');
   }
+
+  /** Calcula el total disponible en quetzales */
+calcularTotalDisponible(): number {
+  return this.detalleSolicitud.reduce(
+    (a: number, d: any) => a + (d.disponibles * d.denominacion), 0);
+}
 }

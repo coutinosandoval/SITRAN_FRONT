@@ -21,6 +21,9 @@ export interface SolicitudCupones {
   nombreEntregador?: string;
   nombreReceptor?: string;
   urlPdf?: string;
+  cantidadOriginal?: number;
+  entregados?: number;
+  disponibles?: number;
 }
 
 export interface SolicitudCuponesDetalle {
@@ -33,6 +36,9 @@ export interface SolicitudCuponesDetalle {
   numeroAl: number;
   fechaAsignacion?: string;
   asignadoPor?: string;
+  cantidadOriginal?: number;
+  entregados?: number;
+  disponibles?: number;
 }
 
 export interface SolicitudCuponesPaginada {

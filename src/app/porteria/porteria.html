@@ -1,0 +1,402 @@
+<!-- ============================================================
+  porteria.html
+  Control de portería — salida y entrada de vehículos
+  Ruta: src/app/porteria/porteria.html
+============================================================ -->
+
+<div>
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0"><i class="bi bi-shield-check"></i> Control de Portería</h4>
+    <!-- Botones de vista -->
+    <div class="btn-group">
+      <button
+        class="btn btn-sm"
+        [ngClass]="vistaActiva === 'enRuta' ? 'btn-primary' : 'btn-outline-primary'"
+        (click)="cambiarVista('enRuta')"
+      >
+        <i class="bi bi-truck"></i> En Ruta
+        <span class="badge bg-danger ms-1" *ngIf="vehiculosEnRuta.length > 0">
+          {{ vehiculosEnRuta.length }}
+        </span>
+      </button>
+      <button
+        class="btn btn-sm"
+        [ngClass]="vistaActiva === 'salida' ? 'btn-success' : 'btn-outline-success'"
+        (click)="cambiarVista('salida')"
+      >
+        <i class="bi bi-box-arrow-right"></i> Registrar Salida
+      </button>
+      <button
+        class="btn btn-sm"
+        [ngClass]="vistaActiva === 'historial' ? 'btn-secondary' : 'btn-outline-secondary'"
+        (click)="cambiarVista('historial')"
+      >
+        <i class="bi bi-clock-history"></i> Historial
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+  <div *ngIf="mensajeError" class="alert alert-danger alert-dismissible">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+    <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
+  </div>
+
+  <!-- ── VEHÍCULOS EN RUTA ─────────────────────────────── -->
+  <div *ngIf="vistaActiva === 'enRuta'">
+    <div class="card shadow-sm">
+      <div class="card-header bg-danger text-white d-flex justify-content-between">
+        <span><i class="bi bi-truck"></i> Vehículos Fuera del Predio</span>
+        <span class="badge bg-light text-danger">{{ vehiculosEnRuta.length }} en ruta</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Placa</th>
+                <th>Vehículo</th>
+                <th>Piloto</th>
+                <th>Tipo</th>
+                <th>Comisión</th>
+                <th>Km Salida</th>
+                <th>Hora Salida</th>
+                <th>Motivo</th>
+                <th class="text-center">Registrar Entrada</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="cargando">
+                <td colspan="9" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                  Cargando...
+                </td>
+              </tr>
+              <tr *ngIf="!cargando && vehiculosEnRuta.length === 0">
+                <td colspan="9" class="text-center py-4 text-muted">
+                  <i class="bi bi-check-circle fs-4 d-block mb-2 text-success"></i>
+                  Todos los vehículos están en el predio.
+                </td>
+              </tr>
+              <tr *ngFor="let v of vehiculosEnRuta">
+                <td>
+                  <strong>{{ v.placa }}</strong>
+                </td>
+                <td>{{ v.vehiculoNombre }}</td>
+                <td>{{ v.pilotoNombre || '—' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="colorTipo(v.tipoMovimiento)">
+                    {{ v.tipoMovimiento }}
+                  </span>
+                </td>
+                <td>
+                  <span *ngIf="v.idComision">#{{ v.idComision }}</span>
+                  <span *ngIf="!v.idComision" class="text-muted">—</span>
+                </td>
+                <td>{{ v.kmSalida | number }}</td>
+                <td>{{ v.horaSalida }}</td>
+                <td
+                  style="
+                    max-width: 150px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                  "
+                  [title]="v.motivo"
+                >
+                  {{ v.motivo || '—' }}
+                </td>
+                <td class="text-center">
+                  <button
+                    class="btn btn-success btn-sm"
+                    title="Registrar entrada al predio"
+                    (click)="abrirEntrada(v)"
+                  >
+                    <i class="bi bi-box-arrow-in-left"></i> Entrada
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REGISTRAR SALIDA ───────────────────────────────── -->
+  <div *ngIf="vistaActiva === 'salida'">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h6 class="mb-0"><i class="bi bi-box-arrow-right"></i> Registrar Salida de Vehículo</h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- Vehículo -->
+          <div class="col-md-4">
+            <label class="form-label fw-bold"> Vehículo <span class="text-danger">*</span> </label>
+            <select class="form-select" [(ngModel)]="salidaIdVehiculo">
+              <option [value]="0">— Seleccione un vehículo —</option>
+              <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
+            </select>
+          </div>
+
+          <!-- Piloto -->
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Piloto</label>
+            <select class="form-select" [(ngModel)]="salidaIdPiloto">
+              <option [value]="0">— Seleccione un piloto —</option>
+              <option *ngFor="let p of pilotos" [value]="p.id">{{ p.nombre }}</option>
+            </select>
+          </div>
+
+          <!-- Tipo de movimiento -->
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Tipo de movimiento</label>
+            <select class="form-select" [(ngModel)]="salidaTipo">
+              <option value="Comisión">Comisión</option>
+              <option value="Mantenimiento">Mantenimiento</option>
+              <option value="Traslado">Traslado</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <!-- Comisión vinculada (opcional) -->
+          <div class="col-md-6" *ngIf="salidaTipo === 'Comisión'">
+            <label class="form-label fw-bold">Comisión vinculada (opcional)</label>
+            <select class="form-select" [(ngModel)]="salidaIdComision">
+              <option [value]="null">— Sin comisión específica —</option>
+              <option *ngFor="let c of comisiones" [value]="c.id">
+                #{{ c.id }} — {{ c.destino }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Motivo -->
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Motivo</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="salidaMotivo"
+              placeholder="Descripción del motivo de salida"
+            />
+          </div>
+
+          <!-- Info: fecha y hora automática -->
+          <div class="col-md-12">
+            <div class="alert alert-info py-2 mb-0">
+              <i class="bi bi-info-circle"></i>
+              La fecha y hora de salida se registrarán automáticamente al confirmar.
+            </div>
+          </div>
+
+          <!-- Botón -->
+          <div class="col-md-12 d-flex justify-content-end">
+            <button
+              class="btn btn-success"
+              [disabled]="cargando || !salidaIdVehiculo"
+              (click)="registrarSalida()"
+            >
+              <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+              <i *ngIf="!cargando" class="bi bi-box-arrow-right"></i>
+              Registrar Salida
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── HISTORIAL ──────────────────────────────────────── -->
+  <div *ngIf="vistaActiva === 'historial'">
+    <!-- Filtros -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body py-2">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label form-label-sm fw-bold">Fecha inicio</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="filtroFechaIni" />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label form-label-sm fw-bold">Fecha fin</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="filtroFechaFin" />
+          </div>
+          <div class="col-md-2">
+            <button
+              class="btn btn-primary btn-sm w-100"
+              (click)="paginaActual = 1; cargarHistorial()"
+            >
+              <i class="bi bi-search"></i> Buscar
+            </button>
+          </div>
+          <div class="col-md-4 text-end">
+            <span class="text-muted small">{{ totalRegistros }} movimientos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-secondary text-white">
+        <span><i class="bi bi-clock-history"></i> Historial de Movimientos</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Placa</th>
+                <th>Piloto</th>
+                <th>Tipo</th>
+                <th>Fecha Salida</th>
+                <th>Hora Salida</th>
+                <th class="text-center">Km Salida</th>
+                <th>Fecha Entrada</th>
+                <th>Hora Entrada</th>
+                <th class="text-center">Km Entrada</th>
+                <th class="text-center">Recorrido</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="cargando">
+                <td colspan="11" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                  Cargando...
+                </td>
+              </tr>
+              <tr *ngIf="!cargando && historial.length === 0">
+                <td colspan="11" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                  No hay movimientos para el período seleccionado.
+                </td>
+              </tr>
+              <tr *ngFor="let h of historial">
+                <td>
+                  <strong>{{ h.placa }}</strong>
+                </td>
+                <td>{{ h.pilotoNombre || '—' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="colorTipo(h.tipoMovimiento)">
+                    {{ h.tipoMovimiento }}
+                  </span>
+                </td>
+                <td>{{ h.fechaSalida | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ h.horaSalida }}</td>
+                <td class="text-center">{{ h.kmSalida | number }}</td>
+                <td>
+                  <span *ngIf="h.fechaEntrada">{{ h.fechaEntrada | date: 'dd/MM/yyyy' }}</span>
+                  <span *ngIf="!h.fechaEntrada" class="text-muted fst-italic small">En ruta</span>
+                </td>
+                <td>{{ h.horaEntrada || '—' }}</td>
+                <td class="text-center">
+                  <span *ngIf="h.kmEntrada">{{ h.kmEntrada | number }}</span>
+                  <span *ngIf="!h.kmEntrada" class="text-muted">—</span>
+                </td>
+                <td class="text-center fw-bold">
+                  <span *ngIf="h.kmRecorridos" class="text-success">
+                    {{ h.kmRecorridos | number }} km
+                  </span>
+                  <span *ngIf="!h.kmRecorridos" class="text-muted">—</span>
+                </td>
+                <td>
+                  <span
+                    class="badge"
+                    [ngClass]="h.estado === 'En Ruta' ? 'bg-danger' : 'bg-success'"
+                  >
+                    {{ h.estado }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div
+        class="card-footer d-flex justify-content-between align-items-center"
+        *ngIf="totalPaginas > 1"
+      >
+        <span class="text-muted small">
+          {{ totalRegistros }} movimientos — Página {{ paginaActual }} de {{ totalPaginas }}
+        </span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="paginaActual === 1">
+              <a class="page-link" (click)="cambiarPagina(paginaActual - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+            <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
+              <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
+            </li>
+            <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
+              <a class="page-link" (click)="cambiarPagina(paginaActual + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL ENTRADA ──────────────────────────────────────── -->
+<div *ngIf="mostrarModalEntrada" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header-custom bg-success text-white">
+      <h6 class="mb-0"><i class="bi bi-box-arrow-in-left"></i> Registrar Entrada al Predio</h6>
+      <button class="btn btn-sm btn-light" (click)="mostrarModalEntrada = false">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body-custom">
+      <div *ngIf="mensajeError" class="alert alert-danger py-2">
+        <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+      </div>
+      <div *ngIf="movimientoSeleccionado" class="mb-3">
+        <p class="mb-2">
+          Vehículo:
+          <strong
+            >{{ movimientoSeleccionado.placa }} —
+            {{ movimientoSeleccionado.vehiculoNombre }}</strong
+          ><br />
+          Piloto: <strong>{{ movimientoSeleccionado.pilotoNombre || '—' }}</strong
+          ><br />
+          Km de salida: <strong>{{ movimientoSeleccionado.kmSalida | number }}</strong
+          ><br />
+          Hora de salida: <strong>{{ movimientoSeleccionado.horaSalida }}</strong>
+        </p>
+        <label class="form-label fw-bold">
+          Kilometraje de entrada <span class="text-danger">*</span>
+        </label>
+        <input
+          type="number"
+          class="form-control"
+          [(ngModel)]="kmEntrada"
+          [min]="movimientoSeleccionado.kmSalida"
+          placeholder="Km actuales del vehículo"
+        />
+        <small class="text-muted">
+          Debe ser mayor o igual a {{ movimientoSeleccionado.kmSalida | number }} km
+        </small>
+        <div class="alert alert-info mt-2 py-2">
+          <i class="bi bi-info-circle"></i>
+          La fecha y hora de entrada se registrarán automáticamente.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer-custom">
+      <button class="btn btn-secondary btn-sm" (click)="mostrarModalEntrada = false">
+        Cancelar
+      </button>
+      <button class="btn btn-success btn-sm" [disabled]="!kmEntrada" (click)="confirmarEntrada()">
+        <i class="bi bi-box-arrow-in-left"></i> Confirmar Entrada
+      </button>
+    </div>
+  </div>
+</div>

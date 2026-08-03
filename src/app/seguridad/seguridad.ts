@@ -78,6 +78,7 @@ export class SeguridadComponent implements OnInit {
     { titulo: 'Catálogos', permisos: ['VER_CATALOGOS'] },
     { titulo: 'Reportes IA', permisos: ['VER_REPORTES_IA'] },
     { titulo: 'Seguridad', permisos: ['VER_SEGURIDAD_USUARIOS', 'VER_SEGURIDAD_ROLES'] },
+    { titulo: 'Portería', permisos: ['GESTIONAR_PORTERIA'] },
   ];
 
   // ─── Catálogos ───

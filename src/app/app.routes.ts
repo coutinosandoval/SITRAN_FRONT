@@ -20,6 +20,7 @@ import { SolicitudCuponesComponent } from './cupones/solicitud-cupones/solicitud
 import { ComisionLocalComponent } from './comisiones/comision-local/comision-local';
 import { SolicitudCombustibleComponent } from './cupones/solicitud-combustible/solicitud-combustible';
 import { ReporteCombustibleComponent } from './reportes/reporte-combustible/reporte-combustible';
+import { PorteriaComponent } from './porteria/porteria';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -30,6 +31,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'porteria', component: PorteriaComponent, canActivate: [authGuard] },
       { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
       { path: 'vehiculos', component: VehiculoComponent, canActivate: [authGuard] },
       {

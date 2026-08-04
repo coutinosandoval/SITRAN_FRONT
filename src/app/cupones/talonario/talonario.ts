@@ -814,6 +814,21 @@ export class TalonarioComponent implements OnInit {
     this.mensajeError = '';
   }
 
+  /** Verifica si una fecha de vencimiento ya pasó */
+  estaVencido(fechaVencimiento: string): boolean {
+    if (!fechaVencimiento) return false;
+    return new Date(fechaVencimiento) < new Date();
+  }
+
+  /** Verifica si vence en los próximos 7 días */
+  estaProximoVencer(fechaVencimiento: string): boolean {
+    if (!fechaVencimiento) return false;
+    const venc = new Date(fechaVencimiento);
+    const hoy = new Date();
+    const diff = (venc.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  }
+
   colorEstado(estado: number): string {
     switch (estado) {
       case 1:

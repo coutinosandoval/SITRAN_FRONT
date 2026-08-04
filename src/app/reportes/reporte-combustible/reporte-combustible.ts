@@ -29,7 +29,8 @@ export class ReporteCombustibleComponent implements OnInit {
   fechaFin: string = '';
   tipoReporte: string = 'consolidado'; // 'consolidado' | 'detalle'
   datosDetalleVehiculo: any[] = [];
-
+  datosLibro: any[] = [];
+  datosMovimientos: any[] = [];
   // ─── Estado ───────────────────────────────────────────────
   cargando: boolean = false;
   mensajeError: string = '';
@@ -107,7 +108,54 @@ export class ReporteCombustibleComponent implements OnInit {
       this.cargarDetalle();
     } else if (this.tipoReporte === 'vehiculo') {
       this.cargarDetalleVehiculo();
+    } else if (this.tipoReporte === 'libro') {
+      this.cargarLibroControl();
+    } else if (this.tipoReporte === 'movimientos') {
+      this.cargarMovimientosVehiculo();
     }
+  }
+
+  /** Carga reporte de movimientos por vehículo */
+  cargarMovimientosVehiculo(): void {
+    this.cargando = true;
+    this.mensajeError = '';
+
+    let params = new HttpParams().set('fechaIni', this.fechaIni).set('fechaFin', this.fechaFin);
+
+    if (this.idSedeUsuario) params = params.set('idSede', this.idSedeUsuario.toString());
+
+    this.http.get<any[]>(`${this.apiUrl}/movimientos-vehiculo`, { params }).subscribe({
+      next: (data) => {
+        this.datosMovimientos = data;
+        this.cargando = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mensajeError = 'Error al cargar movimientos de vehículos.';
+        this.cargando = false;
+      },
+    });
+  }
+  /** Carga el Libro de Control de Cupones */
+  cargarLibroControl(): void {
+    this.cargando = true;
+    this.mensajeError = '';
+
+    let params = new HttpParams().set('fechaIni', this.fechaIni).set('fechaFin', this.fechaFin);
+
+    if (this.idSedeUsuario) params = params.set('idSede', this.idSedeUsuario.toString());
+
+    this.http.get<any[]>(`${this.apiUrl}/libro-control-cupones`, { params }).subscribe({
+      next: (data) => {
+        this.datosLibro = data;
+        this.cargando = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mensajeError = 'Error al cargar el libro de control.';
+        this.cargando = false;
+      },
+    });
   }
 
   /** Carga el reporte consolidado por vehículo */
@@ -172,6 +220,10 @@ export class ReporteCombustibleComponent implements OnInit {
       endpoint = 'combustible/detalle/excel';
     } else if (this.tipoReporte === 'vehiculo') {
       endpoint = 'vehiculo/detalle/excel';
+    } else if (this.tipoReporte === 'libro') {
+      endpoint = 'libro-control-cupones/excel';
+    } else if (this.tipoReporte === 'movimientos') {
+      endpoint = 'movimientos-vehiculo/excel';
     }
 
     let params = new HttpParams().set('fechaIni', this.fechaIni).set('fechaFin', this.fechaFin);
@@ -222,5 +274,19 @@ export class ReporteCombustibleComponent implements OnInit {
         this.cargando = false;
       },
     });
+  }
+
+  /** Color del badge según tipo de movimiento */
+  colorTipo(tipo: string): string {
+    switch (tipo) {
+      case 'Comisión':
+        return 'bg-primary';
+      case 'Mantenimiento':
+        return 'bg-warning text-dark';
+      case 'Traslado':
+        return 'bg-info text-dark';
+      default:
+        return 'bg-secondary';
+    }
   }
 }

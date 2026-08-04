@@ -48,6 +48,7 @@ export class TalonarioComponent implements OnInit {
   // ─── Compras (nuevo módulo) ───
   compras: any[] = [];
   totalCompras: number = 0;
+  talonariosBodega: any[] = [];
 
   // ─── Paginación ───
   paginaActual: number = 1;
@@ -199,6 +200,12 @@ export class TalonarioComponent implements OnInit {
     });
   }
 
+  /** Abre formulario para asignar cupones de bodega a una sede */
+  abrirTrasladoNuevo(item: any): void {
+    // TODO: implementar traslado nuevo modelo
+    console.log('Traslado nuevo modelo:', item);
+  }
+
   toggleRangos(compra: any): void {
     compra._expandido = !compra._expandido;
     if (compra._expandido && !compra._rangos) {
@@ -227,13 +234,29 @@ export class TalonarioComponent implements OnInit {
 
   cargarTalonarios(): void {
     this.cargando = true;
+
+    if (this.esBodega) {
+      // Nuevo modelo — inventario desde COMPRA_CUPONES_DETALLE
+      this.cuponService.obtenerInventarioBodega().subscribe({
+        next: (data) => {
+          console.log('Inventario bodega:', data.length, data);
+          this.talonariosBodega = data;
+          this.cargando = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.mensajeError = 'Error al cargar inventario bodega.';
+          this.cargando = false;
+        },
+      });
+      return;
+    }
+
+    // Resto del código existente para Compras y Delegado...
     let estado: number | undefined = this.filtroEstado || undefined;
     let idSede: number | undefined = undefined;
 
-    if (this.esBodega) {
-      estado = 2;
-      idSede = 41;
-    } else if (this.esCompras) {
+    if (this.esCompras) {
       estado = this.filtroEstado || undefined;
       idSede = undefined;
     } else if (this.esDelegado) {

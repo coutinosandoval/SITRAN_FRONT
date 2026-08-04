@@ -216,78 +216,129 @@
                   Cargando talonarios...
                 </td>
               </tr>
-              <tr *ngIf="!cargando && talonarios.length === 0">
-                <td colspan="10" class="text-center py-4 text-muted">
-                  <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                  No se encontraron talonarios.
-                </td>
-              </tr>
-              <tr *ngFor="let t of talonarios">
-                <td>{{ t.id }}</td>
-                <td>{{ t.nombreExpendedor }}</td>
-                <td>
-                  <span class="badge bg-info text-dark">Q{{ t.valorCupon }}.00</span>
-                </td>
-                <td>{{ t.numeradoDel }} — {{ t.numeradoAl }}</td>
-                <td>{{ t.cantidadCupones }}</td>
-                <td>
-                  <span
-                    class="badge"
-                    [ngClass]="
-                      t.saldo === 0
-                        ? 'bg-danger'
-                        : t.saldo <= 10
-                          ? 'bg-warning text-dark'
-                          : 'bg-success'
-                    "
-                  >
-                    {{ t.saldo }}
-                  </span>
-                </td>
-                <td>{{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
-                <td>
-                  <span *ngIf="esDelegado">Cupones en su sede</span>
-                  <span *ngIf="!esDelegado">{{ t.nombreSedeTraslado || '—' }}</span>
-                </td>
-                <td>
-                  <span *ngIf="esDelegado" class="badge bg-success">En su sede</span>
-                  <span *ngIf="!esDelegado" class="badge" [ngClass]="colorEstado(t.estado)">
-                    {{ nombreEstado(t.estado) }}
-                  </span>
-                </td>
-                <td class="text-center">
-                  <button
-                    class="btn btn-info btn-sm me-1"
-                    title="Ver detalle"
-                    (click)="verDetalle(t)"
-                  >
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <button
-                    class="btn btn-secondary btn-sm me-1"
-                    title="Info cupones"
-                    (click)="verCuponesInfo(t)"
-                  >
-                    <i class="bi bi-info-circle"></i>
-                  </button>
-                  <button
-                    class="btn btn-success btn-sm me-1"
-                    title="Trasladar a sede"
-                    *ngIf="esBodega && t.estado === 2"
-                    (click)="abrirTraslado(t)"
-                  >
-                    <i class="bi bi-arrow-right-circle"></i>
-                  </button>
-                  <button
-                    class="btn btn-warning btn-sm me-1"
-                    title="Devolver a Compras"
-                    *ngIf="esBodega && t.estado === 4"
-                    (click)="abrirDevolucionCompras(t)"
-                  >
-                    <i class="bi bi-arrow-return-left"></i>
-                  </button>
-                </td>
-              </tr>
+
+              <!-- Vista Bodega — nuevo modelo COMPRA_CUPONES_DETALLE -->
+              <ng-container *ngIf="esBodega">
+                <tr *ngIf="!cargando && talonariosBodega.length === 0">
+                  <td colspan="10" class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                    No hay cupones en inventario.
+                  </td>
+                </tr>
+                <tr *ngFor="let t of talonariosBodega">
+                  <td>{{ t.idCompra }}</td>
+                  <td>Bodega Central</td>
+                  <td>
+                    <span class="badge bg-info text-dark">Q{{ t.denominacion }}.00</span>
+                  </td>
+                  <td>{{ t.numeroDel }} — {{ t.numeroAl }}</td>
+                  <td>{{ t.cantidad }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      [ngClass]="
+                        t.disponibles === 0
+                          ? 'bg-danger'
+                          : t.disponibles <= 10
+                            ? 'bg-warning text-dark'
+                            : 'bg-success'
+                      "
+                    >
+                      {{ t.disponibles }}
+                    </span>
+                  </td>
+                  <td>{{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
+                  <td>Bodega Central</td>
+                  <td>
+                    <span class="badge bg-success">Disponible</span>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      class="btn btn-success btn-sm"
+                      title="Asignar a sede"
+                      (click)="abrirTrasladoNuevo(t)"
+                    >
+                      <i class="bi bi-arrow-right-circle"></i>
+                    </button>
+                  </td>
+                </tr>
+              </ng-container>
+
+              <!-- Vista Compras / Delegado — modelo viejo -->
+              <ng-container *ngIf="!esBodega">
+                <tr *ngIf="!cargando && talonarios.length === 0">
+                  <td colspan="10" class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                    No se encontraron talonarios.
+                  </td>
+                </tr>
+                <tr *ngFor="let t of talonarios">
+                  <td>{{ t.id }}</td>
+                  <td>{{ t.nombreExpendedor }}</td>
+                  <td>
+                    <span class="badge bg-info text-dark">Q{{ t.valorCupon }}.00</span>
+                  </td>
+                  <td>{{ t.numeradoDel }} — {{ t.numeradoAl }}</td>
+                  <td>{{ t.cantidadCupones }}</td>
+                  <td>
+                    <span
+                      class="badge"
+                      [ngClass]="
+                        t.saldo === 0
+                          ? 'bg-danger'
+                          : t.saldo <= 10
+                            ? 'bg-warning text-dark'
+                            : 'bg-success'
+                      "
+                    >
+                      {{ t.saldo }}
+                    </span>
+                  </td>
+                  <td>{{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
+                  <td>
+                    <span *ngIf="esDelegado">Cupones en su sede</span>
+                    <span *ngIf="!esDelegado">{{ t.nombreSedeTraslado || '—' }}</span>
+                  </td>
+                  <td>
+                    <span *ngIf="esDelegado" class="badge bg-success">En su sede</span>
+                    <span *ngIf="!esDelegado" class="badge" [ngClass]="colorEstado(t.estado)">
+                      {{ nombreEstado(t.estado) }}
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <button
+                      class="btn btn-info btn-sm me-1"
+                      title="Ver detalle"
+                      (click)="verDetalle(t)"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button
+                      class="btn btn-secondary btn-sm me-1"
+                      title="Info cupones"
+                      (click)="verCuponesInfo(t)"
+                    >
+                      <i class="bi bi-info-circle"></i>
+                    </button>
+                    <button
+                      class="btn btn-success btn-sm me-1"
+                      title="Trasladar a sede"
+                      *ngIf="esBodega && t.estado === 2"
+                      (click)="abrirTraslado(t)"
+                    >
+                      <i class="bi bi-arrow-right-circle"></i>
+                    </button>
+                    <button
+                      class="btn btn-warning btn-sm me-1"
+                      title="Devolver a Compras"
+                      *ngIf="esBodega && t.estado === 4"
+                      (click)="abrirDevolucionCompras(t)"
+                    >
+                      <i class="bi bi-arrow-return-left"></i>
+                    </button>
+                  </td>
+                </tr>
+              </ng-container>
             </tbody>
           </table>
         </div>

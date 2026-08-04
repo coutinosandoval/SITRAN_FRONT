@@ -395,4 +395,12 @@ export class CuponService {
       dto,
     );
   }
+
+  /** Obtiene inventario de bodega del nuevo modelo */
+obtenerInventarioBodega(denominacion?: number): Observable<any[]> {
+  let params = new HttpParams();
+  if (denominacion) params = params.set('denominacion', denominacion.toString());
+  return this.http.get<any[]>(
+    `${environment.apiUrl}/api/cupon/bodega/inventario`, { params });
+}
 }

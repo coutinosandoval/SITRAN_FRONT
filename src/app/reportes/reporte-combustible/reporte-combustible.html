@@ -26,6 +26,8 @@
             <option value="consolidado">Consolidado por vehículo</option>
             <option value="detalle">Detalle por vehículo</option>
             <option value="vehiculo">Detalle por vehículo con comisiones</option>
+            <option value="libro">Libro de Control de Cupones</option>
+            <option value="movimientos">Movimientos por Vehículo</option>
           </select>
         </div>
 
@@ -59,7 +61,14 @@
           <button
             class="btn btn-success btn-sm w-100"
             (click)="descargarExcel()"
-            [disabled]="cargando || (datosConsolidado.length === 0 && datosDetalle.length === 0)"
+            [disabled]="
+              cargando ||
+              (datosConsolidado.length === 0 &&
+                datosDetalle.length === 0 &&
+                datosDetalleVehiculo.length === 0 &&
+                datosLibro.length === 0 &&
+                datosMovimientos.length === 0)
+            "
           >
             <i class="bi bi-file-earmark-excel"></i> Excel
           </button>
@@ -68,7 +77,6 @@
     </div>
   </div>
 
-  <!-- ── REPORTE CONSOLIDADO ─────────────────────────────── -->
   <!-- ── REPORTE CONSOLIDADO ─────────────────────────────── -->
   <div *ngIf="tipoReporte === 'consolidado'">
     <div class="card shadow-sm">
@@ -131,6 +139,181 @@
                 <td class="text-end fw-bold text-success">{{ formatoQ(totalMonto) }}</td>
               </tr>
             </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LIBRO DE CONTROL DE CUPONES ────────────────────── -->
+  <div *ngIf="tipoReporte === 'libro'">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white d-flex justify-content-between">
+        <span><i class="bi bi-journal-text"></i> Libro de Control de Cupones</span>
+        <span class="badge bg-light text-dark">{{ datosLibro.length }} registros</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Tipo</th>
+                <th>Fecha</th>
+                <th>No. Sol.</th>
+                <th>No. Comisión</th>
+                <th>Denom.</th>
+                <th class="text-center">Del</th>
+                <th class="text-center">Al</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-end">Monto</th>
+                <th>Placa</th>
+                <th>Solicitante</th>
+                <th>Unidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="cargando">
+                <td colspan="12" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                  Cargando...
+                </td>
+              </tr>
+              <tr *ngIf="!cargando && datosLibro.length === 0">
+                <td colspan="12" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                  No hay datos para el período seleccionado.
+                </td>
+              </tr>
+              <tr
+                *ngFor="let r of datosLibro"
+                [ngClass]="r['TIPO'] === 'INGRESO' ? 'table-success' : 'table-warning'"
+              >
+                <td>
+                  <span
+                    class="badge"
+                    [ngClass]="r['TIPO'] === 'INGRESO' ? 'bg-success' : 'bg-warning text-dark'"
+                  >
+                    {{ r['TIPO'] === 'INGRESO' ? 'Ingreso' : 'Egreso' }}
+                  </span>
+                </td>
+                <td>{{ r['FECHA'] | date: 'dd/MM/yyyy' }}</td>
+                <td>
+                  <span *ngIf="r['ID_SOLICITUD']">#{{ r['ID_SOLICITUD'] }}</span>
+                  <span *ngIf="!r['ID_SOLICITUD']" class="text-muted">—</span>
+                </td>
+                <td>
+                  <span *ngIf="r['ID_COMISION']">#{{ r['ID_COMISION'] }}</span>
+                  <span *ngIf="!r['ID_COMISION']" class="text-muted">—</span>
+                </td>
+                <td>
+                  <span class="badge bg-info text-dark">Q{{ r['DENOMINACION'] }}.00</span>
+                </td>
+                <td class="text-center">{{ r['NUMERO_DEL'] }}</td>
+                <td class="text-center">{{ r['NUMERO_AL'] }}</td>
+                <td class="text-center fw-bold">{{ r['CANTIDAD'] }}</td>
+                <td class="text-end fw-bold">{{ formatoQ(r['MONTO']) }}</td>
+                <td>{{ r['PLACA'] || '—' }}</td>
+                <td>{{ r['SOLICITANTE'] || '—' }}</td>
+                <td>{{ r['UNIDAD'] || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- ── MOVIMIENTOS POR VEHÍCULO ───────────────────────── -->
+  <div *ngIf="tipoReporte === 'movimientos'">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white d-flex justify-content-between">
+        <span><i class="bi bi-truck"></i> Movimientos por Vehículo</span>
+        <span class="badge bg-light text-primary">{{ datosMovimientos.length }} registros</span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Placa</th>
+                <th>Piloto</th>
+                <th>Tipo</th>
+                <th>Fecha Salida</th>
+                <th>Hora Salida</th>
+                <th>Fecha Entrada</th>
+                <th>Hora Entrada</th>
+                <th class="text-center">Km Salida</th>
+                <th class="text-center">Km Entrada</th>
+                <th class="text-center">Recorrido</th>
+                <th class="text-center">Cupones</th>
+                <th class="text-end">Monto</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="cargando">
+                <td colspan="13" class="text-center py-4">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                  Cargando...
+                </td>
+              </tr>
+              <tr *ngIf="!cargando && datosMovimientos.length === 0">
+                <td colspan="13" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                  No hay datos para el período seleccionado.
+                </td>
+              </tr>
+              <tr *ngFor="let r of datosMovimientos">
+                <td>
+                  <strong>{{ r['PLACA'] }}</strong>
+                </td>
+                <td>{{ r['PILOTO_NOMBRE'] || '—' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="colorTipo(r['TIPO_MOVIMIENTO'])">
+                    {{ r['TIPO_MOVIMIENTO'] }}
+                  </span>
+                </td>
+                <td>{{ r['FECHA_SALIDA'] | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ r['HORA_SALIDA'] }}</td>
+                <td>
+                  <span *ngIf="r['FECHA_ENTRADA']">
+                    {{ r['FECHA_ENTRADA'] | date: 'dd/MM/yyyy' }}
+                  </span>
+                  <span *ngIf="!r['FECHA_ENTRADA']" class="text-muted fst-italic">En ruta</span>
+                </td>
+                <td>{{ r['HORA_ENTRADA'] || '—' }}</td>
+                <td class="text-center">{{ r['KM_SALIDA'] | number }}</td>
+                <td class="text-center">
+                  <span *ngIf="r['KM_ENTRADA']">{{ r['KM_ENTRADA'] | number }}</span>
+                  <span *ngIf="!r['KM_ENTRADA']" class="text-muted">—</span>
+                </td>
+                <td class="text-center fw-bold">
+                  <span *ngIf="r['KM_RECORRIDOS']" class="text-success">
+                    {{ r['KM_RECORRIDOS'] | number }} km
+                  </span>
+                  <span *ngIf="!r['KM_RECORRIDOS']" class="text-muted">—</span>
+                </td>
+                <td class="text-center">
+                  <span *ngIf="+r['CUPONES_UTILIZADOS'] > 0" class="fw-bold text-info">
+                    {{ r['CUPONES_UTILIZADOS'] }}
+                  </span>
+                  <span *ngIf="+r['CUPONES_UTILIZADOS'] === 0" class="text-muted">—</span>
+                </td>
+                <td class="text-end fw-bold text-success">
+                  <span *ngIf="+r['MONTO_COMBUSTIBLE'] > 0">
+                    {{ formatoQ(r['MONTO_COMBUSTIBLE']) }}
+                  </span>
+                  <span *ngIf="+r['MONTO_COMBUSTIBLE'] === 0" class="text-muted">—</span>
+                </td>
+                <td>
+                  <span
+                    class="badge"
+                    [ngClass]="r['ESTADO'] === 'En Ruta' ? 'bg-danger' : 'bg-success'"
+                  >
+                    {{ r['ESTADO'] }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -211,88 +394,91 @@
   </div>
   <!-- ── REPORTE DETALLE VEHÍCULO CON COMISIONES ────────── -->
   <!-- ── REPORTE DETALLE VEHÍCULO CON COMISIONES AGRUPADO ── -->
-<div *ngIf="tipoReporte === 'vehiculo'">
-  <div *ngIf="cargando" class="text-center py-4">
-    <div class="spinner-border spinner-border-sm text-primary"></div>
-    Cargando...
-  </div>
+  <div *ngIf="tipoReporte === 'vehiculo'">
+    <div *ngIf="cargando" class="text-center py-4">
+      <div class="spinner-border spinner-border-sm text-primary"></div>
+      Cargando...
+    </div>
 
-  <div *ngIf="!cargando && datosDetalleVehiculo.length === 0"
-    class="card shadow-sm">
-    <div class="card-body text-center py-4 text-muted">
-      <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-      No hay datos para el período seleccionado.
+    <div *ngIf="!cargando && datosDetalleVehiculo.length === 0" class="card shadow-sm">
+      <div class="card-body text-center py-4 text-muted">
+        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+        No hay datos para el período seleccionado.
+      </div>
     </div>
-  </div>
 
-  <!-- Un card por vehículo -->
-  <div *ngFor="let grupo of datosAgrupadosPorVehiculo" class="card shadow-sm mb-3">
-    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-      <span>
-        <i class="bi bi-truck me-2"></i>
-        <strong>{{ grupo.placa }}</strong> — {{ grupo.nombre }}
-      </span>
-      <span class="text-white small">{{ grupo.sede }}</span>
-    </div>
-    <div class="card-body p-0">
-      <table class="table table-sm table-hover mb-0">
-        <thead class="table-secondary">
-          <tr>
-            <th>#Comisión</th>
-            <th>Tipo</th>
-            <th>Destino</th>
-            <th>Fecha</th>
-            <th class="text-center">Km Inicial</th>
-            <th class="text-center">Km Final</th>
-            <th class="text-center">Recorrido</th>
-            <th class="text-center">Cupones</th>
-            <th class="text-end">Monto</th>
-            <th class="text-end">Q/Km</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let c of grupo.comisiones">
-            <td><strong>#{{ c['ID_COMISION'] }}</strong></td>
-            <td>
-              <span class="badge"
-                [ngClass]="c['TIPO_COMISION'] === 'Nacional' ? 'bg-primary' : 'bg-secondary'">
-                {{ c['TIPO_COMISION'] }}
-              </span>
-            </td>
-            <td>{{ c['DESTINO'] }}</td>
-            <td>{{ c['FECHA_INICIO'] | date: 'dd/MM/yyyy' }}</td>
-            <td class="text-center">{{ c['KILOMETRAJE_INICIAL'] | number }}</td>
-            <td class="text-center">{{ c['KILOMETRAJE_FINAL'] | number }}</td>
-            <td class="text-center fw-bold">{{ c['KM_RECORRIDOS'] | number }} km</td>
-            <td class="text-center">{{ c['CUPONES_UTILIZADOS'] }}</td>
-            <td class="text-end fw-bold text-success">
-              {{ formatoQ(c['MONTO_COMBUSTIBLE']) }}
-            </td>
-            <td class="text-end">
-              <span *ngIf="+c['ESTIMADO_Q_KM'] > 0" class="text-info fw-bold">
-                Q{{ c['ESTIMADO_Q_KM'] }}/km
-              </span>
-              <span *ngIf="+c['ESTIMADO_Q_KM'] === 0" class="text-muted">—</span>
-            </td>
-          </tr>
-        </tbody>
-        <!-- Subtotales por vehículo -->
-        <tfoot class="table-dark">
-          <tr>
-            <td colspan="6" class="fw-bold">TOTAL {{ grupo.placa }}</td>
-            <td class="text-center fw-bold">{{ grupo.totalKm | number }} km</td>
-            <td class="text-center fw-bold">{{ grupo.totalCupones }}</td>
-            <td class="text-end fw-bold text-success">{{ formatoQ(grupo.totalMonto) }}</td>
-            <td class="text-end fw-bold text-info">
-              <span *ngIf="grupo.totalKm > 0">
-                Q{{ (grupo.totalMonto / grupo.totalKm).toFixed(2) }}/km
-              </span>
-              <span *ngIf="grupo.totalKm === 0">—</span>
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+    <!-- Un card por vehículo -->
+    <div *ngFor="let grupo of datosAgrupadosPorVehiculo" class="card shadow-sm mb-3">
+      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-truck me-2"></i>
+          <strong>{{ grupo.placa }}</strong> — {{ grupo.nombre }}
+        </span>
+        <span class="text-white small">{{ grupo.sede }}</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-secondary">
+            <tr>
+              <th>#Comisión</th>
+              <th>Tipo</th>
+              <th>Destino</th>
+              <th>Fecha</th>
+              <th class="text-center">Km Inicial</th>
+              <th class="text-center">Km Final</th>
+              <th class="text-center">Recorrido</th>
+              <th class="text-center">Cupones</th>
+              <th class="text-end">Monto</th>
+              <th class="text-end">Q/Km</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of grupo.comisiones">
+              <td>
+                <strong>#{{ c['ID_COMISION'] }}</strong>
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [ngClass]="c['TIPO_COMISION'] === 'Nacional' ? 'bg-primary' : 'bg-secondary'"
+                >
+                  {{ c['TIPO_COMISION'] }}
+                </span>
+              </td>
+              <td>{{ c['DESTINO'] }}</td>
+              <td>{{ c['FECHA_INICIO'] | date: 'dd/MM/yyyy' }}</td>
+              <td class="text-center">{{ c['KILOMETRAJE_INICIAL'] | number }}</td>
+              <td class="text-center">{{ c['KILOMETRAJE_FINAL'] | number }}</td>
+              <td class="text-center fw-bold">{{ c['KM_RECORRIDOS'] | number }} km</td>
+              <td class="text-center">{{ c['CUPONES_UTILIZADOS'] }}</td>
+              <td class="text-end fw-bold text-success">
+                {{ formatoQ(c['MONTO_COMBUSTIBLE']) }}
+              </td>
+              <td class="text-end">
+                <span *ngIf="+c['ESTIMADO_Q_KM'] > 0" class="text-info fw-bold">
+                  Q{{ c['ESTIMADO_Q_KM'] }}/km
+                </span>
+                <span *ngIf="+c['ESTIMADO_Q_KM'] === 0" class="text-muted">—</span>
+              </td>
+            </tr>
+          </tbody>
+          <!-- Subtotales por vehículo -->
+          <tfoot class="table-dark">
+            <tr>
+              <td colspan="6" class="fw-bold">TOTAL {{ grupo.placa }}</td>
+              <td class="text-center fw-bold">{{ grupo.totalKm | number }} km</td>
+              <td class="text-center fw-bold">{{ grupo.totalCupones }}</td>
+              <td class="text-end fw-bold text-success">{{ formatoQ(grupo.totalMonto) }}</td>
+              <td class="text-end fw-bold text-info">
+                <span *ngIf="grupo.totalKm > 0">
+                  Q{{ (grupo.totalMonto / grupo.totalKm).toFixed(2) }}/km
+                </span>
+                <span *ngIf="grupo.totalKm === 0">—</span>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   </div>
-</div>
 </div>

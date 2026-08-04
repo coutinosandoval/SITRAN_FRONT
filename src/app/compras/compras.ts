@@ -2,12 +2,14 @@
 // compras.component.ts — Módulo de compra de cupones
 // ============================================================
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ComprasService } from '../servicios/compras.service';
 import { Compra, CompraDetalle, ComprasPaginadas } from '../modelos/compra.model';
 import { AuthService } from '../servicios/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 /** Línea temporal del formulario antes de enviar */
 interface LineaFormulario {
@@ -67,6 +69,8 @@ export class ComprasComponent implements OnInit {
   constructor(
     private comprasService: ComprasService,
     private authService: AuthService,
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient,
   ) {}
 
   ngOnInit(): void {
@@ -81,9 +85,11 @@ export class ComprasComponent implements OnInit {
     this.cargando = true;
     this.comprasService.obtenerCompras(this.pagina, this.porPagina).subscribe({
       next: (res: ComprasPaginadas) => {
+        console.log('Compras recibidas:', res);
         this.compras = res.datos;
         this.total = res.total;
         this.cargando = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.cargando = false;
@@ -92,8 +98,12 @@ export class ComprasComponent implements OnInit {
   }
 
   cargarExpendedores(): void {
-    // TODO: conectar al endpoint de catálogo de expendedores
-    // this.catalogoService.obtenerExpendedores().subscribe(...)
+    this.http.get<any[]>(`${environment.apiUrl}/api/cupon/expendedores`).subscribe({
+      next: (data) => {
+        this.expendedores = data;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   // ── Paginación ───────────────────────────────────────────
@@ -117,6 +127,7 @@ export class ComprasComponent implements OnInit {
       next: (rangos: CompraDetalle[]) => {
         this.detalleRangos = rangos;
         this.cargandoDetalle = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.cargandoDetalle = false;

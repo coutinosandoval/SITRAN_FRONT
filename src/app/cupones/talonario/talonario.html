@@ -19,6 +19,201 @@
     <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
   </div>
 
+  <!-- ── INVENTARIO AGRUPADO BODEGA ─────────────────────── -->
+  <div *ngIf="esBodega && inventarioBodegaAgrupado.length > 0" class="card shadow-sm mb-3">
+    <div class="card-header bg-dark text-white">
+      <h6 class="mb-0"><i class="bi bi-box-seam"></i> Resumen de Inventario por Denominación</h6>
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm mb-0">
+        <thead class="table-secondary">
+          <tr>
+            <th>Denominación</th>
+            <th class="text-center">Total Cupones</th>
+            <th class="text-center">Disponibles</th>
+            <th class="text-center">Asignados</th>
+            <th class="text-center">Por vencer</th>
+            <th class="text-center">Vencidos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let g of inventarioBodegaAgrupado">
+            <tr>
+              <td>
+                <span class="badge bg-info text-dark fs-6">Q{{ g.denominacion }}.00</span>
+              </td>
+              <td class="text-center fw-bold">{{ g.totalCantidad | number }}</td>
+              <td class="text-center">
+                <span
+                  class="badge bg-success"
+                  style="cursor: pointer"
+                  title="Ver cupones disponibles"
+                  (click)="toggleDetalleDenominacion(g.denominacion)"
+                >
+                  {{ g.totalDisponibles | number }}
+                  <i
+                    class="bi"
+                    [ngClass]="
+                      denominacionExpandida === g.denominacion ? 'bi-chevron-up' : 'bi-chevron-down'
+                    "
+                  ></i>
+                </span>
+              </td>
+              <td class="text-center">
+                <span
+                  class="badge bg-warning text-dark"
+                  style="cursor: pointer"
+                  title="Ver detalle de asignados"
+                  (click)="toggleDetalleAsignados(g.denominacion)"
+                >
+                  {{ g.totalAsignados | number }}
+                  <i
+                    class="bi"
+                    [ngClass]="
+                      denominacionAsignadaExpandida === g.denominacion
+                        ? 'bi-chevron-up'
+                        : 'bi-chevron-down'
+                    "
+                  ></i>
+                </span>
+              </td>
+              <!-- Por vencer — clickeable para ver números individuales -->
+              <td class="text-center">
+                <span
+                  class="badge bg-orange text-dark"
+                  style="cursor: pointer; background: #fd7e14"
+                  title="Ver cupones por vencer"
+                  (click)="toggleDetallePorVencer(g.denominacion)"
+                >
+                  {{ g.totalPorVencer | number }}
+                  <i
+                    class="bi"
+                    [ngClass]="
+                      denominacionPorVencerExpandida === g.denominacion
+                        ? 'bi-chevron-up'
+                        : 'bi-chevron-down'
+                    "
+                  ></i>
+                </span>
+              </td>
+              <!-- Vencidos — clickeable para ver números individuales -->
+              <td class="text-center">
+                <span
+                  class="badge bg-danger"
+                  style="cursor: pointer"
+                  title="Ver cupones vencidos"
+                  (click)="toggleDetalleVencidos(g.denominacion)"
+                >
+                  {{ g.totalVencidos | number }}
+                  <i
+                    class="bi"
+                    [ngClass]="
+                      denominacionVencidaExpandida === g.denominacion
+                        ? 'bi-chevron-up'
+                        : 'bi-chevron-down'
+                    "
+                  ></i>
+                </span>
+              </td>
+            </tr>
+            <!-- Fila expandible de rangos disponibles -->
+            <tr *ngIf="denominacionExpandida === g.denominacion">
+              <td colspan="6" class="bg-light p-3">
+                <table class="table table-sm mb-0">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>#Compra</th>
+                      <th>Del</th>
+                      <th>Hasta</th>
+                      <th class="text-center">Disponibles</th>
+                      <th>Números disponibles</th>
+                      <th>Vencimiento</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let d of detalleDenominacion">
+                      <td>#{{ d.idCompra }}</td>
+                      <td>{{ d.numeroDel }}</td>
+                      <td>{{ d.numeroAl }}</td>
+                      <td class="text-center">
+                        <span class="badge bg-success">{{ d.disponibles }}</span>
+                      </td>
+                      <td>
+                        <!-- Números individuales disponibles -->
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                          <span
+                            *ngFor="let n of d.numerosDisponibles"
+                            class="badge bg-light text-dark border"
+                          >
+                            {{ n }}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span
+                          [ngClass]="
+                            estaVencido(d.fechaVencimiento)
+                              ? 'text-danger'
+                              : estaProximoVencer(d.fechaVencimiento)
+                                ? 'text-warning'
+                                : 'text-success'
+                          "
+                        >
+                          {{ d.fechaVencimiento | date: 'dd/MM/yyyy' }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            <!-- Fila expandible de asignados -->
+            <tr *ngIf="denominacionAsignadaExpandida === g.denominacion">
+              <td colspan="6" class="bg-light p-3">
+                <table class="table table-sm mb-0">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>#Solicitud</th>
+                      <th>Fecha</th>
+                      <th>Sede</th>
+                      <th>Solicitado por</th>
+                      <th class="text-center">Asignados</th>
+                      <th>Números asignados</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="detalleAsignados.length === 0">
+                      <td colspan="6" class="text-center text-muted">Sin asignaciones.</td>
+                    </tr>
+                    <tr *ngFor="let d of detalleAsignados">
+                      <td>#{{ d.idSolicitud }}</td>
+                      <td>{{ d.fecha | date: 'dd/MM/yyyy' }}</td>
+                      <td>{{ d.sedeNombre }}</td>
+                      <td>{{ d.solicitadoPor }}</td>
+                      <td class="text-center">
+                        <span class="badge bg-warning text-dark">{{ d.cantidadAsignada }}</span>
+                      </td>
+                      <td>
+                        <div class="d-flex flex-wrap gap-1">
+                          <span
+                            *ngFor="let n of d.numerosAsignados"
+                            class="badge bg-warning text-dark border"
+                          >
+                            {{ n }}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="card shadow-sm mb-3">
     <div class="card-body py-2">
       <div class="row align-items-center g-2">
@@ -198,7 +393,7 @@
             <thead class="table-dark">
               <tr>
                 <th>#</th>
-                <th>Expendedor</th>
+                <th translate="no">Expendedor</th>
                 <th>Denominación</th>
                 <th>Rango</th>
                 <th>Cupones</th>
@@ -250,24 +445,7 @@
                   <td>{{ t.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
                   <td>Bodega Central</td>
                   <td>
-                    <span
-                      class="badge"
-                      [ngClass]="
-                        estaVencido(t.fechaVencimiento)
-                          ? 'bg-danger'
-                          : estaProximoVencer(t.fechaVencimiento)
-                            ? 'bg-warning text-dark'
-                            : 'bg-success'
-                      "
-                    >
-                      {{
-                        estaVencido(t.fechaVencimiento)
-                          ? 'Vencido'
-                          : estaProximoVencer(t.fechaVencimiento)
-                            ? 'Por vencer'
-                            : 'Disponible'
-                      }}
-                    </span>
+                    <span class="badge bg-success">Disponible</span>
                   </td>
                   <td class="text-center">
                     <button

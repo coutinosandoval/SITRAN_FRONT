@@ -1,7 +1,3 @@
-// ============================================================
-// compras.component.ts — Módulo de compra de cupones
-// ============================================================
-
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +12,7 @@ interface LineaFormulario {
   denominacion: number | null;
   numeroDel: number | null;
   numeroAl: number | null;
-  error?: string; // error de validación de esta línea
+  error: string;
 }
 
 @Component({
@@ -69,15 +65,15 @@ export class ComprasComponent implements OnInit {
   constructor(
     private comprasService: ComprasService,
     private authService: AuthService,
-    private cdr: ChangeDetectorRef,
+    public cdr: ChangeDetectorRef,
     private http: HttpClient,
   ) {}
 
   ngOnInit(): void {
-    // Verificar permiso
     this.esCompras = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
     this.cargarCompras();
     this.cargarExpendedores();
+    this.lineas = [this.lineaVacia()];
   }
 
   // ── Cargar lista ─────────────────────────────────────────
@@ -85,7 +81,6 @@ export class ComprasComponent implements OnInit {
     this.cargando = true;
     this.comprasService.obtenerCompras(this.pagina, this.porPagina).subscribe({
       next: (res: ComprasPaginadas) => {
-        console.log('Compras recibidas:', res);
         this.compras = res.datos;
         this.total = res.total;
         this.cargando = false;
@@ -97,6 +92,7 @@ export class ComprasComponent implements OnInit {
     });
   }
 
+  // ── Cargar expendedores ──────────────────────────────────
   cargarExpendedores(): void {
     this.http.get<any[]>(`${environment.apiUrl}/api/cupon/expendedores`).subscribe({
       next: (data) => {
@@ -150,7 +146,6 @@ export class ComprasComponent implements OnInit {
     this.fechaEmision = '';
     this.fechaVencimiento = '';
     this.observaciones = '';
-    // Inicia con una línea vacía
     this.lineas = [this.lineaVacia()];
   }
 
@@ -164,16 +159,20 @@ export class ComprasComponent implements OnInit {
     return { denominacion: null, numeroDel: null, numeroAl: null, error: '' };
   }
 
-  /** Agrega una línea nueva al formulario */
   agregarLinea(): void {
-    this.lineas.push(this.lineaVacia());
+    this.lineas = [...this.lineas, this.lineaVacia()];
   }
 
-  /** Elimina una línea del formulario */
   eliminarLinea(index: number): void {
-    if (this.lineas.length === 1) return; // siempre debe haber al menos 1
-    this.lineas.splice(index, 1);
+    if (this.lineas.length === 1) return;
+    this.lineas = this.lineas.filter((_, i) => i !== index);
   }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  // ── Cálculos de línea ────────────────────────────────────
 
   /** Calcula la cantidad de cupones de una línea */
   calcularCantidad(linea: LineaFormulario): number {
@@ -188,20 +187,26 @@ export class ComprasComponent implements OnInit {
     return this.calcularCantidad(linea) * (linea.denominacion ?? 0);
   }
 
-  /** Total de cupones del formulario completo */
+  /** Total de cupones de todas las líneas */
   get totalCuponesFormulario(): number {
     return this.lineas.reduce((acc, l) => acc + this.calcularCantidad(l), 0);
   }
 
-  /** Monto total del formulario completo */
+  /** Monto total de todas las líneas */
   get montoTotalFormulario(): number {
     return this.lineas.reduce((acc, l) => acc + this.calcularMontoLinea(l), 0);
   }
 
-  /** Valida una línea y actualiza su mensaje de error */
+  /** Fuerza detección de cambios al modificar inputs */
+  actualizarLinea(linea: LineaFormulario): void {
+    this.lineas = [...this.lineas];
+    this.cdr.detectChanges();
+  }
+
+  // ── Validación ───────────────────────────────────────────
+
   validarLinea(linea: LineaFormulario): boolean {
     linea.error = '';
-
     if (!linea.denominacion) {
       linea.error = 'Seleccione una denominación.';
       return false;
@@ -215,42 +220,34 @@ export class ComprasComponent implements OnInit {
       return false;
     }
     if (linea.numeroAl <= linea.numeroDel) {
-      linea.error =
-        `El número final (${linea.numeroAl}) debe ser mayor ` +
-        `al número inicial (${linea.numeroDel}).`;
+      linea.error = `El número final (${linea.numeroAl}) debe ser mayor al inicial (${linea.numeroDel}).`;
       return false;
     }
     return true;
   }
 
-  /** Valida solapamiento entre las líneas del mismo formulario */
   validarSolapamientoInterno(): string {
     for (let i = 0; i < this.lineas.length; i++) {
       for (let j = i + 1; j < this.lineas.length; j++) {
         const a = this.lineas[i];
         const b = this.lineas[j];
-        // Solo comparar líneas de la misma denominación
         if (a.denominacion !== b.denominacion) continue;
         if (a.numeroDel == null || a.numeroAl == null) continue;
         if (b.numeroDel == null || b.numeroAl == null) continue;
-        // Verificar solapamiento
-        if (a.numeroDel <= b.numeroAl! && a.numeroAl >= b.numeroDel!) {
-          return (
-            `Las líneas ${i + 1} y ${j + 1} tienen rangos solapados ` +
-            `en la denominación Q${a.denominacion}.`
-          );
+        if (a.numeroDel <= b.numeroAl && a.numeroAl >= b.numeroDel) {
+          return `Las líneas ${i + 1} y ${j + 1} tienen rangos solapados en Q${a.denominacion}.`;
         }
       }
     }
     return '';
   }
 
-  /** Guarda la compra */
+  // ── Guardar compra ───────────────────────────────────────
+
   guardarCompra(): void {
     this.errorGeneral = '';
     this.exitoMensaje = '';
 
-    // Validar encabezado
     if (!this.fechaCompra) {
       this.errorGeneral = 'La fecha de compra es obligatoria.';
       return;
@@ -272,17 +269,15 @@ export class ComprasComponent implements OnInit {
       return;
     }
 
-    // Validar cada línea
-    let hayErrorLinea = false;
+    let hayError = false;
     for (const linea of this.lineas) {
-      if (!this.validarLinea(linea)) hayErrorLinea = true;
+      if (!this.validarLinea(linea)) hayError = true;
     }
-    if (hayErrorLinea) return;
+    if (hayError) return;
 
-    // Validar solapamiento entre líneas del formulario
-    const errorSolapamiento = this.validarSolapamientoInterno();
-    if (errorSolapamiento) {
-      this.errorGeneral = errorSolapamiento;
+    const errorSolape = this.validarSolapamientoInterno();
+    if (errorSolape) {
+      this.errorGeneral = errorSolape;
       return;
     }
 
@@ -316,6 +311,7 @@ export class ComprasComponent implements OnInit {
   }
 
   // ── Helpers de presentación ──────────────────────────────
+
   formatoQuetzales(monto: number): string {
     return `Q ${monto.toLocaleString('es-GT', {
       minimumFractionDigits: 2,

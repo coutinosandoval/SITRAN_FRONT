@@ -41,6 +41,7 @@ export class TalonarioComponent implements OnInit {
   bitacora: BitacoraTalonario[] = [];
   sedesConSolicitud: CatalogoItem[] = [];
   expendedoresFiltrados: CatalogoItem[] = [];
+  inventarioBodegaAgrupado: any[] = [];
 
   // ─── Líneas dinámicas del formulario de compra (rangos) ───
   lineasRango: LineaRango[] = [];
@@ -49,6 +50,18 @@ export class TalonarioComponent implements OnInit {
   compras: any[] = [];
   totalCompras: number = 0;
   talonariosBodega: any[] = [];
+
+  // Control de expandibles en inventario agrupado
+  denominacionExpandida: number | null = null;
+  detalleDenominacion: any[] = [];
+
+  denominacionAsignadaExpandida: number | null = null;
+  detalleAsignados: any[] = [];
+
+  denominacionVencidaExpandida: number | null = null;
+  denominacionPorVencerExpandida: number | null = null;
+  detalleVencidos: any[] = [];
+  detallePorVencer: any[] = [];
 
   // ─── Paginación ───
   paginaActual: number = 1;
@@ -181,6 +194,32 @@ export class TalonarioComponent implements OnInit {
     }
   }
 
+  /** Expande o colapsa el detalle de asignados de una denominación */
+  toggleDetalleAsignados(denominacion: number): void {
+    if (this.denominacionAsignadaExpandida === denominacion) {
+      this.denominacionAsignadaExpandida = null;
+      this.detalleAsignados = [];
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.denominacionAsignadaExpandida = denominacion;
+    this.cuponService.obtenerAsignadosDetalle(denominacion).subscribe({
+      next: (data) => {
+        // Generar números asignados por rango
+        this.detalleAsignados = data.map((r: any) => {
+          const numeros: number[] = [];
+          const entregados = r.cantidadAsignada - r.disponiblesActuales;
+          for (let i = r.numeroDel; i < r.numeroDel + entregados; i++) {
+            numeros.push(i);
+          }
+          return { ...r, numerosAsignados: numeros };
+        });
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
   cargarCompras(): void {
     this.cargando = true;
     this.cuponService.obtenerCompras(this.paginaActual, this.tamanioPagina).subscribe({
@@ -198,6 +237,58 @@ export class TalonarioComponent implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+// ── Expande/colapsa cupones vencidos por denominación ────
+// Filtra del inventario local los rangos cuya fecha de vencimiento ya pasó
+// y genera los números individuales de cupones vencidos disponibles
+  toggleDetalleVencidos(denominacion: number): void {
+    if (this.denominacionVencidaExpandida === denominacion) {
+      this.denominacionVencidaExpandida = null;
+      this.detalleVencidos = [];
+      this.cdr.detectChanges();
+      return;
+    }
+    this.denominacionVencidaExpandida = denominacion;
+    // Filtrar rangos vencidos del inventario individual
+    const rangos = this.talonariosBodega.filter(
+      (t: any) => t.denominacion === denominacion && this.estaVencido(t.fechaVencimiento),
+    );
+    this.detalleVencidos = rangos.map((r: any) => {
+      const numeros: number[] = [];
+      const entregados = r.cantidad - r.disponibles;
+      const primerDisp = r.numeroDel + entregados;
+      for (let i = primerDisp; i <= r.numeroAl; i++) {
+        numeros.push(i);
+      }
+      return { ...r, numerosVencidos: numeros };
+    });
+    this.cdr.detectChanges();
+  }
+
+  /** Expande cupones por vencer por denominación */
+  toggleDetallePorVencer(denominacion: number): void {
+    if (this.denominacionPorVencerExpandida === denominacion) {
+      this.denominacionPorVencerExpandida = null;
+      this.detallePorVencer = [];
+      this.cdr.detectChanges();
+      return;
+    }
+    this.denominacionPorVencerExpandida = denominacion;
+    // Filtrar rangos próximos a vencer del inventario individual
+    const rangos = this.talonariosBodega.filter(
+      (t: any) => t.denominacion === denominacion && this.estaProximoVencer(t.fechaVencimiento),
+    );
+    this.detallePorVencer = rangos.map((r: any) => {
+      const numeros: number[] = [];
+      const entregados = r.cantidad - r.disponibles;
+      const primerDisp = r.numeroDel + entregados;
+      for (let i = primerDisp; i <= r.numeroAl; i++) {
+        numeros.push(i);
+      }
+      return { ...r, numerosPorVencer: numeros };
+    });
+    this.cdr.detectChanges();
   }
 
   /** Abre formulario para asignar cupones de bodega a una sede */
@@ -236,10 +327,9 @@ export class TalonarioComponent implements OnInit {
     this.cargando = true;
 
     if (this.esBodega) {
-      // Nuevo modelo — inventario desde COMPRA_CUPONES_DETALLE
+      // Cargar inventario individual
       this.cuponService.obtenerInventarioBodega().subscribe({
         next: (data) => {
-          console.log('Inventario bodega:', data.length, data);
           this.talonariosBodega = data;
           this.cargando = false;
           this.cdr.detectChanges();
@@ -247,6 +337,14 @@ export class TalonarioComponent implements OnInit {
         error: () => {
           this.mensajeError = 'Error al cargar inventario bodega.';
           this.cargando = false;
+        },
+      });
+
+      // Cargar inventario agrupado
+      this.cuponService.obtenerInventarioBodegaAgrupado().subscribe({
+        next: (data) => {
+          this.inventarioBodegaAgrupado = data;
+          this.cdr.detectChanges();
         },
       });
       return;
@@ -927,5 +1025,28 @@ export class TalonarioComponent implements OnInit {
 
   get cuponesDevueltos(): any[] {
     return this.cuponesInfo.filter((c) => c.disponibilidad === 'Devuelto');
+  }
+  /** Expande o colapsa el detalle de disponibles de una denominación */
+  toggleDetalleDenominacion(denominacion: number): void {
+    if (this.denominacionExpandida === denominacion) {
+      this.denominacionExpandida = null;
+      this.detalleDenominacion = [];
+    } else {
+      this.denominacionExpandida = denominacion;
+
+      // Generar números individuales disponibles por rango
+      const rangos = this.talonariosBodega.filter((t: any) => t.denominacion === denominacion);
+
+      this.detalleDenominacion = rangos.map((r: any) => {
+        const entregados = r.cantidad - r.disponibles;
+        const primerDisp = r.numeroDel + entregados;
+        const numeros: number[] = [];
+        for (let i = primerDisp; i <= r.numeroAl; i++) {
+          numeros.push(i);
+        }
+        return { ...r, numerosDisponibles: numeros };
+      });
+    }
+    this.cdr.detectChanges();
   }
 }

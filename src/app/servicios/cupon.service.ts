@@ -397,10 +397,21 @@ export class CuponService {
   }
 
   /** Obtiene inventario de bodega del nuevo modelo */
-obtenerInventarioBodega(denominacion?: number): Observable<any[]> {
-  let params = new HttpParams();
-  if (denominacion) params = params.set('denominacion', denominacion.toString());
-  return this.http.get<any[]>(
-    `${environment.apiUrl}/api/cupon/bodega/inventario`, { params });
-}
+  obtenerInventarioBodega(denominacion?: number): Observable<any[]> {
+    let params = new HttpParams();
+    if (denominacion) params = params.set('denominacion', denominacion.toString());
+    return this.http.get<any[]>(`${environment.apiUrl}/api/cupon/bodega/inventario`, { params });
+  }
+
+  /** Obtiene inventario de bodega agrupado por denominación */
+  obtenerInventarioBodegaAgrupado(): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiUrl}/api/cupon/bodega/inventario-agrupado`);
+  }
+
+  /** Obtiene detalle de asignados por denominación */
+  obtenerAsignadosDetalle(denominacion: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/api/cupon/bodega/asignados-detalle?denominacion=${denominacion}`,
+    );
+  }
 }

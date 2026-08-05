@@ -2,17 +2,13 @@
 <!-- Módulo de compra de cupones de combustible -->
 
 <div class="page-container">
-
   <!-- ── ENCABEZADO ─────────────────────────────────────── -->
   <div class="page-header">
     <div>
       <h2 class="page-title">Compra de Cupones</h2>
       <p class="page-subtitle">Registro de compras con rangos de numeración</p>
     </div>
-    <button
-      *ngIf="esCompras"
-      class="btn btn-primary"
-      (click)="abrirFormulario()">
+    <button *ngIf="esCompras" class="btn btn-primary" (click)="abrirFormulario()">
       + Nueva Compra
     </button>
   </div>
@@ -24,9 +20,7 @@
 
   <!-- ── TABLA DE COMPRAS ───────────────────────────────── -->
   <div class="card">
-    <div *ngIf="cargando" class="loading-state">
-      Cargando compras...
-    </div>
+    <div *ngIf="cargando" class="loading-state">Cargando compras...</div>
 
     <table *ngIf="!cargando && compras.length > 0" class="tabla">
       <thead>
@@ -58,17 +52,16 @@
           <td class="text-right">{{ formatoQuetzales(c.montoTotal ?? 0) }}</td>
           <td>{{ formatoFecha(c.fechaVencimiento) }}</td>
           <td>
-            <span class="badge"
+            <span
+              class="badge"
               [class.badge-success]="c.estado === 'Activa'"
-              [class.badge-danger]="c.estado === 'Anulada'">
+              [class.badge-danger]="c.estado === 'Anulada'"
+            >
               {{ c.estado }}
             </span>
           </td>
           <td>
-            <button class="btn btn-sm btn-secondary"
-              (click)="verDetalle(c)">
-              Ver rangos
-            </button>
+            <button class="btn btn-sm btn-secondary" (click)="verDetalle(c)">Ver rangos</button>
           </td>
         </tr>
       </tbody>
@@ -80,11 +73,17 @@
 
     <!-- Paginación -->
     <div *ngIf="totalPaginas > 1" class="paginacion">
-      <button class="btn btn-sm" (click)="irPagina(pagina - 1)"
-        [disabled]="pagina === 1">← Anterior</button>
+      <button class="btn btn-sm" (click)="irPagina(pagina - 1)" [disabled]="pagina === 1">
+        ← Anterior
+      </button>
       <span>Página {{ pagina }} de {{ totalPaginas }}</span>
-      <button class="btn btn-sm" (click)="irPagina(pagina + 1)"
-        [disabled]="pagina === totalPaginas">Siguiente →</button>
+      <button
+        class="btn btn-sm"
+        (click)="irPagina(pagina + 1)"
+        [disabled]="pagina === totalPaginas"
+      >
+        Siguiente →
+      </button>
     </div>
   </div>
 
@@ -127,10 +126,12 @@
               <td class="text-center">{{ r.asignados | number }}</td>
               <td>{{ r.sedeNombre ?? '— Bodega central' }}</td>
               <td>
-                <span class="badge"
+                <span
+                  class="badge"
                   [class.badge-success]="r.estado === 'Disponible'"
                   [class.badge-warning]="r.estado === 'Asignado'"
-                  [class.badge-secondary]="r.estado === 'Agotado'">
+                  [class.badge-secondary]="r.estado === 'Agotado'"
+                >
                   {{ r.estado }}
                 </span>
               </td>
@@ -150,7 +151,6 @@
       </div>
 
       <div class="modal-body">
-
         <!-- Error general -->
         <div *ngIf="errorGeneral" class="alert alert-danger">
           {{ errorGeneral }}
@@ -160,41 +160,38 @@
         <fieldset class="fieldset">
           <legend>Datos generales</legend>
           <div class="form-grid">
-
             <div class="form-group">
               <label>Fecha de compra *</label>
-              <input type="date" class="form-control"
-                [(ngModel)]="fechaCompra"/>
+              <input type="date" class="form-control" [(ngModel)]="fechaCompra" />
             </div>
 
             <div class="form-group">
               <label>Expendedor *</label>
               <select class="form-control" [(ngModel)]="idExpendedor">
                 <option [ngValue]="null">-- Seleccione --</option>
-                <option *ngFor="let e of expendedores"
-                  [ngValue]="e.id">{{ e.nombre }}</option>
+                <option *ngFor="let e of expendedores" [ngValue]="e.id">{{ e.nombre }}</option>
               </select>
             </div>
 
             <div class="form-group">
               <label>Fecha de emisión *</label>
-              <input type="date" class="form-control"
-                [(ngModel)]="fechaEmision"/>
+              <input type="date" class="form-control" [(ngModel)]="fechaEmision" />
             </div>
 
             <div class="form-group">
               <label>Fecha de vencimiento *</label>
-              <input type="date" class="form-control"
-                [(ngModel)]="fechaVencimiento"/>
+              <input type="date" class="form-control" [(ngModel)]="fechaVencimiento" />
             </div>
 
             <div class="form-group form-group-full">
               <label>Observaciones</label>
-              <textarea class="form-control" rows="2"
+              <textarea
+                class="form-control"
+                rows="2"
                 [(ngModel)]="observaciones"
-                placeholder="Opcional..."></textarea>
+                placeholder="Opcional..."
+              ></textarea>
             </div>
-
           </div>
         </fieldset>
 
@@ -214,100 +211,97 @@
 
           <!-- Una fila por cada rango -->
           <div *ngFor="let linea of lineas; let i = index" class="rango-row">
-
             <!-- Denominación -->
-            <select class="form-control"
+            <select
+              class="form-control"
               [(ngModel)]="linea.denominacion"
-              (change)="linea.error = ''">
+              (ngModelChange)="actualizarLinea(linea)"
+              (change)="linea.error = ''"
+            >
               <option [ngValue]="null">-- Q --</option>
-              <option *ngFor="let d of denominaciones"
-                [ngValue]="d.valor">{{ d.etiqueta }}</option>
+              <option *ngFor="let d of denominaciones" [ngValue]="d.valor">{{ d.etiqueta }}</option>
             </select>
 
             <!-- Del -->
-            <input type="number" class="form-control text-center"
+            <input
+              type="number"
+              class="form-control text-center"
               [(ngModel)]="linea.numeroDel"
               placeholder="Desde"
               min="1"
-              (input)="linea.error = ''"/>
+              (ngModelChange)="actualizarLinea(linea)"
+              (input)="linea.error = ''"
+            />
 
             <!-- Al -->
-            <input type="number" class="form-control text-center"
+            <input
+              type="number"
+              class="form-control text-center"
               [(ngModel)]="linea.numeroAl"
               placeholder="Hasta"
               min="1"
-              (input)="linea.error = ''"/>
+              (ngModelChange)="actualizarLinea(linea)"
+              (input)="linea.error = ''"
+            />
 
             <!-- Cantidad calculada (solo lectura) -->
             <div class="form-control-static text-center">
-              {{ calcularCantidad(linea) > 0
-                  ? (calcularCantidad(linea) | number)
-                  : '—' }}
-            </div>
+              {{ calcularCantidad(linea) > 0 ? (calcularCantidad(linea) | number) : '—' }}
+             </div>
 
-            <!-- Monto calculado (solo lectura) -->
-            <div class="form-control-static text-right">
-              {{ calcularMontoLinea(linea) > 0
-                  ? formatoQuetzales(calcularMontoLinea(linea))
-                  : '—' }}
-            </div>
+             <!-- Monto calculado (solo lectura) -->
+             <div class="form-control-static text-right">
+              {{
+                calcularMontoLinea(linea) > 0 ? formatoQuetzales(calcularMontoLinea(linea)) : '—'
+              }}
+             </div>
 
-            <!-- Botón eliminar línea -->
-            <button class="btn btn-sm btn-danger-outline"
+             <!-- Botón eliminar línea -->
+             <button
+              class="btn btn-sm btn-danger-outline"
               (click)="eliminarLinea(i)"
               [disabled]="lineas.length === 1"
-              title="Eliminar esta línea">
+              title="Eliminar esta línea"
+             >
               ✕
-            </button>
+             </button>
 
-            <!-- Error de la línea -->
-            <div *ngIf="linea.error" class="rango-error">
-              ⚠ {{ linea.error }}
-            </div>
+             <!-- Error de la línea -->
+             <div *ngIf="linea.error" class="rango-error">⚠ {{ linea.error }}</div>
+               </div>
 
-          </div>
+                  <!-- Botón agregar rango -->
+                  <button class="btn btn-secondary btn-sm mt-2" (click)="agregarLinea()">
+              + Agregar rango
+                </button>
+              </fieldset>
 
-          <!-- Botón agregar rango -->
-          <button class="btn btn-secondary btn-sm mt-2"
-            (click)="agregarLinea()">
-            + Agregar rango
-          </button>
-
-        </fieldset>
-
-        <!-- Resumen totales -->
-        <div class="resumen-compra mt-3">
-          <div class="resumen-item">
-            <span class="resumen-label">Total cupones:</span>
-            <span class="resumen-valor">
+              !-- Resumen totales -->
+              <div class="resumen-compra mt-3">
+               <div class="resumen-item">
+               <span class="resumen-label">Total cupones:</span>
+              <span class="resumen-valor">
               {{ totalCuponesFormulario | number }}
-            </span>
-          </div>
-          <div class="resumen-item">
-            <span class="resumen-label">Monto total:</span>
-            <span class="resumen-valor resumen-monto">
-              {{ formatoQuetzales(montoTotalFormulario) }}
-            </span>
-          </div>
-        </div>
-
+               </span>
+                </div>
+                <div class="resumen-item">
+                 <span class="resumen-label">Monto total:</span>
+                    <span class="resumen-valor resumen-monto">
+                   {{ formatoQuetzales(montoTotalFormulario) }}
+                  </span>
+              </div>
+              </div>
       </div>
 
       <!-- Footer del modal -->
       <div class="modal-footer">
-        <button class="btn btn-secondary"
-          (click)="cerrarFormulario()"
-          [disabled]="guardando">
+        <button class="btn btn-secondary" (click)="cerrarFormulario()" [disabled]="guardando">
           Cancelar
         </button>
-        <button class="btn btn-primary"
-          (click)="guardarCompra()"
-          [disabled]="guardando">
+        <button class="btn btn-primary" (click)="guardarCompra()" [disabled]="guardando">
           {{ guardando ? 'Guardando...' : 'Registrar compra' }}
         </button>
       </div>
-
     </div>
   </div>
-
 </div>

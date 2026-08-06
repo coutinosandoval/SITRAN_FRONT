@@ -58,7 +58,10 @@ export class SolicitudCuponesComponent implements OnInit {
   // ─── Asignación de cupones (Bodega) ───
   rangoSeleccionado: any = null;
   cantidadAsignar: number = 0;
-  asignacionesPendientes: { rango: any; cantidad: number }[] = [];
+  asignacionesPendientes: { rango: any; cantidad: number; numeros: number[] }[] = [];
+
+  // ── Inventario bodega agrupado para asignación ───────────
+  rangosBodegaAgrupados: any[] = [];
 
   // ─── Autorización ───
   observacionAutorizacion: string = '';
@@ -133,8 +136,18 @@ export class SolicitudCuponesComponent implements OnInit {
       });
   }
 
+  sumarMonto = (acc: number, a: any) => acc + a.cantidad * a.rango.denominacion;
+  /** Carga inventario de bodega agrupado por denominación */
+  cargarRangosBodegaAgrupados(): void {
+    this.cuponService.obtenerInventarioBodegaAgrupado().subscribe({
+      next: (data) => {
+        this.rangosBodegaAgrupados = data;
+        this.cdr.detectChanges();
+      },
+    });
+  }
   // ─── Paginación ───────────────────────────────────────────
-
+  //
   cambiarPagina(pagina: number): void {
     if (pagina < 1 || pagina > this.totalPaginas) return;
     this.paginaActual = pagina;
@@ -257,6 +270,13 @@ export class SolicitudCuponesComponent implements OnInit {
       });
   }
 
+  /** Selecciona una denominación del inventario agrupado */
+  seleccionarDenominacion(g: any): void {
+    this.rangoSeleccionado = g;
+    this.cantidadAsignar = 0;
+    this.cdr.detectChanges();
+  }
+
   // ─── Asignar cupones (Bodega) ─────────────────────────────
 
   abrirAsignacion(s: SolicitudCupones): void {
@@ -268,6 +288,7 @@ export class SolicitudCuponesComponent implements OnInit {
     this.mostrarAsignacion = true;
     this.limpiarMensajes();
     this.cargarRangosBodega();
+    this.cargarRangosBodegaAgrupados();
 
     // Cargar detalle actual
     this.cuponService.obtenerDetalleSolicitud(s.id!).subscribe({
@@ -287,34 +308,77 @@ export class SolicitudCuponesComponent implements OnInit {
     });
   }
 
+  /** Agrega una asignación al listado pendiente con números de cupones calculados */
   agregarAsignacion(): void {
     if (!this.rangoSeleccionado || this.cantidadAsignar <= 0) {
-      this.mensajeError = 'Seleccione un rango e ingrese una cantidad válida.';
+      this.mensajeError = 'Seleccione una denominación e ingrese una cantidad válida.';
       return;
     }
-    if (this.cantidadAsignar > this.rangoSeleccionado.disponibles) {
-      this.mensajeError = `Solo hay ${this.rangoSeleccionado.disponibles} cupones disponibles en ese rango.`;
+
+    const disponibles = this.rangoSeleccionado.totalDisponibles;
+    if (this.cantidadAsignar > disponibles) {
+      this.mensajeError = `Solo hay ${disponibles} cupones disponibles en esa denominación.`;
       return;
+    }
+
+    // Verificar que no supere el monto solicitado
+    const montoNuevo = this.cantidadAsignar * this.rangoSeleccionado.denominacion;
+    if (this.montoAsignado + montoNuevo > (this.solicitudSeleccionada?.montoSolicitado ?? 0)) {
+      this.mensajeError = `El monto total supera el solicitado (Q${this.solicitudSeleccionada?.montoSolicitado}.00).`;
+      return;
+    }
+
+    // Calcular números de cupones a entregar — secuencial del menor al mayor
+    // Se obtienen los rangos individuales de esa denominación ordenados por número
+    const rangosIndividuales = this.rangosBodega
+      .filter((r: any) => r.denominacion === this.rangoSeleccionado.denominacion)
+      .sort((a: any, b: any) => a.numeroDel - b.numeroDel);
+
+    const numerosAEntregar: number[] = [];
+    let pendiente = this.cantidadAsignar;
+
+    for (const rango of rangosIndividuales) {
+      if (pendiente <= 0) break;
+      const entregadosEnRango = rango.cantidad - rango.disponibles;
+      const primerDisp = rango.numeroDel + entregadosEnRango;
+      for (let i = primerDisp; i <= rango.numeroAl && pendiente > 0; i++) {
+        numerosAEntregar.push(i);
+        pendiente--;
+      }
     }
 
     this.asignacionesPendientes.push({
-      rango: { ...this.rangoSeleccionado },
+      rango: this.rangoSeleccionado,
       cantidad: this.cantidadAsignar,
+      numeros: numerosAEntregar,
     });
 
-    // Descontar disponibles del rango en pantalla
-    this.rangoSeleccionado.disponibles -= this.cantidadAsignar;
     this.rangoSeleccionado = null;
     this.cantidadAsignar = 0;
     this.mensajeError = '';
+    // Recalcular monto total
+
+    // totalMontoAsignado: number = 0;
   }
 
+  /** Calcula el monto total de asignaciones pendientes */
+  calcularMontoTotal(): number {
+    return this.asignacionesPendientes.reduce(
+      (acc, a) => acc + a.cantidad * a.rango.denominacion,
+      0,
+    );
+  }
   eliminarAsignacion(index: number): void {
     const a = this.asignacionesPendientes[index];
     // Devolver disponibles al rango
     const rango = this.rangosBodega.find((r) => r.id === a.rango.id);
     if (rango) rango.disponibles += a.cantidad;
     this.asignacionesPendientes.splice(index, 1);
+    // Recalcular monto total
+
+    // Al final de agregarAsignacion, antes de detectChanges:
+    this.asignacionesPendientes = [...this.asignacionesPendientes];
+    this.cdr.detectChanges();
   }
 
   get montoAsignado(): number {
@@ -344,29 +408,48 @@ export class SolicitudCuponesComponent implements OnInit {
     this.cargando = true;
 
     for (const a of this.asignacionesPendientes) {
-      await this.cuponService
-        .asignarCuponesPorMonto(this.solicitudSeleccionada!.id!, {
-          idCompraDetalle: a.rango.id,
-          cantidad: a.cantidad,
-        })
-        .toPromise()
-        .catch((err) => {
-          this.mensajeError = err.error?.mensaje || 'Error al asignar cupones.';
-          this.cargando = false;
-        });
+      // Obtener rangos individuales de esa denominación ordenados
+      const rangosIndividuales = this.rangosBodega
+        .filter((r: any) => r.denominacion === a.rango.denominacion)
+        .sort((x: any, y: any) => x.numeroDel - y.numeroDel);
+
+      let pendiente = a.cantidad;
+
+      for (const rango of rangosIndividuales) {
+        if (pendiente <= 0) break;
+
+        const cantidadDeEsteRango = Math.min(pendiente, rango.disponibles);
+
+        await this.cuponService
+          .asignarCuponesPorMonto(this.solicitudSeleccionada!.id!, {
+            idCompraDetalle: rango.id,
+            cantidad: cantidadDeEsteRango,
+          })
+          .toPromise()
+          .catch((err) => {
+            this.mensajeError = err.error?.mensaje || 'Error al asignar cupones.';
+            this.cargando = false;
+          });
+
+        pendiente -= cantidadDeEsteRango;
+      }
     }
 
+    this.cargando = false;
     this.asignacionesPendientes = [];
     this.mensajeExito = 'Cupones asignados correctamente.';
+    this.cargarRangosBodega();
+    this.cargarRangosBodegaAgrupados();
 
-    // Recargar detalle ANTES de limpiar y detectar cambios
+    // Recargar detalle para habilitar botón Finalizar
     this.cuponService.obtenerDetalleSolicitud(this.solicitudSeleccionada!.id!).subscribe({
       next: (data: any) => {
         this.detalleSolicitud = data;
-        this.cargando = false;
         this.cdr.detectChanges();
       },
     });
+
+    this.cdr.detectChanges();
   }
 
   finalizar(): void {
@@ -382,8 +465,12 @@ export class SolicitudCuponesComponent implements OnInit {
 
   private _ejecutarFinalizar(): void {
     this.cuponService.finalizarSolicitudCupones(this.solicitudSeleccionada!.id!, {}).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.mensajeExito = 'Solicitud finalizada correctamente.';
+        // Si el backend devuelve URL del PDF, abrirlo
+        if (res?.urlPdf) {
+          window.open(`https://localhost:7069${res.urlPdf}`, '_blank');
+        }
         this.volverLista();
         this.cargarSolicitudes();
       },
@@ -459,8 +546,10 @@ export class SolicitudCuponesComponent implements OnInit {
   }
 
   /** Calcula el total disponible en quetzales */
-calcularTotalDisponible(): number {
-  return this.detalleSolicitud.reduce(
-    (a: number, d: any) => a + (d.disponibles * d.denominacion), 0);
-}
+  calcularTotalDisponible(): number {
+    return this.detalleSolicitud.reduce(
+      (a: number, d: any) => a + d.disponibles * d.denominacion,
+      0,
+    );
+  }
 }

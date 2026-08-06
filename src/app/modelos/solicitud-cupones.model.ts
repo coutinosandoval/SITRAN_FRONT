@@ -24,6 +24,7 @@ export interface SolicitudCupones {
   cantidadOriginal?: number;
   entregados?: number;
   disponibles?: number;
+  urlPdfEntrega?: string;
 }
 
 export interface SolicitudCuponesDetalle {

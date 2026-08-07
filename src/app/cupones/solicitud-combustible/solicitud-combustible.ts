@@ -33,6 +33,8 @@ export class SolicitudCombustibleComponent implements OnInit {
   pilotos: any[] = [];
   cuponesDisponibles: any[] = [];
   detalleSolicitud: any[] = [];
+  // Niveles de tanque disponibles
+  readonly nivelesTanque = ['1/4', '1/2', '3/4', 'Full'];
 
   // ─── Paginación ───
   paginaActual: number = 1;
@@ -91,6 +93,14 @@ export class SolicitudCombustibleComponent implements OnInit {
       solicitante: ['', Validators.required],
       observaciones: [''],
     });
+
+    this.formulario = this.fb.group({
+      idVehiculo: ['', Validators.required],
+      idPiloto: ['', Validators.required],
+      solicitante: ['', Validators.required],
+      nivelTanque: ['', Validators.required],
+      observaciones: [''],
+    });
   }
 
   ngOnInit(): void {
@@ -131,6 +141,14 @@ export class SolicitudCombustibleComponent implements OnInit {
     });
   }
 
+  /** Al seleccionar piloto, autocompleta el campo solicitante */
+  onPilotoSeleccionado(idPiloto: any): void {
+    const piloto = this.pilotos.find((p: any) => p.id == idPiloto);
+    if (piloto) {
+      this.formulario.patchValue({ solicitante: piloto.nombre });
+      this.cdr.detectChanges();
+    }
+  }
   /** Carga vehículos disponibles */
   cargarVehiculos(): void {
     const hoy = new Date().toISOString();
@@ -178,10 +196,6 @@ export class SolicitudCombustibleComponent implements OnInit {
       this.formulario.markAllAsTouched();
       return;
     }
-    if (this.cuponesAgregados.length === 0) {
-      this.mensajeError = 'Debe agregar al menos un rango de cupones.';
-      return;
-    }
 
     this.cargando = true;
     const v = this.formulario.value;
@@ -193,13 +207,15 @@ export class SolicitudCombustibleComponent implements OnInit {
         idVehiculo: Number(v.idVehiculo),
         idPiloto: Number(v.idPiloto),
         solicitante: v.solicitante,
+        nivelTanque: v.nivelTanque,
         observaciones: v.observaciones || null,
       })
       .subscribe({
         next: (res) => {
-          const idSolicitud = res.id;
-          // Paso 2: agregar cupones en secuencia
-          this.agregarCuponesSecuencial(idSolicitud, 0);
+          this.cargando = false;
+          this.mensajeExito = 'Solicitud registrada correctamente.';
+          this.volverLista();
+          this.cargarSolicitudes();
         },
         error: (err) => {
           this.mensajeError = err.error?.mensaje || 'Error al registrar la solicitud.';

@@ -209,7 +209,9 @@ export class TalonarioComponent implements OnInit {
         // Generar números asignados por rango
         this.detalleAsignados = data.map((r: any) => {
           const numeros: number[] = [];
-          const entregados = r.cantidadAsignada - r.disponiblesActuales;
+          // Calcular cantidad original del rango y cuántos se entregaron
+          const cantidadOriginal = r.numeroAl - r.numeroDel + 1;
+          const entregados = cantidadOriginal - r.disponiblesActuales;
           for (let i = r.numeroDel; i < r.numeroDel + entregados; i++) {
             numeros.push(i);
           }
@@ -239,9 +241,9 @@ export class TalonarioComponent implements OnInit {
     });
   }
 
-// ── Expande/colapsa cupones vencidos por denominación ────
-// Filtra del inventario local los rangos cuya fecha de vencimiento ya pasó
-// y genera los números individuales de cupones vencidos disponibles
+  // ── Expande/colapsa cupones vencidos por denominación ────
+  // Filtra del inventario local los rangos cuya fecha de vencimiento ya pasó
+  // y genera los números individuales de cupones vencidos disponibles
   toggleDetalleVencidos(denominacion: number): void {
     if (this.denominacionVencidaExpandida === denominacion) {
       this.denominacionVencidaExpandida = null;

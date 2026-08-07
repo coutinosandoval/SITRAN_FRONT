@@ -152,7 +152,7 @@ export class SolicitudCombustibleComponent implements OnInit {
     }
   }
 
-  /** Confirma asignación de cupones del Jefe de Transportes y genera constancia */
+  /** Confirma asignación del Jefe de Transportes — usa rangos individuales */
   confirmarAsignacionJefe(): void {
     if (this.cuponesAgregados.length === 0) {
       this.mensajeError = 'Debe agregar al menos un cupón.';
@@ -161,8 +161,69 @@ export class SolicitudCombustibleComponent implements OnInit {
     if (!confirm('¿Confirma entregar estos cupones al solicitante?')) return;
 
     this.cargando = true;
-    // Procesar cupones en secuencia
-    this.agregarCuponesSecuencial(this.solicitudSeleccionada.id, 0);
+    this._procesarAsignacionJefe(0);
+  }
+
+  /** Procesa asignaciones del Jefe de Transportes en secuencia */
+  private async _procesarAsignacionJefe(index: number): Promise<void> {
+    if (index >= this.cuponesAgregados.length) {
+      // Autorizar la solicitud
+      this.http
+        .patch<any>(`${this.apiUrl}/${this.solicitudSeleccionada.id}/autorizar`, {})
+        .subscribe({
+          next: (res) => {
+            this.cargando = false;
+            this.mensajeExito = 'Cupones entregados correctamente.';
+            if (res?.urlPdf) window.open(`https://localhost:7069${res.urlPdf}`, '_blank');
+            this.mostrarAsignacionJefe = false;
+            this.volverLista();
+            this.cargarSolicitudes();
+          },
+          error: (err) => {
+            this.mensajeError = err.error?.mensaje || 'Error al finalizar.';
+            this.cargando = false;
+          },
+        });
+      return;
+    }
+
+    const a = this.cuponesAgregados[index];
+    // Obtener rangos individuales de esa denominación ordenados
+    const rangosIndividuales = this.cuponesDisponibles
+      .filter((r: any) => r.denominacion === a.rango.denominacion)
+      .sort((x: any, y: any) => x.numeroDel - y.numeroDel);
+
+    let pendiente = a.cantidad;
+
+    for (const rango of rangosIndividuales) {
+      if (pendiente <= 0) break;
+
+      const totalRango = rango.numeroAl - rango.numeroDel + 1;
+      const entregados = totalRango - rango.disponibles;
+      const primerDisp = rango.numeroDel + entregados;
+      const cantidadEsteRango = Math.min(pendiente, rango.disponibles);
+
+      // Solo enviar si hay cupones disponibles en este rango
+      if (cantidadEsteRango <= 0) continue;
+
+      await this.http
+        .post<any>(`${this.apiUrl}/${this.solicitudSeleccionada.id}/detalle`, {
+          idSolCuponDet: rango.id,
+          denominacion: rango.denominacion,
+          cantidad: cantidadEsteRango,
+          numeroDel: primerDisp,
+          numeroAl: primerDisp + cantidadEsteRango - 1,
+        })
+        .toPromise()
+        .catch((err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al asignar cupones.';
+          this.cargando = false;
+        });
+
+      pendiente -= cantidadEsteRango;
+    }
+
+    this._procesarAsignacionJefe(index + 1);
   }
 
   /** Abre vista de asignación de cupones para Jefe de Transportes */

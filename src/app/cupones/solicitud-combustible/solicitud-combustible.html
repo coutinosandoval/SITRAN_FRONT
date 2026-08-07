@@ -128,14 +128,14 @@
                 >
                   <i class="bi bi-file-earmark-pdf"></i>
                 </button>
-                <!-- Autorizar — Jefe Transporte, Pendiente -->
+                <!-- Jefe Transporte: asignar cupones — solicitud Pendiente -->
                 <button
-                  class="btn btn-success btn-sm"
+                  class="btn btn-primary btn-sm me-1"
                   *ngIf="esJefeTransporte && s.estado === 'Pendiente'"
-                  title="Autorizar y entregar cupones"
-                  (click)="autorizar(s.id)"
+                  title="Asignar cupones"
+                  (click)="abrirAsignacionJefe(s)"
                 >
-                  <i class="bi bi-check-circle"></i>
+                  <i class="bi bi-box-arrow-in-down"></i>
                 </button>
               </td>
             </tr>
@@ -433,6 +433,197 @@
   >
     <button class="btn btn-success" (click)="autorizar(solicitudSeleccionada.id)">
       <i class="bi bi-check-circle"></i> Autorizar y Entregar Cupones
+    </button>
+  </div>
+</div>
+
+<!-- ── ASIGNACIÓN JEFE DE TRANSPORTES ────────────────────── -->
+<div *ngIf="mostrarAsignacionJefe && solicitudSeleccionada">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">
+      <i class="bi bi-fuel-pump"></i> Asignar Cupones — Solicitud #{{ solicitudSeleccionada.id }}
+    </h4>
+    <button class="btn btn-secondary btn-sm" (click)="volverLista()">
+      <i class="bi bi-arrow-left"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+  <div *ngIf="mensajeExito" class="alert alert-success">
+    <i class="bi bi-check-circle"></i> {{ mensajeExito }}
+  </div>
+
+  <!-- Info de la solicitud -->
+  <div class="alert alert-info mb-3">
+    <div class="row">
+      <div class="col-md-3">
+        <strong>Solicitante:</strong> {{ solicitudSeleccionada.solicitante }}
+      </div>
+      <div class="col-md-3">
+        <strong>Vehículo:</strong> {{ solicitudSeleccionada.vehiculoPlaca }}
+      </div>
+      <div class="col-md-3"><strong>Piloto:</strong> {{ solicitudSeleccionada.pilotoNombre }}</div>
+      <div class="col-md-3">
+        <strong>Nivel tanque:</strong> {{ solicitudSeleccionada.nivelTanque || '—' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Cupones disponibles en sede -->
+    <div class="col-md-6">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header bg-secondary text-white">
+          <h6 class="mb-0"><i class="bi bi-list-ul"></i> Cupones disponibles en sede</h6>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>Denominación</th>
+                <th class="text-center">Disponibles</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="cuponesDisponiblesAgrupados.length === 0">
+                <td colspan="3" class="text-center py-3 text-muted">
+                  No hay cupones disponibles en su sede.
+                </td>
+              </tr>
+              <tr
+                *ngFor="let g of cuponesDisponiblesAgrupados"
+                [class.table-active]="rangoSeleccionado?.denominacion === g.denominacion"
+                style="cursor: pointer"
+                (click)="seleccionarDenominacionJefe(g)"
+              >
+                <td>
+                  <span class="badge bg-info text-dark fs-6">Q{{ g.denominacion }}.00</span>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-success">{{ g.totalDisponibles | number }}</span>
+                </td>
+                <td class="text-center">
+                  <i
+                    class="bi bi-check-circle-fill text-success"
+                    *ngIf="rangoSeleccionado?.denominacion === g.denominacion"
+                  ></i>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Cantidad a asignar -->
+      <div class="card shadow-sm mb-3" *ngIf="rangoSeleccionado">
+        <div class="card-header bg-info text-white">
+          <h6 class="mb-0">
+            Asignar Q{{ rangoSeleccionado.denominacion }}.00 —
+            {{ rangoSeleccionado.totalDisponibles }} disponibles
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row align-items-end g-2">
+            <div class="col-md-8">
+              <label class="form-label">Cantidad a asignar</label>
+              <input
+                type="number"
+                class="form-control"
+                [(ngModel)]="cantidadAsignar"
+                [max]="rangoSeleccionado.totalDisponibles"
+                min="1"
+                placeholder="Cantidad"
+              />
+              <small class="text-muted">
+                Máximo: {{ rangoSeleccionado.totalDisponibles }} · Monto: Q{{
+                  cantidadAsignar * (rangoSeleccionado.denominacion || 0) | number
+                }}.00
+              </small>
+            </div>
+            <div class="col-md-4">
+              <button class="btn btn-success w-100" (click)="agregarCuponJefe()">
+                <i class="bi bi-plus-circle"></i> Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cupones a entregar -->
+    <div class="col-md-6">
+  <div class="card shadow-sm mb-3">
+    <div class="card-header bg-primary text-white">
+      <h6 class="mb-0"><i class="bi bi-cart-check"></i> Cupones a entregar</h6>
+    </div>
+    <div class="card-body p-0">
+      <div *ngIf="cuponesAgregados.length === 0" class="text-center py-3 text-muted">
+        Seleccione cupones de la izquierda.
+      </div>
+      <table *ngIf="cuponesAgregados.length > 0" class="table table-sm mb-0">
+        <thead class="table-secondary">
+          <tr>
+            <th>Denom.</th>
+            <th class="text-center">Cantidad</th>
+            <th class="text-center">Monto</th>
+            <th>Números a entregar</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of cuponesAgregados; let i = index">
+            <td>
+              <span class="badge bg-info text-dark">Q{{ c.rango.denominacion }}.00</span>
+            </td>
+            <td class="text-center">{{ c.cantidad }}</td>
+            <td class="text-center fw-bold text-success">
+              Q{{ c.cantidad * (c.rango.denominacion || 0) | number }}.00
+            </td>
+            <td>
+              <div class="d-flex flex-wrap gap-1">
+                <span *ngFor="let n of c.numeros"
+                  class="badge bg-light text-dark border">
+                  {{ n }}
+                </span>
+              </div>
+            </td>
+            <td class="text-center">
+              <button class="btn btn-outline-danger btn-sm" (click)="eliminarCupon(i)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-dark">
+          <tr>
+            <td class="fw-bold">Total</td>
+            <td class="text-center fw-bold">{{ totalCupones }}</td>
+            <td class="text-center fw-bold text-success">Q{{ montoTotal | number }}.00</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+  </div>
+
+  <!-- Botones -->
+  <div class="d-flex justify-content-end gap-2 mt-3">
+    <button class="btn btn-secondary" (click)="volverLista()">
+      <i class="bi bi-x-circle"></i> Cancelar
+    </button>
+    <button
+      class="btn btn-primary"
+      [disabled]="cuponesAgregados.length === 0 || cargando"
+      (click)="confirmarAsignacionJefe()"
+    >
+      <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+      <i *ngIf="!cargando" class="bi bi-check-circle"></i>
+      Confirmar y Generar Constancia
     </button>
   </div>
 </div>

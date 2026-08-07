@@ -414,4 +414,11 @@ export class CuponService {
       `${environment.apiUrl}/api/cupon/bodega/asignados-detalle?denominacion=${denominacion}`,
     );
   }
+
+  /** Obtiene inventario de sede agrupado por denominación */
+  obtenerInventarioSedeAgrupado(idSede: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/api/cupon/sede/inventario-agrupado?idSede=${idSede}`,
+    );
+  }
 }

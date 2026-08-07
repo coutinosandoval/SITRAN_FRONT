@@ -56,6 +56,7 @@ export class SolicitudCombustibleComponent implements OnInit {
   cuponesAgregados: any[] = [];
   rangoSeleccionado: any = null;
   cantidadAsignar: number = 0;
+  cuponesDisponiblesAgrupados: any[] = [];
 
   // ─── Modal devolución ───
   mostrarModalDevolucion: boolean = false;
@@ -70,6 +71,7 @@ export class SolicitudCombustibleComponent implements OnInit {
   // ─── Formulario ───
   formulario: FormGroup;
   intentoGuardar: boolean = false;
+  mostrarAsignacionJefe: boolean = false;
 
   // ─── Estado ───
   cargando: boolean = false;
@@ -149,13 +151,106 @@ export class SolicitudCombustibleComponent implements OnInit {
       this.cdr.detectChanges();
     }
   }
+
+  /** Confirma asignación de cupones del Jefe de Transportes y genera constancia */
+  confirmarAsignacionJefe(): void {
+    if (this.cuponesAgregados.length === 0) {
+      this.mensajeError = 'Debe agregar al menos un cupón.';
+      return;
+    }
+    if (!confirm('¿Confirma entregar estos cupones al solicitante?')) return;
+
+    this.cargando = true;
+    // Procesar cupones en secuencia
+    this.agregarCuponesSecuencial(this.solicitudSeleccionada.id, 0);
+  }
+
+  /** Abre vista de asignación de cupones para Jefe de Transportes */
+  abrirAsignacionJefe(s: any): void {
+    this.solicitudSeleccionada = s;
+    this.mostrarLista = false;
+    this.mostrarFormulario = false;
+    this.mostrarDetalle = false;
+    this.mostrarAsignacionJefe = true;
+    this.cuponesAgregados = [];
+    this.cuponesDisponiblesAgrupados = [];
+    this.rangoSeleccionado = null;
+    this.cantidadAsignar = 0;
+    this.limpiarMensajes();
+
+    // Cargar inventario agrupado de la sede
+    this.cuponService.obtenerInventarioSedeAgrupado(this.idSedeUsuario!).subscribe({
+      next: (data) => {
+        this.cuponesDisponiblesAgrupados = data.filter((g: any) => g.totalDisponibles > 0);
+        this.cdr.detectChanges();
+      },
+    });
+
+    // Cargar rangos individuales para calcular números
+    this.cargarCuponesDisponibles();
+  }
+
+  /** Agrega cupón al listado del Jefe de Transportes con números individuales */
+  agregarCuponJefe(): void {
+    if (!this.rangoSeleccionado || this.cantidadAsignar <= 0) {
+      this.mensajeError = 'Seleccione una denominación e ingrese una cantidad válida.';
+      return;
+    }
+    if (this.cantidadAsignar > this.rangoSeleccionado.totalDisponibles) {
+      this.mensajeError = `Solo hay ${this.rangoSeleccionado.totalDisponibles} disponibles.`;
+      return;
+    }
+
+    // Calcular números individuales — secuencial del menor al mayor
+    const rangosIndividuales = this.cuponesDisponibles
+      .filter((r: any) => r.denominacion === this.rangoSeleccionado.denominacion)
+      .sort((a: any, b: any) => a.numeroDel - b.numeroDel);
+
+    const numerosAEntregar: number[] = [];
+    let pendiente = this.cantidadAsignar;
+
+    for (const rango of rangosIndividuales) {
+      if (pendiente <= 0) break;
+      // Calcular entregados y primer disponible
+      const totalRango = rango.numeroAl - rango.numeroDel + 1;
+      const entregados = totalRango - rango.disponibles;
+      const primerDisp = rango.numeroDel + entregados;
+      for (let i = primerDisp; i <= rango.numeroAl && pendiente > 0; i++) {
+        numerosAEntregar.push(i);
+        pendiente--;
+      }
+    }
+
+    this.cuponesAgregados.push({
+      rango: this.rangoSeleccionado,
+      cantidad: this.cantidadAsignar,
+      numeros: numerosAEntregar,
+    });
+
+    this.rangoSeleccionado = null;
+    this.cantidadAsignar = 0;
+    this.mensajeError = '';
+    this.cdr.detectChanges();
+  }
+
+  /** Selecciona una denominación del inventario agrupado de sede */
+  seleccionarDenominacionJefe(g: any): void {
+    this.rangoSeleccionado = g;
+    this.cantidadAsignar = 0;
+    this.cdr.detectChanges();
+  }
   /** Carga vehículos disponibles */
   cargarVehiculos(): void {
     const hoy = new Date().toISOString();
     const manana = new Date(Date.now() + 86400000).toISOString();
     this.comisionService
       .obtenerVehiculosDisponibles(hoy, manana, this.idSedeUsuario ?? undefined)
-      .subscribe({ next: (data: any) => (this.vehiculos = data) });
+      .subscribe({
+        next: (data: any) => {
+          this.vehiculos = data;
+          this.cdr.detectChanges();
+        },
+      });
   }
 
   /** Carga pilotos disponibles */

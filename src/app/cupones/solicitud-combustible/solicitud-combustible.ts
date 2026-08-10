@@ -66,6 +66,7 @@ export class SolicitudCombustibleComponent implements OnInit {
   // ─── Roles ───
   esSolicitante: boolean = false;
   esJefeTransporte: boolean = false;
+  ultimoKm: number | null = null;
   idSedeUsuario: number | null = null;
 
   // ─── Formulario ───
@@ -357,6 +358,14 @@ export class SolicitudCombustibleComponent implements OnInit {
     this.cargando = true;
     const v = this.formulario.value;
 
+    // Validar kilometraje
+    const km = v.kilometraje ? Number(v.kilometraje) : null;
+    if (this.ultimoKm && km && km <= this.ultimoKm) {
+      this.mensajeError = `El kilometraje (${km} km) debe ser mayor al último registrado (${this.ultimoKm} km).`;
+      this.cargando = false;
+      return;
+    }
+
     // Paso 1: crear la solicitud
     this.http
       .post<any>(this.apiUrl, {
@@ -627,5 +636,19 @@ export class SolicitudCombustibleComponent implements OnInit {
   limpiarMensajes(): void {
     this.mensajeExito = '';
     this.mensajeError = '';
+  }
+
+  /** Al cambiar vehículo, carga el último km registrado */
+  onVehiculoCambiado(idVehiculo: any): void {
+    if (!idVehiculo) {
+      this.ultimoKm = null;
+      return;
+    }
+    this.http.get<any>(`${this.apiUrl}/ultimo-km/${idVehiculo}`).subscribe({
+      next: (res) => {
+        this.ultimoKm = res.ultimoKm;
+        this.cdr.detectChanges();
+      },
+    });
   }
 }

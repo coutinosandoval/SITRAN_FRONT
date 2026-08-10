@@ -199,6 +199,7 @@
               class="form-select"
               formControlName="idVehiculo"
               [class.is-invalid]="tieneError('idVehiculo')"
+              (change)="onVehiculoCambiado($any($event.target).value)"
             >
               <option value="">Seleccione un vehículo</option>
               <option *ngFor="let v of vehiculos" [value]="v.id">{{ v.nombre }}</option>
@@ -256,6 +257,9 @@
               formControlName="kilometraje"
               placeholder="Kilometraje actual"
             />
+            <small *ngIf="ultimoKm" class="text-muted">
+              Debe ser mayor a <strong>{{ ultimoKm | number }} km</strong>
+            </small>
           </div>
 
           <!-- Observaciones -->

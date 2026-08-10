@@ -101,7 +101,7 @@ export class SolicitudCombustibleComponent implements OnInit {
       idPiloto: ['', Validators.required],
       solicitante: ['', Validators.required],
       nivelTanque: ['', Validators.required],
-      kilometraje:   [''],
+      kilometraje: [''],
       observaciones: [''],
     });
   }
@@ -365,6 +365,7 @@ export class SolicitudCombustibleComponent implements OnInit {
         idPiloto: Number(v.idPiloto),
         solicitante: v.solicitante,
         nivelTanque: v.nivelTanque,
+        kmActual: v.kilometraje ? Number(v.kilometraje) : null,
         observaciones: v.observaciones || null,
       })
       .subscribe({

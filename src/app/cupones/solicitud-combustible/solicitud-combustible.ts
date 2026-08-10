@@ -101,6 +101,7 @@ export class SolicitudCombustibleComponent implements OnInit {
       idPiloto: ['', Validators.required],
       solicitante: ['', Validators.required],
       nivelTanque: ['', Validators.required],
+      kilometraje:   [''],
       observaciones: [''],
     });
   }

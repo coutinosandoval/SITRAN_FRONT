@@ -10,6 +10,7 @@ import { environment } from '../../environments/environment';
 /** Línea temporal del formulario antes de enviar */
 interface LineaFormulario {
   denominacion: number | null;
+  cantidad: number | null;
   numeroDel: number | null;
   numeroAl: number | null;
   error: string;
@@ -156,7 +157,7 @@ export class ComprasComponent implements OnInit {
   }
 
   lineaVacia(): LineaFormulario {
-    return { denominacion: null, numeroDel: null, numeroAl: null, error: '' };
+    return { denominacion: null, cantidad: null, numeroDel: null, numeroAl: null, error: '' };
   }
 
   agregarLinea(): void {
@@ -176,15 +177,12 @@ export class ComprasComponent implements OnInit {
 
   /** Calcula la cantidad de cupones de una línea */
   calcularCantidad(linea: LineaFormulario): number {
-    if (linea.numeroDel != null && linea.numeroAl != null && linea.numeroAl > linea.numeroDel) {
-      return linea.numeroAl - linea.numeroDel + 1;
-    }
-    return 0;
+    return linea.cantidad ?? 0;
   }
 
   /** Calcula el monto de una línea */
   calcularMontoLinea(linea: LineaFormulario): number {
-    return this.calcularCantidad(linea) * (linea.denominacion ?? 0);
+    return (linea.cantidad ?? 0) * (linea.denominacion ?? 0);
   }
 
   /** Total de cupones de todas las líneas */
@@ -199,6 +197,11 @@ export class ComprasComponent implements OnInit {
 
   /** Fuerza detección de cambios al modificar inputs */
   actualizarLinea(linea: LineaFormulario): void {
+    if (linea.numeroDel != null && linea.cantidad != null && linea.cantidad > 0) {
+      linea.numeroAl = linea.numeroDel + linea.cantidad - 1;
+    } else {
+      linea.numeroAl = null;
+    }
     this.lineas = [...this.lineas];
     this.cdr.detectChanges();
   }
@@ -292,7 +295,7 @@ export class ComprasComponent implements OnInit {
       detalles: this.lineas.map((l) => ({
         denominacion: l.denominacion!,
         numeroDel: l.numeroDel!,
-        numeroAl: l.numeroAl!,
+        numeroAl: l.numeroDel! + l.cantidad! - 1,
       })),
     };
 

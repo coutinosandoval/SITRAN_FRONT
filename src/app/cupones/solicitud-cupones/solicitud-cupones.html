@@ -411,8 +411,8 @@
   <!-- Info de la solicitud -->
   <div class="alert alert-info mb-3">
     <strong>{{ solicitudSeleccionada.sedeNombre }}</strong> — Monto solicitado:
-    <strong>Q{{ asignacionesPendientes.reduce(sumarMonto, 0) | number }}.00</strong> — Monto
-    asignado hasta ahora:
+    <strong>Q{{ solicitudSeleccionada.montoSolicitado | number }}.00</strong> — Monto asignado hasta
+    ahora:
     <strong class="text-success"
       >Q{{ asignacionesPendientes.reduce(sumarMonto, 0) | number }}.00</strong
     >

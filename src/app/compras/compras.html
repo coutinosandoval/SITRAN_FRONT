@@ -202,9 +202,9 @@
           <!-- Encabezado de columnas -->
           <div class="rangos-header">
             <span>Denominación *</span>
+            <span>Cantidad *</span>
             <span>Del (número inicial) *</span>
-            <span>Al (número final) *</span>
-            <span>Cantidad</span>
+            <span>Al (calculado)</span>
             <span>Monto</span>
             <span></span>
           </div>
@@ -222,6 +222,17 @@
               <option *ngFor="let d of denominaciones" [ngValue]="d.valor">{{ d.etiqueta }}</option>
             </select>
 
+            <!-- Cantidad -->
+            <input
+              type="number"
+              class="form-control text-center"
+              [(ngModel)]="linea.cantidad"
+              placeholder="Cantidad"
+              min="1"
+              (ngModelChange)="actualizarLinea(linea)"
+              (input)="linea.error = ''"
+            />
+
             <!-- Del -->
             <input
               type="number"
@@ -233,64 +244,55 @@
               (input)="linea.error = ''"
             />
 
-            <!-- Al -->
-            <input
-              type="number"
-              class="form-control text-center"
-              [(ngModel)]="linea.numeroAl"
-              placeholder="Hasta"
-              min="1"
-              (ngModelChange)="actualizarLinea(linea)"
-              (input)="linea.error = ''"
-            />
-
-            <!-- Cantidad calculada (solo lectura) -->
+            <!-- Al — calculado automáticamente -->
             <div class="form-control-static text-center">
-              {{ calcularCantidad(linea) > 0 ? (calcularCantidad(linea) | number) : '—' }}
-             </div>
+              {{ linea.numeroDel && linea.cantidad ? linea.numeroDel + linea.cantidad - 1 : '—' }}
+            </div>
 
-             <!-- Monto calculado (solo lectura) -->
-             <div class="form-control-static text-right">
+            <!-- Monto calculado -->
+            <div class="form-control-static text-right">
               {{
-                calcularMontoLinea(linea) > 0 ? formatoQuetzales(calcularMontoLinea(linea)) : '—'
+                linea.cantidad && linea.denominacion
+                  ? formatoQuetzales(linea.cantidad * linea.denominacion)
+                  : '—'
               }}
-             </div>
+            </div>
 
-             <!-- Botón eliminar línea -->
-             <button
+            <!-- Botón eliminar -->
+            <button
               class="btn btn-sm btn-danger-outline"
               (click)="eliminarLinea(i)"
               [disabled]="lineas.length === 1"
               title="Eliminar esta línea"
-             >
+            >
               ✕
-             </button>
+            </button>
 
-             <!-- Error de la línea -->
-             <div *ngIf="linea.error" class="rango-error">⚠ {{ linea.error }}</div>
-               </div>
+            <!-- Error de la línea -->
+            <div *ngIf="linea.error" class="rango-error">⚠ {{ linea.error }}</div>
+          </div>
 
-                  <!-- Botón agregar rango -->
-                  <button class="btn btn-secondary btn-sm mt-2" (click)="agregarLinea()">
-              + Agregar rango
-                </button>
-              </fieldset>
+          <!-- Botón agregar rango -->
+          <button class="btn btn-secondary btn-sm mt-2" (click)="agregarLinea()">
+            + Agregar rango
+          </button>
+        </fieldset>
 
-              !-- Resumen totales -->
-              <div class="resumen-compra mt-3">
-               <div class="resumen-item">
-               <span class="resumen-label">Total cupones:</span>
-              <span class="resumen-valor">
+        !-- Resumen totales -->
+        <div class="resumen-compra mt-3">
+          <div class="resumen-item">
+            <span class="resumen-label">Total cupones:</span>
+            <span class="resumen-valor">
               {{ totalCuponesFormulario | number }}
-               </span>
-                </div>
-                <div class="resumen-item">
-                 <span class="resumen-label">Monto total:</span>
-                    <span class="resumen-valor resumen-monto">
-                   {{ formatoQuetzales(montoTotalFormulario) }}
-                  </span>
-              </div>
-              </div>
+            </span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Monto total:</span>
+            <span class="resumen-valor resumen-monto">
+              {{ formatoQuetzales(montoTotalFormulario) }}
+            </span>
+          </div>
+        </div>
       </div>
 
       <!-- Footer del modal -->

@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../servicios/auth.service';
 
+
 // Guard que protege las rutas que requieren autenticación
 // Si el usuario no está autenticado lo redirige al login
 export const authGuard: CanActivateFn = (route, state) => {

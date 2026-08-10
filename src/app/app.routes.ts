@@ -18,9 +18,11 @@ import { BitacoraVehiculosComponent } from './reportes/bitacora-vehiculos/bitaco
 import { ComprasComponent } from './compras/compras';
 import { SolicitudCuponesComponent } from './cupones/solicitud-cupones/solicitud-cupones';
 import { ComisionLocalComponent } from './comisiones/comision-local/comision-local';
-import { SolicitudCombustibleComponent } from './cupones/solicitud-combustible/solicitud-combustible';
-import { ReporteCombustibleComponent } from './reportes/reporte-combustible/reporte-combustible';
 import { PorteriaComponent } from './porteria/porteria';
+import { ReporteCuponesVehiculo } from './reportes/reporte-cupones-vehiculo/reporte-cupones-vehiculo';
+import { ReporteCombustibleComponent } from './reportes/reporte-combustible/reporte-combustible';
+
+import { SolicitudCombustibleComponent } from './cupones/solicitud-combustible/solicitud-combustible';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -83,6 +85,11 @@ export const routes: Routes = [
       {
         path: 'reportes/combustible',
         component: ReporteCombustibleComponent,
+        canActivate: [authGuard],
+      },
+      {
+        path: 'reportes/cupones-vehiculo',
+        component: ReporteCuponesVehiculo,
         canActivate: [authGuard],
       },
     ],

@@ -212,6 +212,14 @@
         </a>
         <a
           *ngIf="tienePermiso('VER_REPORTES_CUPONES')"
+          routerLink="/reportes/cupones-vehiculo"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
+          <i class="bi bi-truck"></i> Cupones por Vehículo
+        </a>
+        <a
+          *ngIf="tienePermiso('VER_REPORTES_CUPONES')"
           routerLink="/reportes/combustible"
           routerLinkActive="active"
           class="menu-item submenu-item"

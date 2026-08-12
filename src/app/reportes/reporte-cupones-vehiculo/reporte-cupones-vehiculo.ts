@@ -45,10 +45,12 @@ export class ReporteCuponesVehiculo implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.esAdmin = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
+    this.esAdmin =
+      this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS') ||
+      this.authService.tienePermiso('VER_REPORTES_GENERALES');
     this.idSedeUsuario = this.authService.obtenerIdUnidad();
 
-    // Si no es admin, fija la sede del usuario
+    // Solo fija la sede si NO tiene acceso general
     if (!this.esAdmin) this.idSede = this.idSedeUsuario;
 
     this.cargarVehiculos();

@@ -275,28 +275,24 @@ export class TalonarioComponent implements OnInit {
       return;
     }
 
-    // LOG TEMPORAL
-    console.log(
-      'talonariosBodega:',
-      this.talonariosBodega.map((t: any) => ({
-        denominacion: t.denominacion,
-        fechaVencimiento: t.fechaVencimiento,
-        proximoVencer: this.estaProximoVencer(t.fechaVencimiento),
-      })),
-    );
-
     this.denominacionPorVencerExpandida = denominacion;
+
     // Filtrar rangos próximos a vencer del inventario individual
+    const rangos = this.talonariosBodega.filter(
+      (t: any) => t.denominacion === denominacion && this.estaProximoVencer(t.fechaVencimiento),
+    );
 
     this.detallePorVencer = rangos.map((r: any) => {
       const numeros: number[] = [];
-      const entregados = r.cantidad - r.disponibles;
+      const totalRango = r.numeroAl - r.numeroDel + 1;
+      const entregados = totalRango - r.disponibles;
       const primerDisp = r.numeroDel + entregados;
       for (let i = primerDisp; i <= r.numeroAl; i++) {
         numeros.push(i);
       }
       return { ...r, numerosPorVencer: numeros };
     });
+
     this.cdr.detectChanges();
   }
 

@@ -482,6 +482,15 @@
       <div class="col-md-3">
         <strong>Nivel tanque:</strong> {{ solicitudSeleccionada.nivelTanque || '—' }}
       </div>
+      <div class="col-md-3 mt-2">
+        <strong>Último km registrado:</strong>
+        {{
+          solicitudSeleccionada.kmActual ? (solicitudSeleccionada.kmActual | number) + ' km' : '—'
+        }}
+      </div>
+      <div class="col-md-9 mt-2">
+        <strong>Observaciones:</strong> {{ solicitudSeleccionada.observaciones || '—' }}
+      </div>
     </div>
   </div>
 

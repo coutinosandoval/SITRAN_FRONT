@@ -209,10 +209,8 @@ export class TalonarioComponent implements OnInit {
         // Generar números asignados por rango
         this.detalleAsignados = data.map((r: any) => {
           const numeros: number[] = [];
-          // Calcular cantidad original del rango y cuántos se entregaron
-          const cantidadOriginal = r.numeroAl - r.numeroDel + 1;
-          const entregados = cantidadOriginal - r.disponiblesActuales;
-          for (let i = r.numeroDel; i < r.numeroDel + entregados; i++) {
+          // Mostrar todos los números del rango asignado a la sede
+          for (let i = r.numeroDel; i <= r.numeroAl; i++) {
             numeros.push(i);
           }
           return { ...r, numerosAsignados: numeros };
@@ -276,11 +274,20 @@ export class TalonarioComponent implements OnInit {
       this.cdr.detectChanges();
       return;
     }
+
+    // LOG TEMPORAL
+    console.log(
+      'talonariosBodega:',
+      this.talonariosBodega.map((t: any) => ({
+        denominacion: t.denominacion,
+        fechaVencimiento: t.fechaVencimiento,
+        proximoVencer: this.estaProximoVencer(t.fechaVencimiento),
+      })),
+    );
+
     this.denominacionPorVencerExpandida = denominacion;
     // Filtrar rangos próximos a vencer del inventario individual
-    const rangos = this.talonariosBodega.filter(
-      (t: any) => t.denominacion === denominacion && this.estaProximoVencer(t.fechaVencimiento),
-    );
+
     this.detallePorVencer = rangos.map((r: any) => {
       const numeros: number[] = [];
       const entregados = r.cantidad - r.disponibles;

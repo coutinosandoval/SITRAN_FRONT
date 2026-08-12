@@ -47,7 +47,9 @@
         tienePermiso('SOLICITAR_CUPONES') ||
         tienePermiso('GESTIONAR_SOLICITUDES_CUPONES') ||
         tienePermiso('AUTORIZAR_SOLICITUDES_CUPONES') ||
-        tienePermiso('GESTIONAR_COMPRAS_TALONARIOS')
+        tienePermiso('GESTIONAR_COMPRAS_TALONARIOS') ||
+        tienePermiso('SOLICITAR_COMBUSTIBLE') ||
+        tienePermiso('GESTIONAR_COMBUSTIBLE')
       "
     >
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuCupones">
@@ -95,7 +97,7 @@
         </a>
         <!-- Combustible Vehículos oculto temporalmente -->
         <a
-          *ngIf="false"
+          *ngIf="tienePermiso('SOLICITAR_COMBUSTIBLE') || tienePermiso('GESTIONAR_COMBUSTIBLE')"
           routerLink="/solicitud-combustible"
           routerLinkActive="active"
           class="menu-item submenu-item"

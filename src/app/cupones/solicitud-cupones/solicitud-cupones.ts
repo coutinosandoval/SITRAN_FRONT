@@ -108,7 +108,7 @@ export class SolicitudCuponesComponent implements OnInit {
     this.esBodega = this.authService.tienePermiso('GESTIONAR_SOLICITUDES_CUPONES');
     this.esAutoridad = this.authService.tienePermiso('AUTORIZAR_SOLICITUDES_CUPONES');
     this.esAdmin = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
-    this.idSedeUsuario = this.authService.obtenerIdUnidad();
+    this.idSedeUsuario = this.authService.obtenerIdSede();
     this.cargarSolicitudes();
   }
 

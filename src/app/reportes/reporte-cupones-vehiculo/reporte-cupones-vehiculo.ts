@@ -48,7 +48,7 @@ export class ReporteCuponesVehiculo implements OnInit {
     this.esAdmin =
       this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS') ||
       this.authService.tienePermiso('VER_REPORTES_GENERALES');
-    this.idSedeUsuario = this.authService.obtenerIdUnidad();
+    this.idSedeUsuario = this.authService.obtenerIdSede();
 
     // Solo fija la sede si NO tiene acceso general
     if (!this.esAdmin) this.idSede = this.idSedeUsuario;
@@ -60,7 +60,11 @@ export class ReporteCuponesVehiculo implements OnInit {
   cargarVehiculos(): void {
     this.vehiculoService.obtener(1, 100).subscribe({
       next: (data) => {
-        this.vehiculos = data.vehiculos || [];
+        const todos = data.vehiculos || [];
+        // Si no es admin, filtrar solo los vehículos de su sede
+        this.vehiculos = this.esAdmin
+          ? todos
+          : todos.filter((v: any) => v.idSede === this.idSedeUsuario);
         this.cdr.detectChanges();
       },
     });

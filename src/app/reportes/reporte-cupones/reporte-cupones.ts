@@ -42,11 +42,32 @@ export class ReporteCuponesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.sedeService.obtenerSedes().subscribe({
-      next: (data) => {
-        this.sedes = data;
-      },
-    });
+    // Determinar si puede ver todas las sedes
+    const esAdmin =
+      this.authService.tienePermiso('VER_REPORTES_GENERALES') ||
+      this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
+
+    if (esAdmin) {
+      // Cargar todas las sedes para el selector
+      this.sedeService.obtenerSedes().subscribe({
+        next: (data) => {
+          this.sedes = data;
+        },
+      });
+    } else {
+      // Fijar automáticamente la sede del usuario
+      const idSede = this.authService.obtenerIdSede();
+      if (idSede) {
+        this.idSede = idSede;
+        // Buscar nombre de la sede
+        this.sedeService.obtenerSedes().subscribe({
+          next: (data) => {
+            const sede = data.find((s) => s.id === idSede);
+            if (sede) this.nombreSedeBusqueda = sede.nombre;
+          },
+        });
+      }
+    }
 
     const hoy = new Date();
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);

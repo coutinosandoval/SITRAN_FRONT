@@ -421,4 +421,11 @@ export class CuponService {
       `${environment.apiUrl}/api/cupon/sede/inventario-agrupado?idSede=${idSede}`,
     );
   }
+
+  // Obtiene rangos individuales de una sede por denominación
+  obtenerRangosSede(idSede: number, denominacion: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/api/cupon/sede/inventario-detalle?idSede=${idSede}&denominacion=${denominacion}`,
+    );
+  }
 }

@@ -43,6 +43,9 @@ export class TalonarioComponent implements OnInit {
   expendedoresFiltrados: CatalogoItem[] = [];
   inventarioBodegaAgrupado: any[] = [];
 
+  // Inventario agrupado para Delegado
+  inventarioDelegadoAgrupado: any[] = [];
+
   // ─── Líneas dinámicas del formulario de compra (rangos) ───
   lineasRango: LineaRango[] = [];
 
@@ -62,6 +65,10 @@ export class TalonarioComponent implements OnInit {
   denominacionPorVencerExpandida: number | null = null;
   detalleVencidos: any[] = [];
   detallePorVencer: any[] = [];
+
+  // Expandibles delegado
+  denominacionDelegadoExpandida: number | null = null;
+  detalleDelegadoDisponibles: any[] = [];
 
   // ─── Paginación ───
   paginaActual: number = 1;
@@ -177,11 +184,14 @@ export class TalonarioComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.esDelegado = this.authService.tienePermiso('SOLICITAR_CUPONES');
+    this.idSedeUsuario = this.authService.obtenerIdSede();
+    console.log('>>> ngOnInit - esDelegado:', this.esDelegado, 'idSede:', this.idSedeUsuario);
     this.esAdmin = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
     this.esCompras = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
     this.esBodega = this.authService.tienePermiso('GESTIONAR_SOLICITUDES_CUPONES');
     this.esDelegado = this.authService.tienePermiso('SOLICITAR_CUPONES');
-    this.idSedeUsuario = this.authService.obtenerIdUnidad();
+    this.idSedeUsuario = this.authService.obtenerIdSede();
     if (this.esCompras || this.esAdmin) {
       this.cargarCompras();
     } else {
@@ -191,6 +201,12 @@ export class TalonarioComponent implements OnInit {
     this.cargarExpendedores();
     if (this.esBodega) {
       this.cargarSedesConSolicitud();
+    }
+    if (this.esDelegado) {
+      this.cargarInventarioDelegado();
+    }
+    if (this.esDelegado) {
+      this.cargarInventarioDelegado();
     }
   }
 
@@ -329,6 +345,7 @@ export class TalonarioComponent implements OnInit {
   }
 
   cargarTalonarios(): void {
+    console.log('>>> cargarTalonarios - esBodega:', this.esBodega, 'esDelegado:', this.esDelegado);
     this.cargando = true;
 
     if (this.esBodega) {
@@ -365,6 +382,8 @@ export class TalonarioComponent implements OnInit {
     } else if (this.esDelegado) {
       estado = this.filtroEstado || undefined;
       idSede = this.idSedeUsuario ?? undefined;
+      // Cargar inventario agrupado para delegado
+      if (this.esDelegado) this.cargarInventarioDelegado();
     }
 
     this.cuponService
@@ -1053,5 +1072,56 @@ export class TalonarioComponent implements OnInit {
       });
     }
     this.cdr.detectChanges();
+  }
+  /** Carga inventario agrupado de la sede del delegado */
+  cargarInventarioDelegado(): void {
+    console.log('inventarioDelegadoAgrupado:', this.inventarioDelegadoAgrupado);
+    console.log('>>> EJECUTANDO cargarInventarioDelegado, idSede:', this.idSedeUsuario);
+    if (!this.idSedeUsuario) {
+      console.log('>>> idSedeUsuario es null, saliendo');
+      return;
+    }
+    this.cuponService.obtenerInventarioSedeAgrupado(this.idSedeUsuario).subscribe({
+      next: (data) => {
+        console.log('>>> inventario delegado recibido:', data);
+        this.inventarioDelegadoAgrupado = data.filter((g: any) => g.totalDisponibles > 0);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.log('>>> error inventario delegado:', err);
+      },
+    });
+  }
+
+  toggleDetalleDelegado(denominacion: number): void {
+    if (this.denominacionDelegadoExpandida === denominacion) {
+      this.denominacionDelegadoExpandida = null;
+      this.detalleDelegadoDisponibles = [];
+      this.cdr.detectChanges();
+      return;
+    }
+    this.denominacionDelegadoExpandida = denominacion;
+
+    // Obtener rangos de la sede del delegado
+    this.cuponService.obtenerInventarioSedeAgrupado(this.idSedeUsuario!).subscribe({
+      next: () => {},
+    });
+
+    // Generar números disponibles desde solicitudes atendidas
+    if (!this.idSedeUsuario) return;
+    const params = `?idSede=${this.idSedeUsuario}&denominacion=${denominacion}`;
+    // Usar el SP de rangos individuales
+    this.cuponService.obtenerRangosSede(this.idSedeUsuario, denominacion).subscribe({
+      next: (data: any[]) => {
+        this.detalleDelegadoDisponibles = data.map((r: any) => {
+          const numeros: number[] = [];
+          for (let i = r.numeroDel; i <= r.numeroDel + r.cantidadDisponible - 1; i++) {
+            numeros.push(i);
+          }
+          return { ...r, numerosDisponibles: numeros };
+        });
+        this.cdr.detectChanges();
+      },
+    });
   }
 }

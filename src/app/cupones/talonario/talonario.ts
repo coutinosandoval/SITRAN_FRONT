@@ -70,6 +70,10 @@ export class TalonarioComponent implements OnInit {
   denominacionDelegadoExpandida: number | null = null;
   detalleDelegadoDisponibles: any[] = [];
 
+  // Expandibles asignados delegado
+denominacionDelegadoAsignadaExpandida: number | null = null;
+detalleDelegadoAsignados: any[] = [];
+
   // ─── Paginación ───
   paginaActual: number = 1;
   tamanioPagina: number = 10;
@@ -1100,22 +1104,19 @@ export class TalonarioComponent implements OnInit {
       this.cdr.detectChanges();
       return;
     }
+
     this.denominacionDelegadoExpandida = denominacion;
 
-    // Obtener rangos de la sede del delegado
-    this.cuponService.obtenerInventarioSedeAgrupado(this.idSedeUsuario!).subscribe({
-      next: () => {},
-    });
-
-    // Generar números disponibles desde solicitudes atendidas
     if (!this.idSedeUsuario) return;
-    const params = `?idSede=${this.idSedeUsuario}&denominacion=${denominacion}`;
-    // Usar el SP de rangos individuales
+
     this.cuponService.obtenerRangosSede(this.idSedeUsuario, denominacion).subscribe({
       next: (data: any[]) => {
         this.detalleDelegadoDisponibles = data.map((r: any) => {
           const numeros: number[] = [];
-          for (let i = r.numeroDel; i <= r.numeroDel + r.cantidadDisponible - 1; i++) {
+          const totalRango = r.numeroAl - r.numeroDel + 1;
+          const entregados = totalRango - r.disponibles;
+          const primerDisp = r.numeroDel + entregados;
+          for (let i = primerDisp; i <= r.numeroAl; i++) {
             numeros.push(i);
           }
           return { ...r, numerosDisponibles: numeros };
@@ -1124,4 +1125,32 @@ export class TalonarioComponent implements OnInit {
       },
     });
   }
+
+  toggleDetalleAsignadosDelegado(denominacion: number): void {
+  if (this.denominacionDelegadoAsignadaExpandida === denominacion) {
+    this.denominacionDelegadoAsignadaExpandida = null;
+    this.detalleDelegadoAsignados              = [];
+    this.cdr.detectChanges();
+    return;
+  }
+
+  this.denominacionDelegadoAsignadaExpandida = denominacion;
+
+  if (!this.idSedeUsuario) return;
+
+  this.cuponService.obtenerSedeAsignadosDetalle(this.idSedeUsuario, denominacion).subscribe({
+    next: (data: any[]) => {
+      this.detalleDelegadoAsignados = data.map((r: any) => {
+        const numeros: number[] = [];
+        for (let i = r.numeroDel; i <= r.numeroAl; i++) {
+          numeros.push(i);
+        }
+        return { ...r, numerosAsignados: numeros };
+      });
+      this.cdr.detectChanges();
+    },
+  });
+}
+
+
 }

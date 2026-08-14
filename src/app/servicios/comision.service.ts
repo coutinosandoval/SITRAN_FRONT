@@ -88,7 +88,7 @@ export class ComisionService {
     fechaInicio: string,
     fechaFin: string,
     idSede?: number,
-  ): Observable<CatalogoItem[]> {
+   ): Observable<CatalogoItem[]> {
     let params = new HttpParams().set('fechaInicio', fechaInicio).set('fechaFin', fechaFin);
     if (idSede !== undefined && idSede !== null) {
       params = params.set('idSede', idSede.toString());

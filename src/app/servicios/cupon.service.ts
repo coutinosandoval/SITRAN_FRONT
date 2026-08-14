@@ -428,4 +428,11 @@ export class CuponService {
       `${environment.apiUrl}/api/cupon/sede/inventario-detalle?idSede=${idSede}&denominacion=${denominacion}`,
     );
   }
+
+  // Obtiene detalle de cupones asignados a pilotos por sede y denominación
+  obtenerSedeAsignadosDetalle(idSede: number, denominacion: number): Observable<any[]> {
+    return this.http.get<any[]>(
+      `${environment.apiUrl}/api/cupon/sede/asignados-detalle?idSede=${idSede}&denominacion=${denominacion}`,
+    );
+  }
 }

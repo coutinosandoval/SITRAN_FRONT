@@ -111,7 +111,7 @@ export class SolicitudCombustibleComponent implements OnInit {
     // Determinar rol del usuario logueado
     this.esSolicitante = this.authService.tienePermiso('SOLICITAR_COMBUSTIBLE');
     this.esJefeTransporte = this.authService.tienePermiso('GESTIONAR_COMBUSTIBLE');
-    this.idSedeUsuario = this.authService.obtenerIdUnidad();
+    this.idSedeUsuario = this.authService.obtenerIdSede();
     this.cargarSolicitudes();
     this.cargarVehiculos();
     this.cargarPilotos();
@@ -306,14 +306,12 @@ export class SolicitudCombustibleComponent implements OnInit {
   cargarVehiculos(): void {
     const hoy = new Date().toISOString();
     const manana = new Date(Date.now() + 86400000).toISOString();
-    this.comisionService
-      .obtenerVehiculosDisponibles(hoy, manana, this.idSedeUsuario ?? undefined)
-      .subscribe({
-        next: (data: any) => {
-          this.vehiculos = data;
-          this.cdr.detectChanges();
-        },
-      });
+    this.comisionService.obtenerVehiculosDisponibles(hoy, manana, undefined).subscribe({
+      next: (data: any) => {
+        this.vehiculos = data;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   /** Carga pilotos disponibles */

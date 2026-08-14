@@ -353,11 +353,7 @@
         <thead class="table-secondary">
           <tr>
             <th>Denominación</th>
-            <th class="text-center">Del</th>
-            <th class="text-center">Hasta</th>
-            <th class="text-center">Cantidad</th>
-            <th class="text-center">Entregados</th>
-            <th class="text-center">Disponibles</th>
+            <th>Cupones entregados</th>
             <th class="text-center">Monto disponible</th>
           </tr>
         </thead>
@@ -366,19 +362,23 @@
             <td>
               <span class="badge bg-info text-dark">Q{{ d.denominacion }}.00</span>
             </td>
-            <td class="text-center">{{ d.numeroDel }}</td>
-            <td class="text-center">{{ d.numeroAl }}</td>
-            <td class="text-center">{{ d.cantidadOriginal }}</td>
-            <td class="text-center text-warning fw-bold">{{ d.entregados }}</td>
-            <td class="text-center text-success fw-bold">{{ d.disponibles }}</td>
+            <td>
+              <div class="d-flex flex-wrap gap-1">
+                <span
+                  *ngFor="let n of generarNumeros(d.numeroDel, d.numeroAl)"
+                  class="badge bg-light text-dark border"
+                  >{{ n }}</span
+                >
+              </div>
+            </td>
             <td class="text-center fw-bold text-success">
-              Q{{ (d.disponibles || 0) * d.denominacion | number }}.00
+              Q{{ (d.cantidadAsignada || 0) * d.denominacion | number }}.00
             </td>
           </tr>
         </tbody>
         <tfoot class="table-dark">
           <tr>
-            <td colspan="6" class="fw-bold">Total disponible</td>
+            <td colspan="2" class="fw-bold">Total disponible</td>
             <td class="text-center fw-bold text-success">
               Q{{ calcularTotalDisponible() | number }}.00
             </td>

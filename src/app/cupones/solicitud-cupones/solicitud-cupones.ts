@@ -548,8 +548,15 @@ export class SolicitudCuponesComponent implements OnInit {
   /** Calcula el total disponible en quetzales */
   calcularTotalDisponible(): number {
     return this.detalleSolicitud.reduce(
-      (a: number, d: any) => a + d.disponibles * d.denominacion,
+      (a: number, d: any) => a + (d.cantidadAsignada || 0) * d.denominacion,
       0,
     );
+  }
+
+  /** Genera array de números entre del y al */
+  generarNumeros(del: number, al: number): number[] {
+    const nums: number[] = [];
+    for (let i = del; i <= al; i++) nums.push(i);
+    return nums;
   }
 }

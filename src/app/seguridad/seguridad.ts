@@ -14,11 +14,12 @@ import {
 import { CatalogoItem } from '../modelos/vehiculo.model';
 import { CatalogoService } from '../servicios/catalogo.service';
 import { forkJoin } from 'rxjs';
+import { ModalComponent } from '../shared/modal/modal';
 
 @Component({
   selector: 'app-seguridad',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalComponent],
   templateUrl: './seguridad.html',
 })
 export class SeguridadComponent implements OnInit {
@@ -35,6 +36,14 @@ export class SeguridadComponent implements OnInit {
   filtroBusqueda: string = '';
 
   intentoGuardar: boolean = false;
+
+  // ── Modal ─────────────────────────────────────────────────
+  modalVisible: boolean = false;
+  modalTitulo: string = '';
+  modalMensaje: string = '';
+  modalTipo: 'confirmar' | 'peligro' | 'devolucion' | 'info' = 'confirmar';
+  modalBtnAceptar: string = 'Confirmar';
+  modalAccion: (() => void) | null = null;
 
   // ─── Roles y permisos ───
   roles: Rol[] = [];
@@ -349,16 +358,22 @@ export class SeguridadComponent implements OnInit {
 
   quitarRolUsuario(idRol: number): void {
     if (!this.usuarioSeleccionado) return;
-    if (!confirm('¿Quitar este rol del usuario?')) return;
-    this.seguridadService.quitarRol(this.usuarioSeleccionado.id, idRol).subscribe({
-      next: () => {
-        this.mensajeExito = 'Rol quitado correctamente.';
-        this.abrirRolesUsuario(this.usuarioSeleccionado!);
-      },
-      error: () => {
-        this.mensajeError = 'Error al quitar rol.';
-      },
-    });
+    this.modalTitulo = 'Quitar Rol';
+    this.modalMensaje = '¿Confirma quitar este rol del usuario?';
+    this.modalTipo = 'peligro';
+    this.modalBtnAceptar = 'Quitar';
+    this.modalAccion = () => {
+      this.seguridadService.quitarRol(this.usuarioSeleccionado!.id, idRol).subscribe({
+        next: () => {
+          this.mensajeExito = 'Rol quitado correctamente.';
+          this.abrirRolesUsuario(this.usuarioSeleccionado!);
+        },
+        error: () => {
+          this.mensajeError = 'Error al quitar rol.';
+        },
+      });
+    };
+    this.modalVisible = true;
   }
 
   // ─── Roles ───
@@ -431,16 +446,22 @@ export class SeguridadComponent implements OnInit {
 
   quitarPermisoRol(idPermiso: number): void {
     if (!this.rolSeleccionado) return;
-    if (!confirm('¿Quitar este permiso del rol?')) return;
-    this.seguridadService.quitarPermiso(this.rolSeleccionado.id, idPermiso).subscribe({
-      next: () => {
-        this.mensajeExito = 'Permiso quitado correctamente.';
-        this.abrirPermisosRol(this.rolSeleccionado!);
-      },
-      error: () => {
-        this.mensajeError = 'Error al quitar permiso.';
-      },
-    });
+    this.modalTitulo = 'Quitar Permiso';
+    this.modalMensaje = '¿Confirma quitar este permiso del rol?';
+    this.modalTipo = 'peligro';
+    this.modalBtnAceptar = 'Quitar';
+    this.modalAccion = () => {
+      this.seguridadService.quitarPermiso(this.rolSeleccionado!.id, idPermiso).subscribe({
+        next: () => {
+          this.mensajeExito = 'Permiso quitado correctamente.';
+          this.abrirPermisosRol(this.rolSeleccionado!);
+        },
+        error: () => {
+          this.mensajeError = 'Error al quitar permiso.';
+        },
+      });
+    };
+    this.modalVisible = true;
   }
 
   // Verifica si un permiso ya está asignado al rol actual
@@ -497,46 +518,59 @@ export class SeguridadComponent implements OnInit {
   permisosDeGrupo(nombres: string[]): Permiso[] {
     return this.permisos.filter((p) => nombres.includes(p.nombre!));
   }
+
   inactivarUsuario(u: Usuario): void {
-    if (!confirm(`¿Confirma inactivar al usuario ${u.nombreUsuario}?`)) return;
-    this.seguridadService
-      .actualizarUsuario(u.id, {
-        correo: u.correo,
-        estado: 'Inactivo',
-        idUnidad: u.idUnidad,
-        idSede: u.idSede,
-        tipoLugar: u.tipoLugar,
-      })
-      .subscribe({
-        next: () => {
-          this.mensajeExito = `Usuario ${u.nombreUsuario} inactivado.`;
-          this.cargarUsuarios();
-        },
-        error: () => {
-          this.mensajeError = 'Error al inactivar el usuario.';
-        },
-      });
+    this.modalTitulo = 'Inactivar Usuario';
+    this.modalMensaje = `¿Confirma inactivar al usuario ${u.nombreUsuario}?`;
+    this.modalTipo = 'peligro';
+    this.modalBtnAceptar = 'Inactivar';
+    this.modalAccion = () => {
+      this.seguridadService
+        .actualizarUsuario(u.id, {
+          correo: u.correo,
+          estado: 'Inactivo',
+          idUnidad: u.idUnidad,
+          idSede: u.idSede,
+          tipoLugar: u.tipoLugar,
+        })
+        .subscribe({
+          next: () => {
+            this.mensajeExito = `Usuario ${u.nombreUsuario} inactivado.`;
+            this.cargarUsuarios();
+          },
+          error: () => {
+            this.mensajeError = 'Error al inactivar el usuario.';
+          },
+        });
+    };
+    this.modalVisible = true;
   }
 
   activarUsuario(u: Usuario): void {
-    if (!confirm(`¿Confirma activar al usuario ${u.nombreUsuario}?`)) return;
-    this.seguridadService
-      .actualizarUsuario(u.id, {
-        correo: u.correo,
-        estado: 'Activo',
-        idUnidad: u.idUnidad,
-        idSede: u.idSede,
-        tipoLugar: u.tipoLugar,
-      })
-      .subscribe({
-        next: () => {
-          this.mensajeExito = `Usuario ${u.nombreUsuario} activado.`;
-          this.cargarUsuarios();
-        },
-        error: () => {
-          this.mensajeError = 'Error al activar el usuario.';
-        },
-      });
+    this.modalTitulo = 'Activar Usuario';
+    this.modalMensaje = `¿Confirma activar al usuario ${u.nombreUsuario}?`;
+    this.modalTipo = 'confirmar';
+    this.modalBtnAceptar = 'Activar';
+    this.modalAccion = () => {
+      this.seguridadService
+        .actualizarUsuario(u.id, {
+          correo: u.correo,
+          estado: 'Activo',
+          idUnidad: u.idUnidad,
+          idSede: u.idSede,
+          tipoLugar: u.tipoLugar,
+        })
+        .subscribe({
+          next: () => {
+            this.mensajeExito = `Usuario ${u.nombreUsuario} activado.`;
+            this.cargarUsuarios();
+          },
+          error: () => {
+            this.mensajeError = 'Error al activar el usuario.';
+          },
+        });
+    };
+    this.modalVisible = true;
   }
 
   formularioInvalido(): boolean {
@@ -558,15 +592,34 @@ export class SeguridadComponent implements OnInit {
   }
 
   inactivarRol(r: Rol): void {
-    if (!confirm(`¿Confirma inactivar el rol "${r.nombre}"?`)) return;
-    this.seguridadService.inactivarRol(r.id).subscribe({
-      next: () => {
-        this.mensajeExito = `Rol "${r.nombre}" inactivado correctamente.`;
-        this.cargarRoles();
-      },
-      error: () => {
-        this.mensajeError = 'Error al inactivar el rol.';
-      },
-    });
+    this.modalTitulo = 'Inactivar Rol';
+    this.modalMensaje = `¿Confirma inactivar el rol "${r.nombre}"?`;
+    this.modalTipo = 'peligro';
+    this.modalBtnAceptar = 'Inactivar';
+    this.modalAccion = () => {
+      this.seguridadService.inactivarRol(r.id).subscribe({
+        next: () => {
+          this.mensajeExito = `Rol "${r.nombre}" inactivado correctamente.`;
+          this.cargarRoles();
+        },
+        error: () => {
+          this.mensajeError = 'Error al inactivar el rol.';
+        },
+      });
+    };
+    this.modalVisible = true;
+  }
+
+  onModalAceptar(evento: { texto?: string; numero?: number }): void {
+    this.modalVisible = false;
+    if (this.modalAccion) {
+      this.modalAccion();
+      this.modalAccion = null;
+    }
+  }
+
+  onModalCancelar(): void {
+    this.modalVisible = false;
+    this.modalAccion = null;
   }
 }

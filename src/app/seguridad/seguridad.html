@@ -541,3 +541,15 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de confirmación -->
+<app-modal
+  [visible]="modalVisible"
+  [titulo]="modalTitulo"
+  [mensaje]="modalMensaje"
+  [tipo]="modalTipo"
+  [textoBtnAceptar]="modalBtnAceptar"
+  (aceptar)="onModalAceptar($event)"
+  (cancelar)="onModalCancelar()"
+>
+</app-modal>

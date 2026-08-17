@@ -304,10 +304,12 @@ export class SolicitudCombustibleComponent implements OnInit {
   }
   /** Carga vehículos disponibles */
   cargarVehiculos(): void {
-    const hoy = new Date().toISOString();
-    const manana = new Date(Date.now() + 86400000).toISOString();
-    this.comisionService.obtenerVehiculosDisponibles(hoy, manana, undefined).subscribe({
-      next: (data: any) => {
+    const url = this.idSedeUsuario
+      ? `${environment.apiUrl}/api/solicitud-combustible/vehiculos-sede?idSede=${this.idSedeUsuario}`
+      : `${environment.apiUrl}/api/solicitud-combustible/vehiculos-sede`;
+
+    this.http.get<any[]>(url).subscribe({
+      next: (data) => {
         this.vehiculos = data;
         this.cdr.detectChanges();
       },
@@ -577,9 +579,9 @@ export class SolicitudCombustibleComponent implements OnInit {
   // ─── PDF ─────────────────────────────────────────────────
 
   /** Abre el PDF en nueva pestaña */
- verPdf(urlPdf: string): void {
-  this.authService.abrirPdf(urlPdf);
-}
+  verPdf(urlPdf: string): void {
+    this.authService.abrirPdf(urlPdf);
+  }
 
   // ─── Navegación ──────────────────────────────────────────
 

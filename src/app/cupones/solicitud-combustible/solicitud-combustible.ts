@@ -19,11 +19,12 @@ import { CuponService } from '../../servicios/cupon.service';
 import { ComisionService } from '../../servicios/comision.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { ModalComponent } from '../../shared/modal/modal';
 
 @Component({
   selector: 'app-solicitud-combustible',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ModalComponent],
   templateUrl: './solicitud-combustible.html',
 })
 export class SolicitudCombustibleComponent implements OnInit {
@@ -42,6 +43,14 @@ export class SolicitudCombustibleComponent implements OnInit {
   totalRegistros: number = 0;
   totalPaginas: number = 0;
   filtroEstado: string = '';
+
+  // ── Modal ─────────────────────────────────────────────────
+  modalVisible: boolean = false;
+  modalTitulo: string = '';
+  modalMensaje: string = '';
+  modalTipo: 'confirmar' | 'peligro' | 'devolucion' | 'info' = 'confirmar';
+  modalBtnAceptar: string = 'Confirmar';
+  modalAccion: (() => void) | null = null;
 
   // ─── Visibilidad ───
   mostrarLista: boolean = true;
@@ -160,10 +169,15 @@ export class SolicitudCombustibleComponent implements OnInit {
       this.mensajeError = 'Debe agregar al menos un cupón.';
       return;
     }
-    if (!confirm('¿Confirma entregar estos cupones al solicitante?')) return;
-
-    this.cargando = true;
-    this._procesarAsignacionJefe(0);
+    this.modalTitulo = 'Confirmar Entrega';
+    this.modalMensaje = '¿Confirma entregar estos cupones al solicitante?';
+    this.modalTipo = 'confirmar';
+    this.modalBtnAceptar = 'Entregar';
+    this.modalAccion = () => {
+      this.cargando = true;
+      this._procesarAsignacionJefe(0);
+    };
+    this.modalVisible = true;
   }
 
   /** Procesa asignaciones del Jefe de Transportes en secuencia */
@@ -497,24 +511,28 @@ export class SolicitudCombustibleComponent implements OnInit {
 
   /** Autoriza la solicitud y genera PDF de entrega */
   autorizar(id: number): void {
-    if (!confirm('¿Confirma autorizar y entregar los cupones al piloto?')) return;
-    this.cargando = true;
-
-    this.http.patch<any>(`${this.apiUrl}/${id}/autorizar`, {}).subscribe({
-      next: (res) => {
-        this.cargando = false;
-        this.mensajeExito = 'Solicitud autorizada. Cupones entregados al piloto.';
-        this.cargarSolicitudes();
-        if (this.mostrarDetalle) this.verDetalle(id);
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al autorizar.';
-        this.cargando = false;
-      },
-    });
+    this.modalTitulo = 'Confirmar Autorización';
+    this.modalMensaje = '¿Confirma autorizar y entregar los cupones al piloto?';
+    this.modalTipo = 'confirmar';
+    this.modalBtnAceptar = 'Autorizar';
+    this.modalAccion = () => {
+      this.cargando = true;
+      this.http.patch<any>(`${this.apiUrl}/${id}/autorizar`, {}).subscribe({
+        next: (res) => {
+          this.cargando = false;
+          this.mensajeExito = 'Solicitud autorizada. Cupones entregados al piloto.';
+          this.cargarSolicitudes();
+          if (this.mostrarDetalle) this.verDetalle(id);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al autorizar.';
+          this.cargando = false;
+        },
+      });
+    };
+    this.modalVisible = true;
   }
-
   // ─── Devolución ──────────────────────────────────────────
 
   /** Abre modal para registrar devolución */
@@ -558,22 +576,27 @@ export class SolicitudCombustibleComponent implements OnInit {
 
   /** Finaliza la solicitud */
   finalizar(id: number): void {
-    if (!confirm('¿Confirma finalizar esta solicitud?')) return;
-    this.cargando = true;
-
-    this.http.patch<any>(`${this.apiUrl}/${id}/finalizar`, {}).subscribe({
-      next: () => {
-        this.cargando = false;
-        this.mensajeExito = 'Solicitud finalizada correctamente.';
-        this.cargarSolicitudes();
-        this.volverLista();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al finalizar.';
-        this.cargando = false;
-      },
-    });
+    this.modalTitulo = 'Confirmar Finalización';
+    this.modalMensaje = '¿Confirma finalizar esta solicitud?';
+    this.modalTipo = 'confirmar';
+    this.modalBtnAceptar = 'Finalizar';
+    this.modalAccion = () => {
+      this.cargando = true;
+      this.http.patch<any>(`${this.apiUrl}/${id}/finalizar`, {}).subscribe({
+        next: () => {
+          this.cargando = false;
+          this.mensajeExito = 'Solicitud finalizada correctamente.';
+          this.cargarSolicitudes();
+          this.volverLista();
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al finalizar.';
+          this.cargando = false;
+        },
+      });
+    };
+    this.modalVisible = true;
   }
 
   // ─── PDF ─────────────────────────────────────────────────
@@ -650,5 +673,18 @@ export class SolicitudCombustibleComponent implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+ onModalAceptar(evento: { texto?: string; numero?: number }): void {
+  this.modalVisible = false;
+  if (this.modalAccion) {
+    this.modalAccion();
+    this.modalAccion = null;
+  }
+}
+
+  onModalCancelar(): void {
+    this.modalVisible = false;
+    this.modalAccion = null;
   }
 }

@@ -16,6 +16,7 @@ import { CuponService } from '../../servicios/cupon.service';
 import { AuthService } from '../../servicios/auth.service';
 import { ModalComponent } from '../../shared/modal/modal';
 import { SolicitudCupones, SolicitudCuponesDetalle } from '../../modelos/solicitud-cupones.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-solicitud-cupones',
@@ -534,15 +535,15 @@ export class SolicitudCuponesComponent implements OnInit {
     }
   }
 
+  verPdf(urlPdf: string): void {
+    this.authService.abrirPdf(urlPdf);
+  }
+
   formatoQuetzales(monto: number): string {
     return `Q${monto.toLocaleString('es-GT', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
-  }
-
-  verPdf(urlPdf: string): void {
-    window.open(`https://localhost:7069${urlPdf}`, '_blank');
   }
 
   /** Calcula el total disponible en quetzales */

@@ -577,9 +577,9 @@ export class SolicitudCombustibleComponent implements OnInit {
   // ─── PDF ─────────────────────────────────────────────────
 
   /** Abre el PDF en nueva pestaña */
-  verPdf(urlPdf: string): void {
-    window.open(`${environment.apiUrl}${urlPdf}`, '_blank');
-  }
+ verPdf(urlPdf: string): void {
+  this.authService.abrirPdf(urlPdf);
+}
 
   // ─── Navegación ──────────────────────────────────────────
 

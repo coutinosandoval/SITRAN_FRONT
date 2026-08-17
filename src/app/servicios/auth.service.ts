@@ -116,4 +116,25 @@ export class AuthService {
     const val = sessionStorage.getItem('idSede');
     return val ? parseInt(val) : null;
   }
+  // En auth.service.ts — agrega este método
+  abrirPdf(urlPdf: string): void {
+    const nombreArchivo = urlPdf.split('/').pop();
+
+    let carpeta = 'solicitudes';
+    if (urlPdf.includes('/combustible/')) carpeta = 'combustible';
+    if (urlPdf.includes('/reportes/')) carpeta = 'reportes';
+
+    const token = sessionStorage.getItem('token');
+
+    fetch(`${environment.apiUrl}/api/pdf/${carpeta}/${nombreArchivo}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+      })
+      .catch(() => console.error('Error al abrir PDF'));
+  }
 }

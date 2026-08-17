@@ -1066,10 +1066,9 @@ export class ComisionComponent implements OnInit {
       });
   }
   /** Abre el PDF de combustible */
-  verPdfCombustible(): void {
-    window.open(`${environment.apiUrl}${this.urlPdfCombustible}`, '_blank');
+  verPdf(urlPdf: string): void {
+    this.authService.abrirPdf(urlPdf);
   }
-
   /** Carga detalle de cupones de la solicitud de combustible */
   cargarDetalleCombustible(idSolicitud: number): void {
     this.idSolicitudCombustible = idSolicitud;
@@ -1160,5 +1159,8 @@ export class ComisionComponent implements OnInit {
     console.log('Vehículo:', vehiculo);
     this.kmInicialVehiculo = vehiculo ? vehiculo.kilometraje || 0 : 0;
     this.cdr.detectChanges();
+  }
+  verPdfCombustible(): void {
+    this.authService.abrirPdf(this.urlPdfCombustible);
   }
 }

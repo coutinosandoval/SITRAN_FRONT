@@ -395,9 +395,9 @@ export class ComisionLocalComponent implements OnInit {
   // ─── PDF ─────────────────────────────────────────────────
 
   /** Abre el PDF en una nueva pestaña */
-  verPdf(urlPdf: string): void {
-    window.open(`https://localhost:7069${urlPdf}`, '_blank');
-  }
+ verPdf(urlPdf: string): void {
+  this.authService.abrirPdf(urlPdf);
+}
 
   // ─── Navegación ──────────────────────────────────────────
 

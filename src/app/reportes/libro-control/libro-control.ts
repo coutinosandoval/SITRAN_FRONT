@@ -70,13 +70,18 @@ export class LibroControl implements OnInit {
     if (this.fechaIni) params = params.set('fechaIni', this.fechaIni);
     if (this.fechaFin) params = params.set('fechaFin', this.fechaFin);
 
-    // Determinar endpoint según rol
-    const endpoint = this.esBodega || this.esAdmin ? 'libro-control-bodega' : 'libro-control-sede';
+    let endpoint: string;
+    if (this.esBodega || this.esAdmin) {
+      endpoint = 'libro-control-bodega';
+    } else {
+      // Jefe de Transportes o Delegado — filtra por su sede
+      params = params.set('idSede', (this.idSedeUsuario ?? 0).toString());
+      endpoint = 'libro-control-sede';
+    }
 
     this.http.get<any[]>(`${this.apiUrl}/${endpoint}`, { params }).subscribe({
       next: (data) => {
         console.log('libro control data:', data);
-
         this.reporte = data;
         this.cargando = false;
         this.cdr.detectChanges();
@@ -90,12 +95,18 @@ export class LibroControl implements OnInit {
 
   exportarExcel(): void {
     this.cargando = true;
-    const endpoint =
-      this.esBodega || this.esAdmin ? 'libro-control-bodega/excel' : 'libro-control-sede/excel';
 
     let params = new HttpParams().set('denominacion', this.denominacion.toString());
     if (this.fechaIni) params = params.set('fechaIni', this.fechaIni);
     if (this.fechaFin) params = params.set('fechaFin', this.fechaFin);
+
+    let endpoint: string;
+    if (this.esBodega || this.esAdmin) {
+      endpoint = 'libro-control-bodega/excel';
+    } else {
+      params = params.set('idSede', (this.idSedeUsuario ?? 0).toString());
+      endpoint = 'libro-control-sede/excel';
+    }
 
     this.http
       .get(`${this.apiUrl}/${endpoint}`, {

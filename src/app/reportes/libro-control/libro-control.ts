@@ -18,6 +18,12 @@ export class LibroControl implements OnInit {
   fechaIni: string = '';
   fechaFin: string = '';
   idSede: number | null = null;
+  nombreSedeBusqueda: string = '';
+
+  // ── Autocompletado ───────────────────────────────────────
+  sedes: Sede[] = [];
+  sedesFiltradas: Sede[] = [];
+  mostrarSugerencias: boolean = false;
 
   // ── Datos ────────────────────────────────────────────────
   reporte: any[] = [];
@@ -43,6 +49,7 @@ export class LibroControl implements OnInit {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
+    private sedeService: SedeService,
     private cdr: ChangeDetectorRef,
   ) {}
 
@@ -59,9 +66,63 @@ export class LibroControl implements OnInit {
     const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
     this.fechaIni = primerDia.toISOString().split('T')[0];
     this.fechaFin = hoy.toISOString().split('T')[0];
+
+    if (this.esAdmin) {
+      // Admin — cargar todas las sedes para autobúsqueda
+      this.sedeService.obtenerSedes().subscribe({
+        next: (data) => {
+          this.sedes = data;
+        },
+      });
+    } else if (this.esBodega) {
+      // Bodega — fija sede 41
+      this.idSede = 41;
+      this.nombreSedeBusqueda = 'Bodega Central';
+    } else {
+      // Jefe/Delegado — cargar nombre de su sede
+      this.idSede = this.idSedeUsuario;
+      if (this.idSedeUsuario) {
+        this.sedeService.obtenerSedes().subscribe({
+          next: (data) => {
+            const sede = data.find((s) => s.id === this.idSedeUsuario);
+            if (sede) this.nombreSedeBusqueda = sede.nombre;
+            this.cdr.detectChanges();
+          },
+        });
+      }
+    }
   }
 
+  // ── Autocompletado ───────────────────────────────────────
+  buscarSede(): void {
+    const texto = this.nombreSedeBusqueda.trim().toUpperCase();
+    if (!texto) {
+      this.sedesFiltradas = [];
+      this.mostrarSugerencias = false;
+      this.idSede = null;
+      return;
+    }
+    this.sedesFiltradas = this.sedes.filter((s) => s.nombre.toUpperCase().includes(texto));
+    this.mostrarSugerencias = this.sedesFiltradas.length > 0;
+  }
+
+  seleccionarSede(sede: Sede): void {
+    this.idSede = sede.id;
+    this.nombreSedeBusqueda = sede.nombre;
+    this.mostrarSugerencias = false;
+  }
+
+  ocultarSugerencias(): void {
+    setTimeout(() => (this.mostrarSugerencias = false), 200);
+  }
+
+  // ── Generar reporte ──────────────────────────────────────
   generarReporte(): void {
+    if (!this.idSede) {
+      this.mensajeError = 'Seleccione una sede.';
+      return;
+    }
+
     this.cargando = true;
     this.mensajeError = '';
     this.reporte = [];
@@ -71,17 +132,16 @@ export class LibroControl implements OnInit {
     if (this.fechaFin) params = params.set('fechaFin', this.fechaFin);
 
     let endpoint: string;
-    if (this.esBodega || this.esAdmin) {
+    if (this.idSede === 41) {
+      // Bodega Central
       endpoint = 'libro-control-bodega';
     } else {
-      // Jefe de Transportes o Delegado — filtra por su sede
-      params = params.set('idSede', (this.idSedeUsuario ?? 0).toString());
+      params = params.set('idSede', this.idSede.toString());
       endpoint = 'libro-control-sede';
     }
 
     this.http.get<any[]>(`${this.apiUrl}/${endpoint}`, { params }).subscribe({
       next: (data) => {
-        console.log('libro control data:', data);
         this.reporte = data;
         this.cargando = false;
         this.cdr.detectChanges();
@@ -93,7 +153,10 @@ export class LibroControl implements OnInit {
     });
   }
 
+  // ── Exportar Excel ───────────────────────────────────────
   exportarExcel(): void {
+    if (!this.idSede) return;
+
     this.cargando = true;
 
     let params = new HttpParams().set('denominacion', this.denominacion.toString());
@@ -101,10 +164,10 @@ export class LibroControl implements OnInit {
     if (this.fechaFin) params = params.set('fechaFin', this.fechaFin);
 
     let endpoint: string;
-    if (this.esBodega || this.esAdmin) {
+    if (this.idSede === 41) {
       endpoint = 'libro-control-bodega/excel';
     } else {
-      params = params.set('idSede', (this.idSedeUsuario ?? 0).toString());
+      params = params.set('idSede', this.idSede.toString());
       endpoint = 'libro-control-sede/excel';
     }
 
@@ -118,7 +181,7 @@ export class LibroControl implements OnInit {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `LibroControl_Q${this.denominacion}_${this.fechaIni}.xlsx`;
+          link.download = `LibroControl_${this.nombreSedeBusqueda}_Q${this.denominacion}_${this.fechaIni}.xlsx`;
           link.click();
           window.URL.revokeObjectURL(url);
           this.cargando = false;

@@ -10,14 +10,54 @@
   </div>
 
   <!-- Filtros -->
-  <div class="card shadow-sm mb-4">
+  <div class="card shadow-sm mb-4" style="overflow: visible">
     <div class="card-header bg-primary text-white">
       <h6 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h6>
     </div>
-    <div class="card-body">
+    <div class="card-body" style="overflow: visible">
       <div class="row g-3">
+        <!-- Sede autobúsqueda — solo para admin con VER_REPORTES_GENERALES -->
+        <div class="col-md-3 position-relative" *ngIf="esAdmin">
+          <label class="form-label fw-semibold">Sede <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="nombreSedeBusqueda"
+            (input)="buscarSede()"
+            (focus)="buscarSede()"
+            (blur)="ocultarSugerencias()"
+            placeholder="Buscar sede..."
+            autocomplete="off"
+          />
+          <ul
+            class="list-group position-absolute w-100 shadow-sm"
+            style="z-index: 1000; max-height: 200px; overflow-y: auto"
+            *ngIf="mostrarSugerencias"
+          >
+            <li
+              class="list-group-item list-group-item-action"
+              style="cursor: pointer"
+              *ngFor="let s of sedesFiltradas"
+              (mousedown)="seleccionarSede(s)"
+            >
+              {{ s.nombre }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Sede fija — para bodega, jefe y delegado -->
+        <div class="col-md-3" *ngIf="!esAdmin">
+          <label class="form-label fw-semibold">Sede</label>
+          <input
+            type="text"
+            class="form-control"
+            [value]="nombreSedeBusqueda || 'Mi sede'"
+            readonly
+          />
+        </div>
+
         <!-- Denominación -->
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label fw-semibold">Denominación</label>
           <select class="form-select" [(ngModel)]="denominacion">
             <option *ngFor="let d of denominaciones" [ngValue]="d.valor">{{ d.label }}</option>
@@ -25,13 +65,13 @@
         </div>
 
         <!-- Fecha inicio -->
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label fw-semibold">Fecha Inicio</label>
           <input type="date" class="form-control" [(ngModel)]="fechaIni" />
         </div>
 
         <!-- Fecha fin -->
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label fw-semibold">Fecha Fin</label>
           <input type="date" class="form-control" [(ngModel)]="fechaFin" />
         </div>
@@ -53,7 +93,7 @@
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
       <h6 class="mb-0">
         <i class="bi bi-table"></i>
-        Libro de Control — Q{{ denominacion }}.00
+        Libro de Control — {{ nombreSedeBusqueda }} — Q{{ denominacion }}.00
       </h6>
       <button class="btn btn-sm btn-success" (click)="exportarExcel()">
         <i class="bi bi-file-earmark-excel"></i> Excel
@@ -112,6 +152,6 @@
   <!-- Sin resultados -->
   <div *ngIf="!cargando && reporte.length === 0" class="text-center py-5 text-muted">
     <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
-    Seleccione denominación y período para generar el libro de control.
+    Seleccione los filtros y presione Generar para ver el libro de control.
   </div>
 </div>

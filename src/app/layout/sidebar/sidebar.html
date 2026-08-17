@@ -134,7 +134,10 @@
     </a>
 
     <!-- Reportes -->
-    <div class="menu-group" *ngIf="tienePermiso('VER_REPORTES_CUPONES')">
+    <div
+      class="menu-group"
+      *ngIf="tienePermiso('VER_REPORTES_CUPONES') || tienePermiso('GESTIONAR_SOLICITUDES_CUPONES')"
+    >
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuReportes">
         <i class="bi bi-bar-chart"></i>
         <span>Reportes</span>
@@ -183,6 +186,18 @@
           class="menu-item submenu-item"
         >
           <i class="bi bi-truck"></i> Cupones por Vehículo
+        </a>
+        <a
+          *ngIf="
+            tienePermiso('VER_REPORTES_CUPONES') ||
+            tienePermiso('VER_REPORTES_GENERALES') ||
+            tienePermiso('GESTIONAR_SOLICITUDES_CUPONES')
+          "
+          routerLink="/reportes/libro-control"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
+          <i class="bi bi-journal-text"></i> Libro de Control
         </a>
         <!-- Consumo Combustible oculto temporalmente -->
         <a

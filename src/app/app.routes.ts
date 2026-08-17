@@ -92,6 +92,13 @@ export const routes: Routes = [
         component: ReporteCuponesVehiculo,
         canActivate: [authGuard],
       },
+
+      {
+        path: 'reportes/libro-control',
+        loadComponent: () =>
+          import('./reportes/libro-control/libro-control').then((m) => m.LibroControl),
+        canActivate: [authGuard],
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },

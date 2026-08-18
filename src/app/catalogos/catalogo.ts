@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CatalogoService } from '../servicios/catalogo.service';
 import { CatalogoItem, CatalogoConfig } from '../modelos/catalogo.model';
+import { ModalComponent } from '../shared/modal/modal';
 
 @Component({
   selector: 'app-catalogo',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule,ModalComponent],
   templateUrl: './catalogo.html'
 })
 export class CatalogoComponent implements OnInit {
@@ -36,6 +37,16 @@ export class CatalogoComponent implements OnInit {
 
   // Item seleccionado
   itemSeleccionado: CatalogoItem | null = null;
+
+  // ── Modal ─────────────────────────────────────────────────
+modalVisible:    boolean = false;
+modalTitulo:     string  = '';
+modalMensaje:    string  = '';
+modalTipo:       'confirmar' | 'peligro' | 'devolucion' | 'info' = 'confirmar';
+modalBtnAceptar: string  = 'Confirmar';
+modalAccion:     (() => void) | null = null;
+
+
 
   // Formulario
   formulario: FormGroup;
@@ -164,12 +175,15 @@ export class CatalogoComponent implements OnInit {
   }
 
   // Cambia el estado de un item
-  cambiarEstado(item: CatalogoItem): void {
-    const nuevoEstado = item.estado === 1 ? 0 : 1;
-    const accion      = nuevoEstado === 1 ? 'activar' : 'desactivar';
+ cambiarEstado(item: CatalogoItem): void {
+  const nuevoEstado = item.estado === 1 ? 0 : 1;
+  const accion      = nuevoEstado === 1 ? 'activar' : 'desactivar';
 
-    if (!confirm(`¿Está seguro que desea ${accion} este registro?`)) return;
-
+  this.modalTitulo     = nuevoEstado === 1 ? 'Activar Registro' : 'Desactivar Registro';
+  this.modalMensaje    = `¿Está seguro que desea ${accion} este registro?`;
+  this.modalTipo       = nuevoEstado === 1 ? 'confirmar' : 'peligro';
+  this.modalBtnAceptar = nuevoEstado === 1 ? 'Activar' : 'Desactivar';
+  this.modalAccion     = () => {
     this.catalogoService.cambiarEstado(item.id, {
       tabla:  this.catalogoActual.tabla,
       estado: nuevoEstado
@@ -182,8 +196,9 @@ export class CatalogoComponent implements OnInit {
         this.mensajeError = err.error?.mensaje || 'Error al cambiar estado.';
       }
     });
-  }
-
+  };
+  this.modalVisible = true;
+}
   // Verifica si un campo tiene error
   tieneError(campo: string): boolean {
     const control = this.formulario.get(campo);
@@ -195,4 +210,18 @@ export class CatalogoComponent implements OnInit {
     this.mensajeExito = '';
     this.mensajeError = '';
   }
+onModalAceptar(evento: { texto?: string; numero?: number }): void {
+  this.modalVisible = false;
+  if (this.modalAccion) {
+    this.modalAccion();
+    this.modalAccion = null;
+  }
+}
+
+onModalCancelar(): void {
+  this.modalVisible = false;
+  this.modalAccion  = null;
+}
+
+
 }

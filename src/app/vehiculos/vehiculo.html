@@ -1,13 +1,9 @@
 <!-- CONTENEDOR GENERAL -->
 <div class="vehiculo-container">
-
   <!-- ================= LISTA ================= -->
   <div *ngIf="mostrarLista">
-
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="mb-0">
-        <i class="bi bi-truck"></i> Vehículos
-      </h4>
+      <h4 class="mb-0"><i class="bi bi-truck"></i> Vehículos</h4>
       <button class="btn btn-primary btn-sm" (click)="mostrarAgregar()">
         <i class="bi bi-plus-circle"></i> Agregar Vehículo
       </button>
@@ -27,15 +23,22 @@
         <div class="row align-items-center g-2">
           <div class="col-md-6">
             <div class="input-group input-group-sm">
-              <input type="text" class="form-control"
+              <input
+                type="text"
+                class="form-control"
                 placeholder="Buscar por placa, marca, modelo..."
                 [(ngModel)]="textoBusqueda"
                 (input)="buscarEnTiempoReal()"
-                (keyup.enter)="buscar()">
+                (keyup.enter)="buscar()"
+              />
               <button class="btn btn-outline-primary" (click)="buscar()">
                 <i class="bi bi-search"></i>
               </button>
-              <button class="btn btn-outline-secondary" *ngIf="textoBusqueda" (click)="limpiarBusqueda()">
+              <button
+                class="btn btn-outline-secondary"
+                *ngIf="textoBusqueda"
+                (click)="limpiarBusqueda()"
+              >
                 <i class="bi bi-x"></i>
               </button>
             </div>
@@ -76,20 +79,34 @@
                 </td>
               </tr>
               <tr *ngFor="let v of vehiculos">
-                <td><strong>{{ v.placa }}</strong></td>
+                <td>
+                  <strong>{{ v.placa }}</strong>
+                </td>
                 <td>{{ v.numeroInventario }}</td>
                 <td>{{ v.marca }}</td>
                 <td>{{ v.modelo }}</td>
                 <td>{{ v.anio }}</td>
                 <td>{{ v.nombreSede || '—' }}</td>
                 <td class="text-center">
-                  <button class="btn btn-info btn-sm me-1" title="Ver detalle" (click)="verDetalle(v)">
+                  <button
+                    class="btn btn-info btn-sm me-1"
+                    title="Ver detalle"
+                    (click)="verDetalle(v)"
+                  >
                     <i class="bi bi-eye"></i>
                   </button>
-                  <button class="btn btn-warning btn-sm me-1" title="Editar" (click)="mostrarEditar(v)">
+                  <button
+                    class="btn btn-warning btn-sm me-1"
+                    title="Editar"
+                    (click)="mostrarEditar(v)"
+                  >
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn btn-success btn-sm me-1" title="Disponibilidad" (click)="abrirDisponibilidad(v)">
+                  <button
+                    class="btn btn-success btn-sm me-1"
+                    title="Disponibilidad"
+                    (click)="abrirDisponibilidad(v)"
+                  >
                     <i class="bi bi-toggle-on"></i>
                   </button>
                   <button class="btn btn-danger btn-sm" title="Eliminar" (click)="eliminar(v.id)">
@@ -101,8 +118,10 @@
           </table>
         </div>
       </div>
-      <div class="card-footer d-flex justify-content-between align-items-center"
-        *ngIf="totalPaginas > 1">
+      <div
+        class="card-footer d-flex justify-content-between align-items-center"
+        *ngIf="totalPaginas > 1"
+      >
         <span class="text-muted small">Página {{ paginaActual }} de {{ totalPaginas }}</span>
         <nav>
           <ul class="pagination pagination-sm mb-0">
@@ -127,7 +146,6 @@
 
   <!-- ================= FORMULARIO ================= -->
   <div *ngIf="mostrarFormulario">
-
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4 class="mb-0">
         <i class="bi bi-truck"></i> {{ modoEdicion ? 'Editar Vehículo' : 'Agregar Vehículo' }}
@@ -148,93 +166,132 @@
         </div>
         <div class="card-body">
           <div class="row">
-
             <div class="col-md-4 mb-3">
               <label class="form-label">Placa <span class="text-danger">*</span></label>
-              <input type="text" class="form-control text-uppercase"
+              <input
+                type="text"
+                class="form-control text-uppercase"
                 formControlName="placa"
                 [class.is-invalid]="tieneError('placa')"
-                placeholder="Ej: P-123ABC">
+                placeholder="Ej: P-123ABC"
+              />
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">N° Inventario <span class="text-danger">*</span></label>
-              <input type="text" class="form-control"
+              <input
+                type="text"
+                class="form-control"
                 formControlName="numeroInventario"
                 [class.is-invalid]="tieneError('numeroInventario')"
-                placeholder="N° de inventario">
+                placeholder="N° de inventario"
+              />
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">Año <span class="text-danger">*</span></label>
-              <input type="number" class="form-control"
+              <input
+                type="number"
+                class="form-control"
                 formControlName="anio"
                 [class.is-invalid]="tieneError('anio')"
-                placeholder="Ej: 2022">
+                placeholder="Ej: 2022"
+              />
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">Marca <span class="text-danger">*</span></label>
-              <input type="text" class="form-control"
+              <input
+                type="text"
+                class="form-control"
                 formControlName="marca"
                 [class.is-invalid]="tieneError('marca')"
-                placeholder="Ej: Toyota">
+                placeholder="Ej: Toyota"
+              />
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">Modelo <span class="text-danger">*</span></label>
-              <input type="text" class="form-control"
+              <input
+                type="text"
+                class="form-control"
                 formControlName="modelo"
                 [class.is-invalid]="tieneError('modelo')"
-                placeholder="Ej: Hilux">
+                placeholder="Ej: Hilux"
+              />
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">Color</label>
-              <input type="text" class="form-control"
+              <input
+                type="text"
+                class="form-control"
                 formControlName="color"
-                placeholder="Ej: Blanco">
+                placeholder="Ej: Blanco"
+              />
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">Tipo de Vehículo <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="idTipoVehiculo"
-                [class.is-invalid]="tieneError('idTipoVehiculo')">
+              <select
+                class="form-select"
+                formControlName="idTipoVehiculo"
+                [class.is-invalid]="tieneError('idTipoVehiculo')"
+              >
                 <option value="">Seleccione...</option>
-                <option *ngFor="let t of catalogos.tiposVehiculo" [value]="t.id">{{ t.nombre }}</option>
+                <option *ngFor="let t of catalogos.tiposVehiculo" [value]="t.id">
+                  {{ t.nombre }}
+                </option>
               </select>
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
-              <label class="form-label">Tipo de Combustible <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="idTipoCombustible"
-                [class.is-invalid]="tieneError('idTipoCombustible')">
+              <label class="form-label"
+                >Tipo de Combustible <span class="text-danger">*</span></label
+              >
+              <select
+                class="form-select"
+                formControlName="idTipoCombustible"
+                [class.is-invalid]="tieneError('idTipoCombustible')"
+              >
                 <option value="">Seleccione...</option>
-                <option *ngFor="let t of catalogos.tiposCombustible" [value]="t.id">{{ t.nombre }}</option>
+                <option *ngFor="let t of catalogos.tiposCombustible" [value]="t.id">
+                  {{ t.nombre }}
+                </option>
               </select>
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
-              <label class="form-label">Tipo de Transmisión <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="idTipoTransmision"
-                [class.is-invalid]="tieneError('idTipoTransmision')">
+              <label class="form-label"
+                >Tipo de Transmisión <span class="text-danger">*</span></label
+              >
+              <select
+                class="form-select"
+                formControlName="idTipoTransmision"
+                [class.is-invalid]="tieneError('idTipoTransmision')"
+              >
                 <option value="">Seleccione...</option>
-                <option *ngFor="let t of catalogos.tiposTransmision" [value]="t.id">{{ t.nombre }}</option>
+                <option *ngFor="let t of catalogos.tiposTransmision" [value]="t.id">
+                  {{ t.nombre }}
+                </option>
               </select>
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">Sede <span class="text-danger">*</span></label>
-              <select class="form-select" formControlName="idSede"
-                [class.is-invalid]="tieneError('idSede')">
+              <select
+                class="form-select"
+                formControlName="idSede"
+                [class.is-invalid]="tieneError('idSede')"
+              >
                 <option value="">Seleccione...</option>
                 <option *ngFor="let s of catalogos.sedes" [value]="s.id">{{ s.nombre }}</option>
               </select>
@@ -243,46 +300,63 @@
 
             <div class="col-md-4 mb-3">
               <label class="form-label">N° Chasis</label>
-              <input type="text" class="form-control"
+              <input
+                type="text"
+                class="form-control"
                 formControlName="numeroChasis"
-                placeholder="N° de chasis">
+                placeholder="N° de chasis"
+              />
             </div>
 
             <div class="col-md-4 mb-3">
               <label class="form-label">N° VIN</label>
-              <input type="text" class="form-control"
+              <input
+                type="text"
+                class="form-control"
                 formControlName="numeroVin"
-                placeholder="N° VIN">
+                placeholder="N° VIN"
+              />
             </div>
 
             <div class="col-md-3 mb-3">
               <label class="form-label">Tamaño Motor (cc)</label>
-              <input type="number" class="form-control"
+              <input
+                type="number"
+                class="form-control"
                 formControlName="tamanioMotor"
-                placeholder="Ej: 2000">
+                placeholder="Ej: 2000"
+              />
             </div>
 
             <div class="col-md-3 mb-3">
               <label class="form-label">Capacidad Tanque (gal)</label>
-              <input type="number" class="form-control"
+              <input
+                type="number"
+                class="form-control"
                 formControlName="capacidadTanque"
-                placeholder="Ej: 60">
+                placeholder="Ej: 60"
+              />
             </div>
 
             <div class="col-md-3 mb-3">
               <label class="form-label">Rendimiento (km/gal)</label>
-              <input type="number" class="form-control"
+              <input
+                type="number"
+                class="form-control"
                 formControlName="rendimientoGalon"
-                placeholder="Ej: 30">
+                placeholder="Ej: 30"
+              />
             </div>
 
             <div class="col-md-3 mb-3">
               <label class="form-label">Kilometraje</label>
-              <input type="number" class="form-control"
+              <input
+                type="number"
+                class="form-control"
                 formControlName="kilometraje"
-                placeholder="Ej: 50000">
+                placeholder="Ej: 50000"
+              />
             </div>
-
           </div>
         </div>
       </div>
@@ -302,11 +376,8 @@
 
   <!-- ================= DETALLE ================= -->
   <div *ngIf="mostrarDetalle && vehiculoSeleccionado">
-
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="mb-0">
-        <i class="bi bi-truck"></i> Detalle — {{ vehiculoSeleccionado.placa }}
-      </h4>
+      <h4 class="mb-0"><i class="bi bi-truck"></i> Detalle — {{ vehiculoSeleccionado.placa }}</h4>
       <button class="btn btn-secondary btn-sm" (click)="volverLista()">
         <i class="bi bi-arrow-left"></i> Volver
       </button>
@@ -317,23 +388,62 @@
         <div class="row">
           <div class="col-md-6">
             <table class="table table-sm table-borderless">
-              <tr><th>Placa:</th><td>{{ vehiculoSeleccionado.placa }}</td></tr>
-              <tr><th>N° Inventario:</th><td>{{ vehiculoSeleccionado.numeroInventario }}</td></tr>
-              <tr><th>Marca:</th><td>{{ vehiculoSeleccionado.marca }}</td></tr>
-              <tr><th>Modelo:</th><td>{{ vehiculoSeleccionado.modelo }}</td></tr>
-              <tr><th>Año:</th><td>{{ vehiculoSeleccionado.anio }}</td></tr>
-              <tr><th>Color:</th><td>{{ vehiculoSeleccionado.color || '—' }}</td></tr>
-              <tr><th>Sede:</th><td>{{ vehiculoSeleccionado.nombreSede || '—' }}</td></tr>
+              <tr>
+                <th>Placa:</th>
+                <td>{{ vehiculoSeleccionado.placa }}</td>
+              </tr>
+              <tr>
+                <th>N° Inventario:</th>
+                <td>{{ vehiculoSeleccionado.numeroInventario }}</td>
+              </tr>
+              <tr>
+                <th>Marca:</th>
+                <td>{{ vehiculoSeleccionado.marca }}</td>
+              </tr>
+              <tr>
+                <th>Modelo:</th>
+                <td>{{ vehiculoSeleccionado.modelo }}</td>
+              </tr>
+              <tr>
+                <th>Año:</th>
+                <td>{{ vehiculoSeleccionado.anio }}</td>
+              </tr>
+              <tr>
+                <th>Color:</th>
+                <td>{{ vehiculoSeleccionado.color || '—' }}</td>
+              </tr>
+              <tr>
+                <th>Sede:</th>
+                <td>{{ vehiculoSeleccionado.nombreSede || '—' }}</td>
+              </tr>
             </table>
           </div>
           <div class="col-md-6">
             <table class="table table-sm table-borderless">
-              <tr><th>N° Chasis:</th><td>{{ vehiculoSeleccionado.numeroChasis || '—' }}</td></tr>
-              <tr><th>N° VIN:</th><td>{{ vehiculoSeleccionado.numeroVin || '—' }}</td></tr>
-              <tr><th>Tamaño Motor:</th><td>{{ vehiculoSeleccionado.tamanioMotor || '—' }} cc</td></tr>
-              <tr><th>Capacidad Tanque:</th><td>{{ vehiculoSeleccionado.capacidadTanque || '—' }} gal</td></tr>
-              <tr><th>Rendimiento:</th><td>{{ vehiculoSeleccionado.rendimientoGalon || '—' }} km/gal</td></tr>
-              <tr><th>Kilometraje:</th><td>{{ vehiculoSeleccionado.kilometraje || '—' }} km</td></tr>
+              <tr>
+                <th>N° Chasis:</th>
+                <td>{{ vehiculoSeleccionado.numeroChasis || '—' }}</td>
+              </tr>
+              <tr>
+                <th>N° VIN:</th>
+                <td>{{ vehiculoSeleccionado.numeroVin || '—' }}</td>
+              </tr>
+              <tr>
+                <th>Tamaño Motor:</th>
+                <td>{{ vehiculoSeleccionado.tamanioMotor || '—' }} cc</td>
+              </tr>
+              <tr>
+                <th>Capacidad Tanque:</th>
+                <td>{{ vehiculoSeleccionado.capacidadTanque || '—' }} gal</td>
+              </tr>
+              <tr>
+                <th>Rendimiento:</th>
+                <td>{{ vehiculoSeleccionado.rendimientoGalon || '—' }} km/gal</td>
+              </tr>
+              <tr>
+                <th>Kilometraje:</th>
+                <td>{{ vehiculoSeleccionado.kilometraje || '—' }} km</td>
+              </tr>
             </table>
           </div>
         </div>
@@ -342,17 +452,23 @@
   </div>
 
   <!-- ================= MODAL DISPONIBILIDAD ================= -->
-  <div *ngIf="mostrarModalDisponibilidad && vehiculoDisponibilidad"
+  <div
+    *ngIf="mostrarModalDisponibilidad && vehiculoDisponibilidad"
     class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
-    style="background:rgba(0,0,0,0.5); z-index:1050">
-    <div class="card shadow-lg" style="min-width:400px; max-width:500px">
+    style="background: rgba(0, 0, 0, 0.5); z-index: 1050"
+  >
+    <div class="card shadow-lg" style="min-width: 400px; max-width: 500px">
       <div class="card-header bg-primary text-white d-flex justify-content-between">
         <h6 class="mb-0"><i class="bi bi-toggle-on"></i> Cambiar Disponibilidad</h6>
         <button class="btn-close btn-close-white btn-sm" (click)="cerrarDisponibilidad()"></button>
       </div>
       <div class="card-body">
         <p class="text-muted mb-3">
-          Vehículo: <strong>{{ vehiculoDisponibilidad.placa }} — {{ vehiculoDisponibilidad.marca }} {{ vehiculoDisponibilidad.modelo }}</strong>
+          Vehículo:
+          <strong
+            >{{ vehiculoDisponibilidad.placa }} — {{ vehiculoDisponibilidad.marca }}
+            {{ vehiculoDisponibilidad.modelo }}</strong
+          >
         </p>
         <div class="mb-3">
           <label class="form-label">Estado</label>
@@ -362,9 +478,12 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Observaciones</label>
-          <textarea class="form-control" rows="3"
+          <textarea
+            class="form-control"
+            rows="3"
             [(ngModel)]="observacionesDisponibilidad"
-            placeholder="Observaciones opcionales..."></textarea>
+            placeholder="Observaciones opcionales..."
+          ></textarea>
         </div>
       </div>
       <div class="card-footer d-flex justify-content-end gap-2">
@@ -373,5 +492,15 @@
       </div>
     </div>
   </div>
-
 </div>
+
+<app-modal
+  [visible]="modalVisible"
+  [titulo]="modalTitulo"
+  [mensaje]="modalMensaje"
+  [tipo]="modalTipo"
+  [textoBtnAceptar]="modalBtnAceptar"
+  (aceptar)="onModalAceptar($event)"
+  (cancelar)="onModalCancelar()"
+>
+</app-modal>

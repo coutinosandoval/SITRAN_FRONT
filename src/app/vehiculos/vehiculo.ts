@@ -228,7 +228,9 @@ export class VehiculoComponent implements OnInit {
     this.modalBtnAceptar = this.modoEdicion ? 'Actualizar' : 'Registrar';
     this.modalAccion = () => {
       this.cargando = true;
+
       const datos: VehiculoRequest = this.formulario.value;
+      console.log('datos a enviar:', datos);
 
       if (this.modoEdicion && this.vehiculoSeleccionado) {
         this.vehiculoService.actualizar(this.vehiculoSeleccionado.id, datos).subscribe({
@@ -241,6 +243,7 @@ export class VehiculoComponent implements OnInit {
           error: (err) => {
             this.mensajeError = err.error?.mensaje || 'Error al actualizar el vehículo.';
             this.cargando = false;
+            this.cdr.detectChanges();
           },
         });
       } else {
@@ -252,8 +255,10 @@ export class VehiculoComponent implements OnInit {
             this.cargarVehiculos();
           },
           error: (err) => {
+            console.log('error:', err);
             this.mensajeError = err.error?.mensaje || 'Error al registrar el vehículo.';
             this.cargando = false;
+            this.cdr.detectChanges();
           },
         });
       }
@@ -274,6 +279,7 @@ export class VehiculoComponent implements OnInit {
         },
         error: (err) => {
           this.mensajeError = err.error?.mensaje || 'Error al eliminar el vehículo.';
+          this.cdr.detectChanges();
         },
       });
     };

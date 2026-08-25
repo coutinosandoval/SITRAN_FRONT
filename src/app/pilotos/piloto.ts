@@ -18,6 +18,7 @@ import {
   TelefonoRequest,
 } from '../modelos/piloto.model';
 import { ModalComponent } from '../shared/modal/modal';
+import { SedeService } from '../servicios/sede.service';
 
 @Component({
   selector: 'app-piloto',
@@ -25,7 +26,6 @@ import { ModalComponent } from '../shared/modal/modal';
   imports: [CommonModule, FormsModule, ReactiveFormsModule, ModalComponent],
   templateUrl: './piloto.html',
 })
-
 export class PilotoComponent implements OnInit {
   // Lista de pilotos
   pilotos: Piloto[] = [];
@@ -41,6 +41,12 @@ export class PilotoComponent implements OnInit {
 
   // Teléfonos del piloto seleccionado
   telefonos: Telefono[] = [];
+  sedes: any[] = [];
+
+  // Autobúsqueda sede
+  nombreSedeBusqueda: string = '';
+  sedesFiltradas: any[] = [];
+  mostrarSugerencias: boolean = false;
 
   // Paginación
   paginaActual: number = 1;
@@ -82,6 +88,7 @@ export class PilotoComponent implements OnInit {
 
   constructor(
     private pilotoService: PilotoService,
+    private sedeService: SedeService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
   ) {
@@ -100,6 +107,7 @@ export class PilotoComponent implements OnInit {
       idTipoLicencia: ['', Validators.required],
       fechaVencimiento: ['', Validators.required],
       idUnidad: ['', Validators.required],
+      idSede: ['', Validators.required],
     });
 
     this.formularioTelefono = this.fb.group({
@@ -117,6 +125,11 @@ export class PilotoComponent implements OnInit {
   ngOnInit(): void {
     this.cargarPilotos();
     this.cargarCatalogos();
+    this.sedeService.obtenerSedes().subscribe({
+      next: (data) => {
+        this.sedes = data;
+      },
+    });
   }
 
   // Carga la lista de pilotos
@@ -206,7 +219,15 @@ export class PilotoComponent implements OnInit {
       idTipoLicencia: Number(piloto.idTipoLicencia),
       fechaVencimiento: piloto.fechaVencimiento ? piloto.fechaVencimiento.substring(0, 10) : '',
       idUnidad: Number(piloto.idUnidad),
+      idSede: piloto.idSede ? Number(piloto.idSede) : null,
     });
+
+    // Cargar nombre de la sede en el campo de autobúsqueda
+    if (piloto.idSede && piloto.nombreSede) {
+      this.nombreSedeBusqueda = piloto.nombreSede;
+    } else {
+      this.nombreSedeBusqueda = '';
+    }
   }
 
   // Muestra detalle
@@ -231,75 +252,77 @@ export class PilotoComponent implements OnInit {
   }
 
   // Guarda el piloto
- guardar(): void {
-  if (this.formulario.invalid) {
-    this.formulario.markAllAsTouched();
-    return;
+  guardar(): void {
+    if (this.formulario.invalid) {
+      this.formulario.markAllAsTouched();
+      return;
+    }
+
+    this.modalTitulo = this.modoEdicion ? 'Actualizar Piloto' : 'Registrar Piloto';
+    this.modalMensaje = this.modoEdicion
+      ? '¿Está seguro que desea actualizar este piloto?'
+      : '¿Está seguro que desea registrar este piloto?';
+    this.modalTipo = 'confirmar';
+    this.modalBtnAceptar = this.modoEdicion ? 'Actualizar' : 'Registrar';
+    this.modalAccion = () => {
+      this.cargando = true;
+      const datos: PilotoRequest = this.formulario.value;
+
+      if (!datos.fechaNacimiento) datos.fechaNacimiento = undefined;
+      if (!datos.fechaIngreso) datos.fechaIngreso = undefined;
+      if (!datos.fechaVencimiento) datos.fechaVencimiento = undefined;
+
+      if (this.modoEdicion && this.pilotoSeleccionado) {
+        this.pilotoService.actualizar(this.pilotoSeleccionado.id, datos).subscribe({
+          next: () => {
+            this.cargando = false;
+            this.mensajeExito = 'Piloto actualizado correctamente.';
+            this.volverLista();
+            this.cargarPilotos();
+          },
+          error: (err) => {
+            this.mensajeError = err.error?.mensaje || 'Error al actualizar el piloto.';
+            this.cargando = false;
+          },
+        });
+      } else {
+        this.pilotoService.agregar(datos).subscribe({
+          next: () => {
+            this.cargando = false;
+            this.mensajeExito = 'Piloto registrado correctamente.';
+            this.volverLista();
+            this.cargarPilotos();
+          },
+          error: (err) => {
+            this.mensajeError = err.error?.mensaje || 'Error al registrar el piloto.';
+            this.cargando = false;
+            this.cdr.detectChanges();
+          },
+        });
+      }
+    };
+    this.modalVisible = true;
   }
 
-  this.modalTitulo     = this.modoEdicion ? 'Actualizar Piloto' : 'Registrar Piloto';
-  this.modalMensaje    = this.modoEdicion
-    ? '¿Está seguro que desea actualizar este piloto?'
-    : '¿Está seguro que desea registrar este piloto?';
-  this.modalTipo       = 'confirmar';
-  this.modalBtnAceptar = this.modoEdicion ? 'Actualizar' : 'Registrar';
-  this.modalAccion     = () => {
-    this.cargando = true;
-    const datos: PilotoRequest = this.formulario.value;
-
-    if (!datos.fechaNacimiento)  datos.fechaNacimiento  = undefined;
-    if (!datos.fechaIngreso)     datos.fechaIngreso     = undefined;
-    if (!datos.fechaVencimiento) datos.fechaVencimiento = undefined;
-
-    if (this.modoEdicion && this.pilotoSeleccionado) {
-      this.pilotoService.actualizar(this.pilotoSeleccionado.id, datos).subscribe({
+  eliminar(id: number): void {
+    this.modalTitulo = 'Eliminar Piloto';
+    this.modalMensaje = '¿Está seguro que desea eliminar este piloto?';
+    this.modalTipo = 'peligro';
+    this.modalBtnAceptar = 'Eliminar';
+    this.modalAccion = () => {
+      this.pilotoService.borrar(id).subscribe({
         next: () => {
-          this.cargando     = false;
-          this.mensajeExito = 'Piloto actualizado correctamente.';
-          this.volverLista();
+          this.mensajeExito = 'Piloto eliminado correctamente.';
           this.cargarPilotos();
         },
         error: (err) => {
-          this.mensajeError = err.error?.mensaje || 'Error al actualizar el piloto.';
-          this.cargando     = false;
-        }
-      });
-    } else {
-      this.pilotoService.agregar(datos).subscribe({
-        next: () => {
-          this.cargando     = false;
-          this.mensajeExito = 'Piloto registrado correctamente.';
-          this.volverLista();
-          this.cargarPilotos();
+          this.mensajeError = err.error?.mensaje || 'Error al eliminar el piloto.';
+          this.cdr.detectChanges();
         },
-        error: (err) => {
-          this.mensajeError = err.error?.mensaje || 'Error al registrar el piloto.';
-          this.cargando     = false;
-        }
       });
-    }
-  };
-  this.modalVisible = true;
-}
-
-eliminar(id: number): void {
-  this.modalTitulo     = 'Eliminar Piloto';
-  this.modalMensaje    = '¿Está seguro que desea eliminar este piloto?';
-  this.modalTipo       = 'peligro';
-  this.modalBtnAceptar = 'Eliminar';
-  this.modalAccion     = () => {
-    this.pilotoService.borrar(id).subscribe({
-      next: () => {
-        this.mensajeExito = 'Piloto eliminado correctamente.';
-        this.cargarPilotos();
-      },
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al eliminar el piloto.';
-      }
-    });
-  };
-  this.modalVisible = true;
-}
+    };
+    this.modalVisible = true;
+  }
 
   // Agrega un teléfono
   agregarTelefono(): void {
@@ -326,24 +349,25 @@ eliminar(id: number): void {
   }
 
   // Elimina un teléfono
-eliminarTelefono(id: number): void {
-  this.modalTitulo     = 'Eliminar Teléfono';
-  this.modalMensaje    = '¿Confirma eliminar este teléfono?';
-  this.modalTipo       = 'peligro';
-  this.modalBtnAceptar = 'Eliminar';
-  this.modalAccion     = () => {
-    this.pilotoService.eliminarTelefono(id).subscribe({
-      next: () => {
-        this.telefonos = this.telefonos.filter(t => t.id !== id);
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.mensajeError = err.error?.mensaje || 'Error al eliminar teléfono.';
-      }
-    });
-  };
-  this.modalVisible = true;
-}
+  eliminarTelefono(id: number): void {
+    this.modalTitulo = 'Eliminar Teléfono';
+    this.modalMensaje = '¿Confirma eliminar este teléfono?';
+    this.modalTipo = 'peligro';
+    this.modalBtnAceptar = 'Eliminar';
+    this.modalAccion = () => {
+      this.pilotoService.eliminarTelefono(id).subscribe({
+        next: () => {
+          this.telefonos = this.telefonos.filter((t) => t.id !== id);
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.mensajeError = err.error?.mensaje || 'Error al eliminar teléfono.';
+          this.cdr.detectChanges();
+        },
+      });
+    };
+    this.modalVisible = true;
+  }
 
   // Cambiar página
   cambiarPagina(pagina: number): void {
@@ -406,5 +430,27 @@ eliminarTelefono(id: number): void {
   onModalCancelar(): void {
     this.modalVisible = false;
     this.modalAccion = null;
+  }
+
+  buscarSede(): void {
+    const texto = this.nombreSedeBusqueda.trim().toUpperCase();
+    if (!texto) {
+      this.sedesFiltradas = [];
+      this.mostrarSugerencias = false;
+      this.formulario.patchValue({ idSede: null });
+      return;
+    }
+    this.sedesFiltradas = this.sedes.filter((s) => s.nombre.toUpperCase().includes(texto));
+    this.mostrarSugerencias = this.sedesFiltradas.length > 0;
+  }
+
+  seleccionarSede(sede: any): void {
+    this.nombreSedeBusqueda = sede.nombre;
+    this.mostrarSugerencias = false;
+    this.formulario.patchValue({ idSede: sede.id });
+  }
+
+  ocultarSugerencias(): void {
+    setTimeout(() => (this.mostrarSugerencias = false), 200);
   }
 }

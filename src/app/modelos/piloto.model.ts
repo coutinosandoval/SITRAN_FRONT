@@ -22,6 +22,8 @@ export interface Piloto {
   nombreUnidad?: string;
   estado: number;
   telefonos?: string;
+  idSede?:     number;
+nombreSede?: string;
 }
 
 export interface PilotoRequest {

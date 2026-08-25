@@ -1,11 +1,8 @@
 <!-- LISTA DE PILOTOS -->
 <div *ngIf="mostrarLista">
-
   <!-- Encabezado -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-person-badge"></i> Pilotos
-    </h4>
+    <h4 class="mb-0"><i class="bi bi-person-badge"></i> Pilotos</h4>
     <button class="btn btn-primary btn-sm" (click)="mostrarAgregar()">
       <i class="bi bi-plus-circle"></i> Agregar Piloto
     </button>
@@ -27,24 +24,32 @@
       <div class="row align-items-center">
         <div class="col-md-6">
           <div class="input-group input-group-sm">
-            <input type="text" class="form-control"
+            <input
+              type="text"
+              class="form-control"
               placeholder="Buscar por nombre, apellidos, DPI o licencia..."
               [(ngModel)]="textoBusqueda"
               (input)="buscarEnTiempoReal()"
-              (keyup.enter)="buscar()">
+              (keyup.enter)="buscar()"
+            />
             <button class="btn btn-outline-primary" (click)="buscar()">
               <i class="bi bi-search"></i>
             </button>
-            <button class="btn btn-outline-secondary" (click)="limpiarBusqueda()"
-              *ngIf="textoBusqueda">
+            <button
+              class="btn btn-outline-secondary"
+              (click)="limpiarBusqueda()"
+              *ngIf="textoBusqueda"
+            >
               <i class="bi bi-x"></i>
             </button>
           </div>
         </div>
         <div class="col-md-6 d-flex justify-content-end align-items-center gap-2">
           <label class="mb-0 text-muted small">Mostrar:</label>
-          <select class="form-select form-select-sm w-auto"
-            (change)="cambiarTamanioPagina(+$any($event.target).value)">
+          <select
+            class="form-select form-select-sm w-auto"
+            (change)="cambiarTamanioPagina(+$any($event.target).value)"
+          >
             <option value="5">5</option>
             <option value="10" selected>10</option>
             <option value="25">25</option>
@@ -87,33 +92,42 @@
             </tr>
             <tr *ngFor="let p of pilotos">
               <td>
-                <strong>{{ p.apellidos }}</strong>, {{ p.nombre }}
+                <strong>{{ p.apellidos }}</strong
+                >, {{ p.nombre }}
               </td>
               <td>{{ p.dpi }}</td>
               <td>{{ p.noLicencia }}</td>
               <td>
-                <span class="badge"
+                <span
+                  class="badge"
                   [ngClass]="{
                     'bg-danger': estaVencida(p.fechaVencimiento),
                     'bg-warning text-dark': estaPorVencer(p.fechaVencimiento),
-                    'bg-success': !estaVencida(p.fechaVencimiento) && !estaPorVencer(p.fechaVencimiento)
-                  }">
-                  {{ p.fechaVencimiento | date:'dd/MM/yyyy' }}
+                    'bg-success':
+                      !estaVencida(p.fechaVencimiento) && !estaPorVencer(p.fechaVencimiento),
+                  }"
+                >
+                  {{ p.fechaVencimiento | date: 'dd/MM/yyyy' }}
                 </span>
               </td>
               <td>{{ p.nombreUnidad }}</td>
               <td>{{ p.telefonos || 'Sin teléfono' }}</td>
               <td class="text-center">
-                <button class="btn btn-info btn-sm me-1" title="Ver detalle"
-                  (click)="verDetalle(p)">
+                <button
+                  class="btn btn-info btn-sm me-1"
+                  title="Ver detalle"
+                  (click)="verDetalle(p)"
+                >
                   <i class="bi bi-eye"></i>
                 </button>
-                <button class="btn btn-warning btn-sm me-1" title="Editar"
-                  (click)="mostrarEditar(p)">
+                <button
+                  class="btn btn-warning btn-sm me-1"
+                  title="Editar"
+                  (click)="mostrarEditar(p)"
+                >
                   <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" title="Eliminar"
-                  (click)="eliminar(p.id)">
+                <button class="btn btn-danger btn-sm" title="Eliminar" (click)="eliminar(p.id)">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
@@ -124,8 +138,10 @@
     </div>
 
     <!-- Paginación -->
-    <div class="card-footer d-flex justify-content-between align-items-center"
-      *ngIf="totalPaginas > 1">
+    <div
+      class="card-footer d-flex justify-content-between align-items-center"
+      *ngIf="totalPaginas > 1"
+    >
       <span class="text-muted small">Página {{ paginaActual }} de {{ totalPaginas }}</span>
       <nav>
         <ul class="pagination pagination-sm mb-0">
@@ -134,8 +150,7 @@
               <i class="bi bi-chevron-left"></i>
             </a>
           </li>
-          <li class="page-item" *ngFor="let p of paginas"
-            [class.active]="p === paginaActual">
+          <li class="page-item" *ngFor="let p of paginas" [class.active]="p === paginaActual">
             <a class="page-link" (click)="cambiarPagina(p)">{{ p }}</a>
           </li>
           <li class="page-item" [class.disabled]="paginaActual === totalPaginas">
@@ -151,7 +166,6 @@
 
 <!-- FORMULARIO AGREGAR / EDITAR -->
 <div *ngIf="mostrarFormulario">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">
       <i class="bi bi-person-badge"></i>
@@ -170,7 +184,6 @@
   </div>
 
   <form [formGroup]="formulario" (ngSubmit)="guardar()">
-
     <!-- Información personal -->
     <div class="card shadow-sm mb-3">
       <div class="card-header bg-primary text-white">
@@ -178,60 +191,76 @@
       </div>
       <div class="card-body">
         <div class="row">
-
           <div class="col-md-4 mb-3">
             <label class="form-label">Nombre <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
+            <input
+              type="text"
+              class="form-control text-uppercase"
               formControlName="nombre"
               [class.is-invalid]="tieneError('nombre')"
-              placeholder="Nombre del piloto">
+              placeholder="Nombre del piloto"
+            />
             <div class="invalid-feedback">El nombre es requerido.</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Apellidos <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
+            <input
+              type="text"
+              class="form-control text-uppercase"
               formControlName="apellidos"
               [class.is-invalid]="tieneError('apellidos')"
-              placeholder="Apellidos del piloto">
+              placeholder="Apellidos del piloto"
+            />
             <div class="invalid-feedback">Los apellidos son requeridos.</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">DPI <span class="text-danger">*</span></label>
-            <input type="text" class="form-control"
+            <input
+              type="text"
+              class="form-control"
               formControlName="dpi"
               [class.is-invalid]="tieneError('dpi')"
-              placeholder="Número de DPI">
+              placeholder="Número de DPI"
+            />
             <div class="invalid-feedback">El DPI es requerido.</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">NIT</label>
-            <input type="text" class="form-control text-uppercase"
+            <input
+              type="text"
+              class="form-control text-uppercase"
               formControlName="nit"
-              placeholder="Número de NIT">
+              placeholder="Número de NIT"
+            />
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Correo</label>
-            <input type="email" class="form-control"
+            <input
+              type="email"
+              class="form-control"
               formControlName="correo"
               [class.is-invalid]="tieneError('correo')"
-              placeholder="correo@ejemplo.com">
+              placeholder="correo@ejemplo.com"
+            />
             <div class="invalid-feedback">Ingrese un correo válido.</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Fecha de Nacimiento</label>
-            <input type="date" class="form-control"
-              formControlName="fechaNacimiento">
+            <input type="date" class="form-control" formControlName="fechaNacimiento" />
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Sexo <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idSexo"
-              [class.is-invalid]="tieneError('idSexo')">
+            <select
+              class="form-select"
+              formControlName="idSexo"
+              [class.is-invalid]="tieneError('idSexo')"
+            >
               <option value="">Seleccione</option>
               <option *ngFor="let s of catalogos.sexos" [value]="s.id">{{ s.nombre }}</option>
             </select>
@@ -240,8 +269,11 @@
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Tipo de Sangre <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idTipoSangre"
-              [class.is-invalid]="tieneError('idTipoSangre')">
+            <select
+              class="form-select"
+              formControlName="idTipoSangre"
+              [class.is-invalid]="tieneError('idTipoSangre')"
+            >
               <option value="">Seleccione</option>
               <option *ngFor="let s of catalogos.tiposSangre" [value]="s.id">{{ s.nombre }}</option>
             </select>
@@ -250,11 +282,13 @@
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Dirección</label>
-            <input type="text" class="form-control text-uppercase"
+            <input
+              type="text"
+              class="form-control text-uppercase"
               formControlName="direccion"
-              placeholder="Dirección del piloto">
+              placeholder="Dirección del piloto"
+            />
           </div>
-
         </div>
       </div>
     </div>
@@ -266,50 +300,93 @@
       </div>
       <div class="card-body">
         <div class="row">
-
           <div class="col-md-4 mb-3">
             <label class="form-label">No. Licencia <span class="text-danger">*</span></label>
-            <input type="text" class="form-control text-uppercase"
+            <input
+              type="text"
+              class="form-control text-uppercase"
               formControlName="noLicencia"
               [class.is-invalid]="tieneError('noLicencia')"
-              placeholder="Número de licencia">
+              placeholder="Número de licencia"
+            />
             <div class="invalid-feedback">La licencia es requerida.</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Tipo de Licencia <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idTipoLicencia"
-              [class.is-invalid]="tieneError('idTipoLicencia')">
+            <select
+              class="form-select"
+              formControlName="idTipoLicencia"
+              [class.is-invalid]="tieneError('idTipoLicencia')"
+            >
               <option value="">Seleccione</option>
-              <option *ngFor="let t of catalogos.tiposLicencia" [value]="t.id">{{ t.nombre }}</option>
+              <option *ngFor="let t of catalogos.tiposLicencia" [value]="t.id">
+                {{ t.nombre }}
+              </option>
             </select>
             <div class="invalid-feedback">El tipo de licencia es requerido.</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Fecha Vencimiento <span class="text-danger">*</span></label>
-            <input type="date" class="form-control"
+            <input
+              type="date"
+              class="form-control"
               formControlName="fechaVencimiento"
-              [class.is-invalid]="tieneError('fechaVencimiento')">
+              [class.is-invalid]="tieneError('fechaVencimiento')"
+            />
             <div class="invalid-feedback">La fecha de vencimiento es requerida.</div>
           </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Unidad <span class="text-danger">*</span></label>
-            <select class="form-select" formControlName="idUnidad"
-              [class.is-invalid]="tieneError('idUnidad')">
+            <select
+              class="form-select"
+              formControlName="idUnidad"
+              [class.is-invalid]="tieneError('idUnidad')"
+            >
               <option value="">Seleccione</option>
               <option *ngFor="let u of catalogos.unidades" [value]="u.id">{{ u.nombre }}</option>
             </select>
             <div class="invalid-feedback">La unidad es requerida.</div>
           </div>
+          <!-- Sede -->
+          <!-- Sede -->
+          <div class="col-md-4 mb-3 position-relative">
+            <label class="form-label">Sede <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="nombreSedeBusqueda"
+              [ngModelOptions]="{ standalone: true }"
+              (input)="buscarSede()"
+              (focus)="buscarSede()"
+              (blur)="ocultarSugerencias()"
+              placeholder="Buscar sede..."
+              autocomplete="off"
+              [class.is-invalid]="tieneError('idSede')"
+            />
+            <ul
+              class="list-group position-absolute w-100 shadow-sm"
+              style="z-index: 1000; max-height: 200px; overflow-y: auto; bottom: 100%; top: auto"
+              *ngIf="mostrarSugerencias"
+            >
+              <li
+                class="list-group-item list-group-item-action"
+                style="cursor: pointer"
+                *ngFor="let s of sedesFiltradas"
+                (mousedown)="seleccionarSede(s)"
+              >
+                {{ s.nombre }}
+              </li>
+            </ul>
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
 
           <div class="col-md-4 mb-3">
             <label class="form-label">Fecha Ingreso</label>
-            <input type="date" class="form-control"
-              formControlName="fechaIngreso">
+            <input type="date" class="form-control" formControlName="fechaIngreso" />
           </div>
-
         </div>
       </div>
     </div>
@@ -322,24 +399,30 @@
       <div class="card-body">
         <div class="row mb-3">
           <div class="col-md-5">
-            <input type="text" class="form-control form-control-sm"
+            <input
+              type="text"
+              class="form-control form-control-sm"
               [formControl]="$any(formularioTelefono.get('numero'))"
               [class.is-invalid]="tieneErrorTelefono('numero')"
-              placeholder="Número de teléfono">
+              placeholder="Número de teléfono"
+            />
             <div class="invalid-feedback">El número es requerido.</div>
           </div>
           <div class="col-md-5">
-            <select class="form-select form-select-sm"
+            <select
+              class="form-select form-select-sm"
               [formControl]="$any(formularioTelefono.get('idTipoTelefono'))"
-              [class.is-invalid]="tieneErrorTelefono('idTipoTelefono')">
+              [class.is-invalid]="tieneErrorTelefono('idTipoTelefono')"
+            >
               <option value="">Tipo de teléfono</option>
-              <option *ngFor="let t of catalogos.tiposTelefono" [value]="t.id">{{ t.nombre }}</option>
+              <option *ngFor="let t of catalogos.tiposTelefono" [value]="t.id">
+                {{ t.nombre }}
+              </option>
             </select>
             <div class="invalid-feedback">El tipo es requerido.</div>
           </div>
           <div class="col-md-2">
-            <button type="button" class="btn btn-success btn-sm w-100"
-              (click)="agregarTelefono()">
+            <button type="button" class="btn btn-success btn-sm w-100" (click)="agregarTelefono()">
               <i class="bi bi-plus"></i> Agregar
             </button>
           </div>
@@ -359,8 +442,11 @@
               <td>{{ t.numero }}</td>
               <td>{{ t.nombreTipoTelefono }}</td>
               <td class="text-center">
-                <button type="button" class="btn btn-danger btn-sm"
-                  (click)="eliminarTelefono(t.id)">
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  (click)="eliminarTelefono(t.id)"
+                >
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
@@ -384,17 +470,13 @@
         {{ modoEdicion ? 'Actualizar' : 'Guardar' }}
       </button>
     </div>
-
   </form>
 </div>
 
 <!-- DETALLE DEL PILOTO -->
 <div *ngIf="mostrarDetalle && pilotoSeleccionado">
-
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">
-      <i class="bi bi-person-badge"></i> Detalle del Piloto
-    </h4>
+    <h4 class="mb-0"><i class="bi bi-person-badge"></i> Detalle del Piloto</h4>
     <div class="d-flex gap-2">
       <button class="btn btn-warning btn-sm" (click)="mostrarEditar(pilotoSeleccionado)">
         <i class="bi bi-pencil"></i> Editar
@@ -410,26 +492,65 @@
       <strong>{{ pilotoSeleccionado.apellidos }}, {{ pilotoSeleccionado.nombre }}</strong>
     </div>
     <div class="card-body">
-      <div class="row">
+      <div class="row" style="overflow: visible">
         <div class="col-md-6">
           <table class="table table-sm table-borderless">
-            <tr><th>DPI:</th><td>{{ pilotoSeleccionado.dpi }}</td></tr>
-            <tr><th>NIT:</th><td>{{ pilotoSeleccionado.nit || 'No especificado' }}</td></tr>
-            <tr><th>Correo:</th><td>{{ pilotoSeleccionado.correo || 'No especificado' }}</td></tr>
-            <tr><th>Dirección:</th><td>{{ pilotoSeleccionado.direccion || 'No especificado' }}</td></tr>
-            <tr><th>Fecha Nacimiento:</th><td>{{ pilotoSeleccionado.fechaNacimiento | date:'dd/MM/yyyy' }}</td></tr>
-            <tr><th>Sexo:</th><td>{{ pilotoSeleccionado.nombreSexo }}</td></tr>
-            <tr><th>Tipo Sangre:</th><td>{{ pilotoSeleccionado.nombreTipoSangre }}</td></tr>
+            <tr>
+              <th>DPI:</th>
+              <td>{{ pilotoSeleccionado.dpi }}</td>
+            </tr>
+            <tr>
+              <th>NIT:</th>
+              <td>{{ pilotoSeleccionado.nit || 'No especificado' }}</td>
+            </tr>
+            <tr>
+              <th>Correo:</th>
+              <td>{{ pilotoSeleccionado.correo || 'No especificado' }}</td>
+            </tr>
+            <tr>
+              <th>Dirección:</th>
+              <td>{{ pilotoSeleccionado.direccion || 'No especificado' }}</td>
+            </tr>
+            <tr>
+              <th>Fecha Nacimiento:</th>
+              <td>{{ pilotoSeleccionado.fechaNacimiento | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr>
+              <th>Sexo:</th>
+              <td>{{ pilotoSeleccionado.nombreSexo }}</td>
+            </tr>
+            <tr>
+              <th>Tipo Sangre:</th>
+              <td>{{ pilotoSeleccionado.nombreTipoSangre }}</td>
+            </tr>
           </table>
         </div>
         <div class="col-md-6">
           <table class="table table-sm table-borderless">
-            <tr><th>No. Licencia:</th><td>{{ pilotoSeleccionado.noLicencia }}</td></tr>
-            <tr><th>Tipo Licencia:</th><td>{{ pilotoSeleccionado.nombreTipoLicencia }}</td></tr>
-            <tr><th>Vencimiento:</th><td>{{ pilotoSeleccionado.fechaVencimiento | date:'dd/MM/yyyy' }}</td></tr>
-            <tr><th>Fecha Ingreso:</th><td>{{ pilotoSeleccionado.fechaIngreso | date:'dd/MM/yyyy' }}</td></tr>
-            <tr><th>Unidad:</th><td>{{ pilotoSeleccionado.nombreUnidad }}</td></tr>
-            <tr><th>Teléfonos:</th><td>{{ pilotoSeleccionado.telefonos || 'Sin teléfono' }}</td></tr>
+            <tr>
+              <th>No. Licencia:</th>
+              <td>{{ pilotoSeleccionado.noLicencia }}</td>
+            </tr>
+            <tr>
+              <th>Tipo Licencia:</th>
+              <td>{{ pilotoSeleccionado.nombreTipoLicencia }}</td>
+            </tr>
+            <tr>
+              <th>Vencimiento:</th>
+              <td>{{ pilotoSeleccionado.fechaVencimiento | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr>
+              <th>Fecha Ingreso:</th>
+              <td>{{ pilotoSeleccionado.fechaIngreso | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+            <tr>
+              <th>Unidad:</th>
+              <td>{{ pilotoSeleccionado.nombreUnidad }}</td>
+            </tr>
+            <tr>
+              <th>Teléfonos:</th>
+              <td>{{ pilotoSeleccionado.telefonos || 'Sin teléfono' }}</td>
+            </tr>
           </table>
         </div>
       </div>
@@ -439,7 +560,10 @@
         <h6><i class="bi bi-telephone"></i> Teléfonos registrados</h6>
         <table class="table table-sm table-striped">
           <thead class="table-dark">
-            <tr><th>Número</th><th>Tipo</th></tr>
+            <tr>
+              <th>Número</th>
+              <th>Tipo</th>
+            </tr>
           </thead>
           <tbody>
             <tr *ngFor="let t of telefonos">
@@ -460,5 +584,6 @@
   [tipo]="modalTipo"
   [textoBtnAceptar]="modalBtnAceptar"
   (aceptar)="onModalAceptar($event)"
-  (cancelar)="onModalCancelar()">
+  (cancelar)="onModalCancelar()"
+>
 </app-modal>

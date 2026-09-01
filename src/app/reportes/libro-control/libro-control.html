@@ -110,7 +110,8 @@
               <th class="text-center">Ingreso Q</th>
               <th class="text-center">Ingreso Cant.</th>
               <th class="text-center">No. Solicitud</th>
-              <th>Sede/Unidad</th>
+              <th>Placa Vehículo</th>
+              <th>Piloto</th>
               <th class="text-center">Egreso Del</th>
               <th class="text-center">Egreso Al</th>
               <th class="text-center">Egreso Q</th>
@@ -132,7 +133,8 @@
               <td class="text-center">
                 {{ r.idSolicitud ? '#' + r.idSolicitud : '—' }}
               </td>
-              <td>{{ r.sedeDestino || '—' }}</td>
+              <td>{{ r.placa || '—' }}</td>
+              <td>{{ r.piloto || '—' }}</td>
               <td class="text-center">{{ r.egresoDel || '—' }}</td>
               <td class="text-center">{{ r.egresoAl || '—' }}</td>
               <td class="text-center text-danger fw-bold">

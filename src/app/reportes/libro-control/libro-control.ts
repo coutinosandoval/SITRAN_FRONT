@@ -142,6 +142,7 @@ export class LibroControl implements OnInit {
 
     this.http.get<any[]>(`${this.apiUrl}/${endpoint}`, { params }).subscribe({
       next: (data) => {
+        console.log('reporte generado:', data.length, 'registros');
         this.reporte = data;
         this.cargando = false;
         this.cdr.detectChanges();
@@ -162,7 +163,10 @@ export class LibroControl implements OnInit {
     let params = new HttpParams().set('denominacion', this.denominacion.toString());
     if (this.fechaIni) params = params.set('fechaIni', this.fechaIni);
     if (this.fechaFin) params = params.set('fechaFin', this.fechaFin);
-
+    if (this.idSede !== null) {
+      params = params.set('idSede', this.idSede.toString());
+      params = params.set('nombreSede', this.nombreSedeBusqueda);
+    }
     let endpoint: string;
     if (this.idSede === 41) {
       endpoint = 'libro-control-bodega/excel';
@@ -185,6 +189,7 @@ export class LibroControl implements OnInit {
           link.click();
           window.URL.revokeObjectURL(url);
           this.cargando = false;
+          this.cdr.detectChanges();
         },
         error: () => {
           this.mensajeError = 'Error al exportar Excel.';

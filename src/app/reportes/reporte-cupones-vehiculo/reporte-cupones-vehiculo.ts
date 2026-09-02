@@ -34,6 +34,8 @@ export class ReporteCuponesVehiculo implements OnInit {
   esAdmin: boolean = false;
   idSedeUsuario: number | null = null;
 
+  vehiculosFiltrados: any[] = [];
+
   private apiUrl = `${environment.apiUrl}/api/reporte`;
 
   constructor(
@@ -68,7 +70,21 @@ export class ReporteCuponesVehiculo implements OnInit {
         this.cdr.detectChanges();
       },
     });
+    this.vehiculosFiltrados = this.vehiculos;
+
   }
+
+onSedeCambiada(): void {
+  if (!this.idSede) {
+    this.vehiculosFiltrados = this.vehiculos;
+  } else {
+    this.vehiculosFiltrados = this.vehiculos.filter(
+      (v: any) => v.idSede === this.idSede
+    );
+  }
+  this.idVehiculo = null;
+  this.cdr.detectChanges();
+}
 
   cargarSedes(): void {
     this.sedeService.obtenerSedes().subscribe({

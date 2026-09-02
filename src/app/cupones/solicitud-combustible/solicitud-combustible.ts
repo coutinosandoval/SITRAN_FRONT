@@ -332,12 +332,17 @@ export class SolicitudCombustibleComponent implements OnInit {
 
   /** Carga pilotos disponibles */
   cargarPilotos(): void {
-    const hoy = new Date().toISOString();
-    const manana = new Date(Date.now() + 86400000).toISOString();
-    this.comisionService
-      .obtenerPilotosDisponibles(hoy, manana)
-      .subscribe({ next: (data: any) => (this.pilotos = data) });
-  }
+  const url = this.idSedeUsuario
+    ? `${environment.apiUrl}/api/solicitud-combustible/pilotos-sede?idSede=${this.idSedeUsuario}`
+    : `${environment.apiUrl}/api/solicitud-combustible/pilotos-sede`;
+
+  this.http.get<any[]>(url).subscribe({
+    next: (data) => {
+      this.pilotos = data;
+      this.cdr.detectChanges();
+    },
+  });
+}
 
   /** Carga cupones disponibles en la sede */
   cargarCuponesDisponibles(): void {

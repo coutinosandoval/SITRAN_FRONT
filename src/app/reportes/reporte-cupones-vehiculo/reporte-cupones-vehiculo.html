@@ -15,23 +15,23 @@
     </div>
     <div class="card-body">
       <div class="row g-2">
+        <!-- Sede (solo admin) -->
+        <div class="col-md-3" *ngIf="esAdmin">
+          <label class="form-label">Sede</label>
+          <select class="form-select" [(ngModel)]="idSede" (ngModelChange)="onSedeCambiada()">
+            <option [ngValue]="null">Todas las sedes</option>
+            <option *ngFor="let s of sedes" [ngValue]="s.id">{{ s.nombre }}</option>
+          </select>
+        </div>
+
         <!-- Vehículo -->
         <div class="col-md-3">
           <label class="form-label">Vehículo</label>
           <select class="form-select" [(ngModel)]="idVehiculo">
-            <option [ngValue]="null">Todos los vehículos</option>
+            <option *ngFor="let v of vehiculosFiltrados" [ngValue]="v.id"></option>
             <option *ngFor="let v of vehiculos" [ngValue]="v.id">
               {{ v.placa }} — {{ v.nombre }}
             </option>
-          </select>
-        </div>
-
-        <!-- Sede (solo admin) -->
-        <div class="col-md-3" *ngIf="esAdmin">
-          <label class="form-label">Sede</label>
-          <select class="form-select" [(ngModel)]="idSede">
-            <option [ngValue]="null">Todas las sedes</option>
-            <option *ngFor="let s of sedes" [ngValue]="s.id">{{ s.nombre }}</option>
           </select>
         </div>
 

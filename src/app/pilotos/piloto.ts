@@ -151,6 +151,8 @@ export class PilotoComponent implements OnInit {
           this.cdr.detectChanges();
         },
       });
+
+      
   }
 
   // Carga los catálogos

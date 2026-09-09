@@ -31,11 +31,7 @@
 
     <div class="welcome-text" style="z-index: 1">
       <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem">
-        <img
-          src="assets/segeplan.png"
-          alt="SEGEPLAN"
-          style="height: 55px; filter: brightness(0) invert(1); opacity: 0.9"
-        />
+        <img src="assets/segeplan.png" alt="SEGEPLAN" style="height: 55px; opacity: 0.9" />
         <div>
           <h2
             style="
@@ -64,138 +60,98 @@
       <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.05rem; margin: 0; font-weight: 300">
         Sistema de Gestión de Cupones de Combustible
       </p>
-      <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap">
-        <span
+
+      <!-- TARJETAS DE ACCESO RÁPIDO -->
+      <div
+        *ngIf="false"
+        style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1rem;
+          margin-bottom: 2rem;
+        "
+      >
+        <div
           style="
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            padding: 0.3rem 0.9rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            backdrop-filter: blur(4px);
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #2e75b6;
+            text-align: center;
+          "
+         >
+          <i class="bi bi-cart-plus" style="font-size: 2rem; color: #2e75b6"></i>
+          <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Compra de Cupones</p>
+          <small style="color: #999">Módulo Compras</small>
+        </div>
+
+        <div
+          style="
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #375623;
+            text-align: center;
           "
         >
-          <i class="bi bi-fuel-pump"></i> Cupones de Combustible
-        </span>
-        <span
+          <i class="bi bi-bookmarks" style="font-size: 2rem; color: #375623"></i>
+          <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Talonarios</p>
+          <small style="color: #999">Módulo Almacen</small>
+        </div>
+
+        <div
           style="
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            padding: 0.3rem 0.9rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            backdrop-filter: blur(4px);
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #7b3f00;
+            text-align: center;
           "
         >
-          <i class="bi bi-truck"></i> Control de Vehículos
-        </span>
-        <span
+          <i class="bi bi-receipt" style="font-size: 2rem; color: #7b3f00"></i>
+          <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Solicitudes de Cupones</p>
+          <small style="color: #999">Módulo Delegados</small>
+        </div>
+
+        <div
           style="
-            background: rgba(255, 255, 255, 0.15);
-            color: white;
-            padding: 0.3rem 0.9rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            backdrop-filter: blur(4px);
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #1f4e79;
+            text-align: center;
           "
         >
-          <i class="bi bi-graph-up"></i> Reportes y Estadísticas
-        </span>
+          <i class="bi bi-bar-chart" style="font-size: 2rem; color: #1f4e79"></i>
+          <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Reportes</p>
+          <small style="color: #999">Módulo Reportes</small>
+        </div>
       </div>
-    </div>
 
-    <div style="z-index: 1; text-align: center">
-      <!-- Espacio reservado para logo de SEGEPLAN -->
-      <img src="assets/segeplan.png" alt="SEGEPLAN" style="height: 80px" />
-    </div>
-  </div>
-
-  <!-- TARJETAS DE ACCESO RÁPIDO -->
-  <div
-    *ngIf="false"
-    style="
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    "
-  >
-    <div
-      style="
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border-left: 4px solid #2e75b6;
-        text-align: center;
-      "
-    >
-      <i class="bi bi-cart-plus" style="font-size: 2rem; color: #2e75b6"></i>
-      <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Compra de Cupones</p>
-      <small style="color: #999">Módulo Compras</small>
-    </div>
-
-    <div
-      style="
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border-left: 4px solid #375623;
-        text-align: center;
-      "
-    >
-      <i class="bi bi-bookmarks" style="font-size: 2rem; color: #375623"></i>
-      <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Talonarios</p>
-      <small style="color: #999">Módulo Almacen</small>
-    </div>
-
-    <div
-      style="
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border-left: 4px solid #7b3f00;
-        text-align: center;
-      "
-    >
-      <i class="bi bi-receipt" style="font-size: 2rem; color: #7b3f00"></i>
-      <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Solicitudes de Cupones</p>
-      <small style="color: #999">Módulo Delegados</small>
-    </div>
-
-    <div
-      style="
-        background: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border-left: 4px solid #1f4e79;
-        text-align: center;
-      "
-    >
-      <i class="bi bi-bar-chart" style="font-size: 2rem; color: #1f4e79"></i>
-      <p style="margin: 0.5rem 0 0; font-weight: 600; color: #333">Reportes</p>
-      <small style="color: #999">Módulo Reportes</small>
-    </div>
-  </div>
-
-  <!-- MENSAJE INFORMATIVO -->
-  <div
-    style="
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 10px;
-      padding: 1.25rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    "
-  >
-    <i class="bi bi-info-circle-fill" style="font-size: 1.5rem; color: #2e75b6; flex-shrink: 0"></i>
-    <div *ngIf="false">
-      <strong style="color: #1f4e79">Sistema en fase de implementación</strong>
+      <!-- MENSAJE INFORMATIVO -->
+      <div
+        style="
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          border-radius: 10px;
+          padding: 1.25rem 1.5rem;
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        "
+      >
+        <i
+          class="bi bi-info-circle-fill"
+          style="font-size: 1.5rem; color: #2e75b6; flex-shrink: 0"
+        ></i>
+        <div *ngIf="false">
+          <strong style="color: #1f4e79">Sistema en fase de implementación</strong>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -39,6 +39,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./auth/reset-password/reset-password').then((m) => m.ResetPassword),
   },
+  // Ruta para cambio obligatorio de contraseña al primer ingreso
+  {
+    path: 'cambiar-clave',
+    loadComponent: () => import('./auth/cambiar-clave/cambiar-clave').then((m) => m.CambiarClave),
+  },
   {
     path: '',
     component: MainLayoutComponent,

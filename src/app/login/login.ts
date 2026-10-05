@@ -64,11 +64,17 @@ export class LoginComponent {
     // Llamar al servicio de autenticación
     this.authService.login(this.request).subscribe({
       next: (response) => {
-        // Login exitoso: guardar token y redirigir al dashboard
+        // Login exitoso: guardar token y datos del usuario
         this.authService.guardarToken(response);
         this.intentosFallidos = 0;
         this.cargando = false;
-        this.router.navigate(['/dashboard']);
+
+        // Si es primer ingreso, redirigir a cambiar contraseña obligatoriamente
+        if (response.primerIngreso === 'SI') {
+          this.router.navigate(['/cambiar-clave']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         // Login fallido: mostrar error y contar intento

@@ -28,9 +28,9 @@ export interface LoginResponse {
   roles: string[];
   expiracion: string;
   idUnidad: number;
-  idSede?: number;    // ← agregar esta línea
+  idSede?: number; // ← agregar esta línea
   tipoLugar: string;
   permisos: string[];
+  // Indica si el usuario debe cambiar su contraseña al primer ingreso
+  primerIngreso?: string;
 }
-
-

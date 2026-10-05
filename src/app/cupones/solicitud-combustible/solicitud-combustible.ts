@@ -109,6 +109,7 @@ export class SolicitudCombustibleComponent implements OnInit {
     this.formulario = this.fb.group({
       idVehiculo: ['', Validators.required],
       idPiloto: ['', Validators.required],
+      // idPiloto: [''],
       solicitante: ['', Validators.required],
       nivelTanque: ['', Validators.required],
       kilometraje: [''],
@@ -332,17 +333,17 @@ export class SolicitudCombustibleComponent implements OnInit {
 
   /** Carga pilotos disponibles */
   cargarPilotos(): void {
-  const url = this.idSedeUsuario
-    ? `${environment.apiUrl}/api/solicitud-combustible/pilotos-sede?idSede=${this.idSedeUsuario}`
-    : `${environment.apiUrl}/api/solicitud-combustible/pilotos-sede`;
+    const url = this.idSedeUsuario
+      ? `${environment.apiUrl}/api/solicitud-combustible/pilotos-sede?idSede=${this.idSedeUsuario}`
+      : `${environment.apiUrl}/api/solicitud-combustible/pilotos-sede`;
 
-  this.http.get<any[]>(url).subscribe({
-    next: (data) => {
-      this.pilotos = data;
-      this.cdr.detectChanges();
-    },
-  });
-}
+    this.http.get<any[]>(url).subscribe({
+      next: (data) => {
+        this.pilotos = data;
+        this.cdr.detectChanges();
+      },
+    });
+  }
 
   /** Carga cupones disponibles en la sede */
   cargarCuponesDisponibles(): void {
@@ -680,13 +681,13 @@ export class SolicitudCombustibleComponent implements OnInit {
     });
   }
 
- onModalAceptar(evento: { texto?: string; numero?: number }): void {
-  this.modalVisible = false;
-  if (this.modalAccion) {
-    this.modalAccion();
-    this.modalAccion = null;
+  onModalAceptar(evento: { texto?: string; numero?: number }): void {
+    this.modalVisible = false;
+    if (this.modalAccion) {
+      this.modalAccion();
+      this.modalAccion = null;
+    }
   }
-}
 
   onModalCancelar(): void {
     this.modalVisible = false;

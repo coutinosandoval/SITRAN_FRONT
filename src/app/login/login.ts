@@ -6,25 +6,22 @@ import { AuthService } from '../servicios/auth.service';
 import { LoginRequest } from '../modelos/auth.model';
 import { RouterModule } from '@angular/router';
 
-
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.html',
- 
 })
 export class LoginComponent {
-
   // Modelo que se enlaza con el formulario HTML
   request: LoginRequest = {
     usuario: '',
-    clave: ''
+    clave: '',
   };
 
   irARegistro(): void {
-  this.router.navigate(['/registro']);
-}
+    this.router.navigate(['/registro']);
+  }
 
   // Mensaje de error para mostrar al usuario
   mensajeError: string = '';
@@ -46,12 +43,11 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
   ) {}
 
   // Método que se ejecuta al hacer click en el botón Ingresar
   iniciarSesion(): void {
-
     // Limpiar mensajes anteriores
     this.mensajeError = '';
     this.mensajeBloqueado = '';
@@ -89,7 +85,12 @@ export class LoginComponent {
         } else {
           this.mensajeError = 'Ocurrió un error al intentar iniciar sesión.';
         }
-      }
+      },
     });
+  }
+
+  // Navega a la página de recuperación de contraseña
+  irAForgotPassword(): void {
+    this.router.navigate(['/forgot-password']);
   }
 }

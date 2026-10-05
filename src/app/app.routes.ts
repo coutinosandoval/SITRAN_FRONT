@@ -27,6 +27,18 @@ import { SolicitudCombustibleComponent } from './cupones/solicitud-combustible/s
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
+  // Ruta para solicitar recuperación de contraseña (sin autenticación)
+  {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
+  },
+  // Ruta para restablecer contraseña con token (sin autenticación)
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./auth/reset-password/reset-password').then((m) => m.ResetPassword),
+  },
   {
     path: '',
     component: MainLayoutComponent,

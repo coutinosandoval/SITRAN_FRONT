@@ -713,6 +713,7 @@ detalleDelegadoAsignados: any[] = [];
       error: (err: any) => {
         this.mensajeError = err.error?.mensaje || 'Error al registrar la compra.';
         this.cargando = false;
+        this.cdr.detectChanges();
       },
     });
   }

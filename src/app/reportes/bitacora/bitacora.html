@@ -1,0 +1,178 @@
+<!-- Módulo de Bitácora del Sistema -->
+<div class="container-fluid py-3">
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <!-- Botón regresar -->
+      <button class="btn btn-outline-secondary" (click)="location.back()">
+        <i class="bi bi-arrow-left me-1"></i> Regresar
+      </button>
+      <h4 class="mb-0"><i class="bi bi-journal-check"></i> Bitácora del Sistema</h4>
+    </div>
+    <span class="badge bg-secondary">{{ total }} registros</span>
+  </div>
+
+  <!-- Mensaje de error -->
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ mensajeError }}
+  </div>
+
+  <!-- Panel de filtros -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      <i class="bi bi-funnel"></i> Filtros de búsqueda
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <!-- Filtro por usuario con autocompletar -->
+        <div class="col-md-2 position-relative">
+          <label class="form-label fw-semibold">Usuario</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="filtroUsuario"
+            placeholder="Buscar usuario..."
+            (input)="buscarUsuarios()"
+            (blur)="ocultarSugerencias()"
+            (keyup.enter)="buscar()"
+          />
+          <!-- Lista de sugerencias de usuarios -->
+          <ul
+            *ngIf="mostrarSugerencias"
+            class="list-group position-absolute w-100 shadow-sm"
+            style="z-index: 1000; max-height: 200px; overflow-y: auto"
+          >
+            <li
+              *ngFor="let u of usuariosSugeridos"
+              class="list-group-item list-group-item-action"
+              style="cursor: pointer"
+              (mousedown)="seleccionarUsuario(u)"
+            >
+              {{ u }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Filtro por módulo -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Módulo</label>
+          <select class="form-select" [(ngModel)]="filtroModulo">
+            <option value="">Todos los módulos</option>
+            <option *ngFor="let m of modulos" [value]="m">{{ m }}</option>
+          </select>
+        </div>
+
+        <!-- Filtro por acción como dropdown -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Acción</label>
+          <select class="form-select" [(ngModel)]="filtroAccion">
+            <option value="">Todas las acciones</option>
+            <option *ngFor="let a of acciones" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+
+        <!-- Filtro por resultado -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Resultado</label>
+          <select class="form-select" [(ngModel)]="filtroResultado">
+            <option value="">Todos</option>
+            <option value="EXITOSO">Exitoso</option>
+            <option value="FALLIDO">Fallido</option>
+          </select>
+        </div>
+
+        <!-- Filtro por fecha inicio -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Fecha Inicio</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaInicio" />
+        </div>
+
+        <!-- Filtro por fecha fin -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Fecha Fin</label>
+          <input type="date" class="form-control" [(ngModel)]="filtroFechaFin" />
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary" (click)="buscar()" [disabled]="cargando">
+          <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!cargando" class="bi bi-search me-1"></i>
+          Buscar
+        </button>
+        <button class="btn btn-outline-secondary" (click)="limpiarFiltros()">
+          <i class="bi bi-x-circle me-1"></i> Limpiar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de registros -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover table-bordered mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Usuario</th>
+              <th>Módulo</th>
+              <th>Acción</th>
+              <th>Descripción</th>
+              <th class="text-center">Resultado</th>
+              <th>IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Fila por cada registro de bitácora -->
+            <tr *ngFor="let r of registros">
+              <td class="text-nowrap">{{ formatoFecha(r.fecha) }}</td>
+              <td>{{ r.usuario || '—' }}</td>
+              <td>
+                <span class="badge bg-primary">{{ r.modulo }}</span>
+              </td>
+              <td>{{ r.accion }}</td>
+              <td>{{ r.descripcion }}</td>
+              <td class="text-center">
+                <span [class]="claseResultado(r.resultado)">
+                  {{ r.resultado }}
+                </span>
+              </td>
+              <td class="text-muted small">{{ r.ip || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sin registros -->
+      <div *ngIf="!cargando && registros.length === 0" class="text-center py-5 text-muted">
+        <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
+        No se encontraron registros con los filtros seleccionados.
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div class="card-footer d-flex justify-content-between align-items-center" *ngIf="total > 0">
+      <small class="text-muted">
+        Página {{ pagina }} de {{ totalPaginas }} — {{ total }} registros
+      </small>
+      <div class="d-flex gap-2">
+        <button
+          class="btn btn-sm btn-outline-primary"
+          (click)="paginaAnterior()"
+          [disabled]="pagina === 1"
+        >
+          <i class="bi bi-chevron-left"></i> Anterior
+        </button>
+        <button
+          class="btn btn-sm btn-outline-primary"
+          (click)="paginaSiguiente()"
+          [disabled]="pagina >= totalPaginas"
+        >
+          Siguiente <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

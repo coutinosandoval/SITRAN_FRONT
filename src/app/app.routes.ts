@@ -33,6 +33,17 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
   },
+
+  // Ruta para el módulo de bitácora — solo Administrador y Jefe Admin
+{
+  path: 'bitacora',
+  loadComponent: () =>
+    import('./reportes/bitacora/bitacora').then(
+      (m) => m.Bitacora
+    ),
+  canActivate: [authGuard]
+},
+
   // Ruta para restablecer contraseña con token (sin autenticación)
   {
     path: 'reset-password',

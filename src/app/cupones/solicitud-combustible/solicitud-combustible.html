@@ -224,14 +224,24 @@
 
           <!-- Solicitante — autocomplete desde piloto, editable -->
           <div class="col-md-4 mb-3">
-            <label class="form-label">Solicitante <span class="text-danger">*</span></label>
+            <label class="form-label"> Solicitante <span class="text-danger">*</span> </label>
             <input
               type="text"
               class="form-control text-uppercase"
               formControlName="solicitante"
               [class.is-invalid]="tieneError('solicitante')"
               placeholder="Nombre del solicitante"
+              [readonly]="
+                !pilotoNoAsignado &&
+                formulario.get('idPiloto')?.value &&
+                formulario.get('idPiloto')?.value != '0'
+              "
             />
+            <!-- Mensaje cuando es piloto no asignado -->
+            <small class="text-info" *ngIf="pilotoNoAsignado">
+              <i class="bi bi-pencil me-1"></i>
+              Ingrese el nombre del solicitante manualmente
+            </small>
             <div class="invalid-feedback">Requerido.</div>
           </div>
 

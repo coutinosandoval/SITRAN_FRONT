@@ -88,6 +88,9 @@ export class SolicitudCombustibleComponent implements OnInit {
   mensajeExito: string = '';
   mensajeError: string = '';
 
+  // Indica si el piloto es "No Asignado" — permite ingreso manual del solicitante
+  pilotoNoAsignado: boolean = false;
+
   private apiUrl = `${environment.apiUrl}/api/solicitud-combustible`;
 
   constructor(
@@ -156,13 +159,24 @@ export class SolicitudCombustibleComponent implements OnInit {
   }
 
   /** Al seleccionar piloto, autocompleta el campo solicitante */
-  onPilotoSeleccionado(idPiloto: any): void {
-    const piloto = this.pilotos.find((p: any) => p.id == idPiloto);
-    if (piloto) {
-      this.formulario.patchValue({ solicitante: piloto.nombre });
-      this.cdr.detectChanges();
-    }
+ onPilotoSeleccionado(idPiloto: any): void {
+  const piloto = this.pilotos.find((p: any) => p.id == idPiloto);
+  
+  // Verificar si es el piloto "No Asignado" de la BD
+  if (piloto && piloto.nombre.toLowerCase().includes('no asignado')) {
+    this.formulario.patchValue({ solicitante: '' });
+    this.pilotoNoAsignado = true;
+    this.cdr.detectChanges();
+    return;
   }
+
+  // Piloto normal
+  this.pilotoNoAsignado = false;
+  if (piloto) {
+    this.formulario.patchValue({ solicitante: piloto.nombre });
+    this.cdr.detectChanges();
+  }
+}
 
   /** Confirma asignación del Jefe de Transportes — usa rangos individuales */
   confirmarAsignacionJefe(): void {

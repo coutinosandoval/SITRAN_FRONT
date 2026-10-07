@@ -356,6 +356,12 @@ export class CuponService {
     });
   }
 
+  // Obtiene el último rango comprado por denominación
+  obtenerUltimoRango(denominacion: number): Observable<any> {
+    const params = new HttpParams().set('denominacion', denominacion.toString());
+    return this.http.get<any>(`${environment.apiUrl}/api/compras/ultimo-rango`, { params });
+  }
+
   // Obtiene el resumen de cupones disponibles por sede
   obtenerResumenSedes(idSede?: number): Observable<any[]> {
     let params = new HttpParams();

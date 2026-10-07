@@ -6,7 +6,11 @@
       <i class="bi bi-bookmarks"></i>
       {{ esCompras || esAdmin ? 'Compras de Cupones' : 'Talonarios' }}
     </h4>
-    <button class="btn btn-primary btn-sm" *ngIf="esAdmin || esCompras" (click)="mostrarAgregar()">
+    <button
+      class="btn btn-primary btn-sm"
+      *ngIf="esAdmin || esCompras"
+      (click)="mostrarAgregar(); $event.stopPropagation()"
+    >
       <i class="bi bi-plus-circle"></i> Registrar Compra
     </button>
   </div>
@@ -940,6 +944,21 @@
           <div class="col-md-1"></div>
         </div>
 
+        <!-- Información de últimos rangos registrados -->
+        <div *ngIf="ultimoRangoQ50 || ultimoRangoQ100" class="alert alert-info py-2 mb-2">
+          <small>
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Últimos rangos comprados:</strong>
+            <span *ngIf="ultimoRangoQ50">
+              Q50: Del {{ ultimoRangoQ50.ultimoDel }} al {{ ultimoRangoQ50.ultimoAl }} (siguiente:
+              {{ ultimoRangoQ50.siguiente }})
+            </span>
+            <span *ngIf="ultimoRangoQ100">
+              | Q100: Del {{ ultimoRangoQ100.ultimoDel }} al
+              {{ ultimoRangoQ100.ultimoAl }} (siguiente: {{ ultimoRangoQ100.siguiente }})
+            </span>
+          </small>
+        </div>
         <!-- Filas de rangos -->
         <div *ngFor="let linea of lineasRango; let i = index" class="mb-2">
           <div class="row align-items-center g-2">
@@ -949,12 +968,24 @@
                 class="form-select form-select-sm"
                 [(ngModel)]="linea.denominacion"
                 [ngModelOptions]="{ standalone: true }"
-                (change)="linea.error = ''"
+                (change)="onDenominacionChange(linea, linea.denominacion)"
               >
-                <option [ngValue]="null">— Denominación —</option>
-                <option [ngValue]="50">Q 50.00</option>
-                <option [ngValue]="100">Q 100.00</option>
+                <option value="">— Denominación —</option>
+                <option value="50">Q 50.00</option>
+                <option value="100">Q 100.00</option>
               </select>
+
+              <!-- Mostrar último rango comprado como referencia -->
+              <small class="text-muted" *ngIf="linea.denominacion === 50 && ultimoRangoQ50">
+                <i class="bi bi-info-circle"></i>
+                Último rango Q50: Del {{ ultimoRangoQ50.ultimoDel }} al
+                {{ ultimoRangoQ50.ultimoAl }} — Siguiente sugerido: {{ ultimoRangoQ50.siguiente }}
+              </small>
+              <small class="text-muted" *ngIf="linea.denominacion === 100 && ultimoRangoQ100">
+                <i class="bi bi-info-circle"></i>
+                Último rango Q100: Del {{ ultimoRangoQ100.ultimoDel }} al
+                {{ ultimoRangoQ100.ultimoAl }} — Siguiente sugerido: {{ ultimoRangoQ100.siguiente }}
+              </small>
             </div>
 
             <!-- Del -->
@@ -1054,7 +1085,7 @@
 
           <div class="col-md-3">
             <div class="fs-4 fw-bold text-info">
-              {{ lineasRango.length }}
+              {{ totalLineasValidas }}
             </div>
             <div class="text-muted small">Rangos ingresados</div>
           </div>

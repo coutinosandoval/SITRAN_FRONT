@@ -130,6 +130,10 @@ export class TalonarioComponent implements OnInit {
   modalPlaceholder: string = '';
   modalAccion: (() => void) | null = null;
 
+  // Último rango comprado por denominación
+  ultimoRangoQ50: any = null;
+  ultimoRangoQ100: any = null;
+
   estados = [
     { id: 0, nombre: 'Todos' },
     { id: 1, nombre: 'Disponible' },
@@ -207,6 +211,12 @@ export class TalonarioComponent implements OnInit {
       this.cargarResumenSedes();
     }
 
+    // Cargar último rango al iniciar para Q50 y Q100
+    if (this.esAdmin || this.esCompras) {
+      this.cargarUltimoRango(50);
+      this.cargarUltimoRango(100);
+    }
+
     // Cargar sedes para el filtro del resumen
     if (this.esAdmin || this.authService.tienePermiso('VER_REPORTES_GENERALES')) {
       this.cargarSedesResumen();
@@ -266,6 +276,22 @@ export class TalonarioComponent implements OnInit {
           }
           return { ...r, numerosAsignados: numeros };
         });
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // Carga el último rango cuando cambia la denominación
+  cargarUltimoRango(denominacion: number): void {
+    console.log('cargarUltimoRango llamado con denominacion:', denominacion);
+    this.cuponService.obtenerUltimoRango(denominacion).subscribe({
+      next: (data) => {
+        console.log('ultimo rango data:', data);
+        if (denominacion === 50) {
+          this.ultimoRangoQ50 = data;
+        } else {
+          this.ultimoRangoQ100 = data;
+        }
         this.cdr.detectChanges();
       },
     });
@@ -522,6 +548,10 @@ export class TalonarioComponent implements OnInit {
   }
 
   mostrarAgregar(): void {
+    console.log('mostrarAgregar llamado');
+    this.ocultarTodo();
+    this.mostrarFormulario = true;
+    console.log('mostrarFormulario:', this.mostrarFormulario);
     this.ocultarTodo();
     this.mostrarFormulario = true;
     this.expendedorSeleccionado = null;
@@ -606,6 +636,15 @@ export class TalonarioComponent implements OnInit {
     this.lineasRango.push(this.lineaRangoVacia());
   }
 
+  // Maneja el cambio de denominación en una línea de rango
+  onDenominacionChange(linea: LineaRango, denominacion: number | null): void {
+    console.log('onDenominacionChange:', denominacion);
+    linea.error = '';
+    if (denominacion) {
+      this.cargarUltimoRango(denominacion);
+    }
+  }
+
   /** Elimina una línea — mínimo debe quedar 1 */
   eliminarLineaRango(index: number): void {
     if (this.lineasRango.length === 1) return;
@@ -628,6 +667,13 @@ export class TalonarioComponent implements OnInit {
   /** Total de cupones de todas las líneas */
   get totalCuponesCompra(): number {
     return this.lineasRango.reduce((acc, l) => acc + this.calcularCantidadLinea(l), 0);
+  }
+
+  // Cuenta solo las líneas que tienen datos completos
+  get totalLineasValidas(): number {
+    return this.lineasRango.filter(
+      (l) => l.denominacion != null && l.numeroDel != null && l.numeroAl != null,
+    ).length;
   }
 
   /** Monto total de todas las líneas */

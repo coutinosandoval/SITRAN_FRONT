@@ -47,11 +47,17 @@ export class AuthService {
     sessionStorage.clear();
   }
 
-  // Cierra la sesión del usuario
+  // Cierra la sesión del usuario — registra en bitácora y limpia sessionStorage
   logout(): void {
+    const token = this.obtenerToken();
+    if (token) {
+      // Notificar al backend para registrar el logout en bitácora
+      this.http.post(`${this.base}/logout`, {}).subscribe({
+        error: () => {}, // Si falla el registro, igual cerramos sesión
+      });
+    }
     sessionStorage.clear();
   }
-
   // Verifica si el usuario está autenticado
   estaAutenticado(): boolean {
     const token = sessionStorage.getItem('token');

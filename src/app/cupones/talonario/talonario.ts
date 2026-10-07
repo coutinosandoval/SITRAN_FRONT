@@ -42,6 +42,8 @@ export class TalonarioComponent implements OnInit {
   sedesConSolicitud: CatalogoItem[] = [];
   expendedoresFiltrados: CatalogoItem[] = [];
   inventarioBodegaAgrupado: any[] = [];
+  // Resumen de cupones por sede para Admin y Autoridad Nacional
+  resumenSedes: any[] = [];
 
   // Inventario agrupado para Delegado
   inventarioDelegadoAgrupado: any[] = [];
@@ -71,8 +73,14 @@ export class TalonarioComponent implements OnInit {
   detalleDelegadoDisponibles: any[] = [];
 
   // Expandibles asignados delegado
-denominacionDelegadoAsignadaExpandida: number | null = null;
-detalleDelegadoAsignados: any[] = [];
+  denominacionDelegadoAsignadaExpandida: number | null = null;
+  detalleDelegadoAsignados: any[] = [];
+
+  // ── Filtro de sede para resumen ───────────────────────────────
+  filtroSede: string = '';
+  sedesFiltroResumen: any[] = [];
+  mostrarSugerenciasSede: boolean = false;
+  todasLasSedes: any[] = [];
 
   // ─── Paginación ───
   paginaActual: number = 1;
@@ -148,7 +156,7 @@ detalleDelegadoAsignados: any[] = [];
     private cuponService: CuponService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private authService: AuthService,
+    public authService: AuthService,
   ) {
     // Formulario de compra — solo campos generales
     // Los rangos se manejan en lineasRango[]
@@ -190,25 +198,48 @@ detalleDelegadoAsignados: any[] = [];
   ngOnInit(): void {
     this.esDelegado = this.authService.tienePermiso('SOLICITAR_CUPONES');
     this.idSedeUsuario = this.authService.obtenerIdSede();
-    console.log('>>> ngOnInit - esDelegado:', this.esDelegado, 'idSede:', this.idSedeUsuario);
     this.esAdmin = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
     this.esCompras = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
     this.esBodega = this.authService.tienePermiso('GESTIONAR_SOLICITUDES_CUPONES');
-    this.esDelegado = this.authService.tienePermiso('SOLICITAR_CUPONES');
-    this.idSedeUsuario = this.authService.obtenerIdSede();
+
+    // Cargar resumen de sedes para Admin y Autoridad Nacional
+    if (this.esAdmin || this.authService.tienePermiso('VER_REPORTES_GENERALES')) {
+      this.cargarResumenSedes();
+    }
+
+    // Cargar sedes para el filtro del resumen
+    if (this.esAdmin || this.authService.tienePermiso('VER_REPORTES_GENERALES')) {
+      this.cargarSedesResumen();
+    }
+
+    // Si es Delegado, cargar solo su sede
+    if (this.esDelegado && !this.esAdmin) {
+      this.cargarResumenSedes(this.idSedeUsuario ?? undefined);
+    }
+
     if (this.esCompras || this.esAdmin) {
       this.cargarCompras();
     } else {
       this.cargarTalonarios();
     }
+
     this.cargarSedes();
     this.cargarExpendedores();
+
     if (this.esBodega) {
       this.cargarSedesConSolicitud();
     }
-    if (this.esDelegado) {
-      this.cargarInventarioDelegado();
+
+    // Cargar inventario de bodega también para Admin
+    if (this.esBodega || this.esAdmin) {
+      this.cuponService.obtenerInventarioBodegaAgrupado().subscribe({
+        next: (data) => {
+          this.inventarioBodegaAgrupado = data;
+          this.cdr.detectChanges();
+        },
+      });
     }
+
     if (this.esDelegado) {
       this.cargarInventarioDelegado();
     }
@@ -236,6 +267,19 @@ detalleDelegadoAsignados: any[] = [];
           return { ...r, numerosAsignados: numeros };
         });
         this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // Carga el resumen de cupones por sede
+  cargarResumenSedes(idSede?: number): void {
+    this.cuponService.obtenerResumenSedes(idSede).subscribe({
+      next: (data) => {
+        this.resumenSedes = data;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.mensajeError = 'Error al cargar resumen de sedes.';
       },
     });
   }
@@ -1128,30 +1172,69 @@ detalleDelegadoAsignados: any[] = [];
   }
 
   toggleDetalleAsignadosDelegado(denominacion: number): void {
-  if (this.denominacionDelegadoAsignadaExpandida === denominacion) {
-    this.denominacionDelegadoAsignadaExpandida = null;
-    this.detalleDelegadoAsignados              = [];
-    this.cdr.detectChanges();
-    return;
+    if (this.denominacionDelegadoAsignadaExpandida === denominacion) {
+      this.denominacionDelegadoAsignadaExpandida = null;
+      this.detalleDelegadoAsignados = [];
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.denominacionDelegadoAsignadaExpandida = denominacion;
+
+    if (!this.idSedeUsuario) return;
+
+    this.cuponService.obtenerSedeAsignadosDetalle(this.idSedeUsuario, denominacion).subscribe({
+      next: (data: any[]) => {
+        this.detalleDelegadoAsignados = data.map((r: any) => {
+          const numeros: number[] = [];
+          for (let i = r.numeroDel; i <= r.numeroAl; i++) {
+            numeros.push(i);
+          }
+          return { ...r, numerosAsignados: numeros };
+        });
+        this.cdr.detectChanges();
+      },
+    });
   }
 
-  this.denominacionDelegadoAsignadaExpandida = denominacion;
+  // Carga todas las sedes para el autocompletar
+  cargarSedesResumen(): void {
+    this.cuponService.obtenerSedes().subscribe({
+      next: (data) => {
+        this.todasLasSedes = data;
+      },
+    });
+  }
 
-  if (!this.idSedeUsuario) return;
+  // Filtra sedes según lo que escribe el usuario
+  buscarSedeResumen(): void {
+    if (!this.filtroSede || this.filtroSede.length < 2) {
+      this.sedesFiltroResumen = [];
+      this.mostrarSugerenciasSede = false;
+      return;
+    }
+    const busqueda = this.filtroSede.toUpperCase();
+    this.sedesFiltroResumen = this.todasLasSedes.filter((s: any) =>
+      s.nombre.toUpperCase().includes(busqueda),
+    );
+    this.mostrarSugerenciasSede = this.sedesFiltroResumen.length > 0;
+  }
 
-  this.cuponService.obtenerSedeAsignadosDetalle(this.idSedeUsuario, denominacion).subscribe({
-    next: (data: any[]) => {
-      this.detalleDelegadoAsignados = data.map((r: any) => {
-        const numeros: number[] = [];
-        for (let i = r.numeroDel; i <= r.numeroAl; i++) {
-          numeros.push(i);
-        }
-        return { ...r, numerosAsignados: numeros };
-      });
-      this.cdr.detectChanges();
-    },
-  });
-}
+  // Selecciona una sede y carga su resumen
+  seleccionarSedeResumen(sede: any): void {
+    this.filtroSede = sede.nombre;
+    this.mostrarSugerenciasSede = false;
+    this.cargarResumenSedes(sede.id);
+  }
 
+  // Oculta sugerencias al perder foco
+  ocultarSugerenciasSedeResumen(): void {
+    setTimeout(() => (this.mostrarSugerenciasSede = false), 200);
+  }
 
+  // Limpia filtro y muestra todas las sedes
+  limpiarFiltroSede(): void {
+    this.filtroSede = '';
+    this.cargarResumenSedes();
+  }
 }

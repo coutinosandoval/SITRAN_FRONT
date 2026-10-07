@@ -277,33 +277,29 @@ export class CuponService {
 
   /** Registra una nueva compra de cupones con rangos del-al */
   /** Registra una nueva compra de cupones con rangos del-al */
-  agregarCompra(
-                  dto: {
-                          fechaCompra: string;
-                          idExpendedor: number;
-                          fechaEmision: string;
-                          fechaVencimiento: string;
-                          observaciones?: string;
-                          detalles: {
-                                      denominacion: number;
-                                      numeroDel: number;
-                                      numeroAl: number;
-                                    }[];
-                        }
-                ): Observable<{ idCompra: number; mensaje: string }> 
-    {
-        return this.http.post<{ idCompra: number; mensaje: string }>
-          (
-              `${environment.apiUrl}/api/compras`,
-              dto,
-          );
-    }
+  agregarCompra(dto: {
+    fechaCompra: string;
+    idExpendedor: number;
+    fechaEmision: string;
+    fechaVencimiento: string;
+    observaciones?: string;
+    detalles: {
+      denominacion: number;
+      numeroDel: number;
+      numeroAl: number;
+    }[];
+  }): Observable<{ idCompra: number; mensaje: string }> {
+    return this.http.post<{ idCompra: number; mensaje: string }>(
+      `${environment.apiUrl}/api/compras`,
+      dto,
+    );
+  }
 
   /** Obtiene las compras del nuevo módulo */
   obtenerCompras(
     pagina: number = 1,
     porPagina: number = 10,
-   ): Observable<{ total: number; pagina: number; porPagina: number; datos: any[] }> {
+  ): Observable<{ total: number; pagina: number; porPagina: number; datos: any[] }> {
     const params = new HttpParams()
       .set('pagina', pagina.toString())
       .set('porPagina', porPagina.toString());
@@ -358,6 +354,13 @@ export class CuponService {
     return this.http.get<any[]>(`${environment.apiUrl}/api/solicitudes-cupones/rangos-bodega`, {
       params,
     });
+  }
+
+  // Obtiene el resumen de cupones disponibles por sede
+  obtenerResumenSedes(idSede?: number): Observable<any[]> {
+    let params = new HttpParams();
+    if (idSede) params = params.set('idSede', idSede.toString());
+    return this.http.get<any[]>(`${environment.apiUrl}/api/cupon/resumen-sedes`, { params });
   }
 
   /** Delegado crea una solicitud por monto */

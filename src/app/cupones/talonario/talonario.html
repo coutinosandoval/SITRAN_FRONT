@@ -256,8 +256,94 @@
     </div>
   </div>
 
+  <!-- Resumen de cupones por sede — visible para Admin, Autoridad Nacional y Delegado -->
+  <!-- Resumen de cupones por sede — visible para Admin y Autoridad Nacional -->
+  <div
+    *ngIf="esAdmin || authService.tienePermiso('VER_REPORTES_GENERALES')"
+    class="card shadow-sm mb-3"
+  >
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h6 class="mb-0"><i class="bi bi-building"></i> Saldo de Cupones por Sede</h6>
+    </div>
+    <div class="card-body">
+      <!-- Buscador de sede -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-4 position-relative">
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="filtroSede"
+            placeholder="Buscar sede... (dejar vacío para ver todas)"
+            (input)="buscarSedeResumen()"
+            (blur)="ocultarSugerenciasSedeResumen()"
+          />
+          <!-- Sugerencias de sedes -->
+          <ul
+            *ngIf="mostrarSugerenciasSede"
+            class="list-group position-absolute w-100 shadow-sm"
+            style="z-index: 1000; max-height: 200px; overflow-y: auto"
+          >
+            <li
+              *ngFor="let s of sedesFiltroResumen"
+              class="list-group-item list-group-item-action"
+              style="cursor: pointer"
+              (mousedown)="seleccionarSedeResumen(s)"
+            >
+              {{ s.nombre }}
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-secondary w-100" (click)="limpiarFiltroSede()">
+            <i class="bi bi-x-circle me-1"></i> Ver todas
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de saldos -->
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Sede</th>
+              <th class="text-center">Denominación</th>
+              <th class="text-center">Ingresado</th>
+              <th class="text-center">Entregado a Pilotos</th>
+              <th class="text-center">Vencidos</th>
+              <th class="text-center">Saldo Disponible</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of resumenSedes">
+              <td>{{ r.sede }}</td>
+              <td class="text-center">
+                <span class="badge bg-info text-dark">Q{{ r.denominacion }}.00</span>
+              </td>
+              <td class="text-center">{{ r.ingresado | number }}</td>
+              <td class="text-center text-warning fw-bold">{{ r.entregado | number }}</td>
+              <td class="text-center">
+                <span [class]="r.vencidos > 0 ? 'badge bg-danger' : 'badge bg-secondary'">
+                  {{ r.vencidos | number }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span [class]="r.saldo > 0 ? 'badge bg-success' : 'badge bg-danger'">
+                  {{ r.saldo | number }}
+                </span>
+              </td>
+            </tr>
+            <!-- Sin registros -->
+            <tr *ngIf="resumenSedes.length === 0">
+              <td colspan="6" class="text-center py-3 text-muted">No hay datos disponibles.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <!-- ── INVENTARIO AGRUPADO DELEGADO ───────────────────────── -->
-  <div *ngIf="esDelegado" class="card shadow-sm mb-3">
+  <div *ngIf="esDelegado && !esAdmin" class="card shadow-sm mb-3">
     <div class="card-header bg-dark text-white">
       <h6 class="mb-0"><i class="bi bi-box-seam"></i> Resumen de Inventario por Denominación</h6>
     </div>

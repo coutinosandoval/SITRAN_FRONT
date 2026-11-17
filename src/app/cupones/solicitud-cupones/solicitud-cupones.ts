@@ -469,9 +469,8 @@ export class SolicitudCuponesComponent implements OnInit {
       next: (res: any) => {
         this.mensajeExito = 'Solicitud finalizada correctamente.';
         // Si el backend devuelve URL del PDF, abrirlo
-        if (res?.urlPdf) {
-          window.open(`https://localhost:7069${res.urlPdf}`, '_blank');
-        }
+        // Abrir PDF por PdfController (con token), no directo desde wwwroot
+        if (res?.urlPdf) this.authService.abrirPdf(res.urlPdf);
         this.volverLista();
         this.cargarSolicitudes();
       },

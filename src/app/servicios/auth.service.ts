@@ -122,10 +122,14 @@ export class AuthService {
     const val = sessionStorage.getItem('idSede');
     return val ? parseInt(val) : null;
   }
-  // En auth.service.ts — agrega este método
+  /**
+   * Abre un PDF pasando por PdfController (con token JWT).
+   * Si el PDF no existe, muestra un aviso en lugar de abrir el JSON de error.
+   */
   abrirPdf(urlPdf: string): void {
     const nombreArchivo = urlPdf.split('/').pop();
 
+    // Determinar la subcarpeta según la URL guardada
     let carpeta = 'solicitudes';
     if (urlPdf.includes('/combustible/')) carpeta = 'combustible';
     if (urlPdf.includes('/reportes/')) carpeta = 'reportes';
@@ -135,12 +139,16 @@ export class AuthService {
     fetch(`${environment.apiUrl}/api/pdf/${carpeta}/${nombreArchivo}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.blob())
+      .then((res) => {
+        // Si el backend responde error (ej. 404), avisar en lugar de abrir el JSON
+        if (!res.ok) throw new Error('PDF no disponible');
+        return res.blob();
+      })
       .then((blob) => {
         const url = window.URL.createObjectURL(blob);
         window.open(url, '_blank');
         setTimeout(() => window.URL.revokeObjectURL(url), 10000);
       })
-      .catch(() => console.error('Error al abrir PDF'));
+      .catch(() => alert('El documento PDF no está disponible.'));
   }
 }

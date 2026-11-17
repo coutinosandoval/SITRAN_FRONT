@@ -1,0 +1,100 @@
+<!-- Botón: solo para quien tiene GESTIONAR_FOLIOS -->
+<button
+  *ngIf="puedeImprimir"
+  class="btn btn-sm btn-warning"
+  (click)="abrir()"
+  [disabled]="!idSede || !fechaIni || !fechaFin"
+  title="Genera el Excel con folios y descuenta los folios del rango de la sede"
+>
+  <i class="bi bi-printer"></i> Imprimir con folios
+</button>
+
+<!-- Diálogo de confirmación -->
+<ng-container *ngIf="mostrarModal">
+  <div class="modal-backdrop fade show"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-dark">
+
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-printer"></i> Imprimir con folios</h5>
+          <button type="button" class="btn-close" (click)="cerrar()"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Calculando -->
+          <div *ngIf="consultando" class="text-center py-3">
+            <span class="spinner-border spinner-border-sm me-2"></span> Calculando folios...
+          </div>
+
+          <!-- Error -->
+          <div *ngIf="mensajeError" class="alert alert-danger mb-2">{{ mensajeError }}</div>
+
+          <!-- No se puede imprimir (sin rango, sin folios, fechas ya impresas...) -->
+          <div *ngIf="prevista && !prevista.valido && !resultado" class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle"></i> {{ prevista.mensaje }}
+          </div>
+
+          <!-- Vista previa válida -->
+          <div *ngIf="prevista && prevista.valido && !resultado">
+            <p class="mb-2">
+              <strong>{{ nombreSede }}</strong> — Q{{ denominacion }}.00<br />
+              Periodo: {{ fechaIni }} al {{ fechaFin }}
+            </p>
+            <ul class="list-group mb-3">
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Renglones</span><strong>{{ prevista.totalFilas }}</strong>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Hojas a imprimir</span><strong>{{ prevista.hojas }}</strong>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Folios que se usarán</span>
+                <strong>{{ prevista.folioInicial }} al {{ prevista.folioFinal }}</strong>
+              </li>
+              <li class="list-group-item d-flex justify-content-between">
+                <span>Folios que quedarán disponibles</span><strong>{{ restantes }}</strong>
+              </li>
+            </ul>
+
+            <!-- Aviso de pocos folios -->
+            <div *ngIf="restantes !== null && restantes <= UMBRAL_ALERTA" class="alert alert-warning py-2">
+              <i class="bi bi-exclamation-triangle"></i>
+              Quedarán pocos folios. Solicite un nuevo rango de folios.
+            </div>
+
+            <small class="text-muted">
+              Al confirmar, los folios quedan asignados a estas hojas y se descuentan del rango de la sede.
+              Para volver a imprimirlas use <em>Reimprimir</em> en Control de Folios.
+            </small>
+          </div>
+
+          <!-- Resultado -->
+          <div *ngIf="resultado" class="alert alert-success mb-0">
+            <i class="bi bi-check-circle"></i>
+            Impresión realizada. Folios <strong>{{ resultado.folioInicial }}</strong> al
+            <strong>{{ resultado.folioFinal }}</strong> (lote {{ resultado.lote }}).
+            El archivo se descargó.
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="cerrar()" [disabled]="imprimiendo">
+            {{ resultado ? 'Cerrar' : 'Cancelar' }}
+          </button>
+          <button
+            *ngIf="prevista?.valido && !resultado"
+            class="btn btn-warning"
+            (click)="confirmar()"
+            [disabled]="imprimiendo"
+          >
+            <span *ngIf="imprimiendo" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!imprimiendo" class="bi bi-printer"></i>
+            Confirmar e imprimir
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</ng-container>

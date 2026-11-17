@@ -21,7 +21,7 @@ import { ComisionLocalComponent } from './comisiones/comision-local/comision-loc
 import { PorteriaComponent } from './porteria/porteria';
 import { ReporteCuponesVehiculo } from './reportes/reporte-cupones-vehiculo/reporte-cupones-vehiculo';
 import { ReporteCombustibleComponent } from './reportes/reporte-combustible/reporte-combustible';
-
+import { permisoGuard } from './login/permiso.guard';
 import { SolicitudCombustibleComponent } from './cupones/solicitud-combustible/solicitud-combustible';
 
 export const routes: Routes = [
@@ -34,15 +34,13 @@ export const routes: Routes = [
       import('./auth/forgot-password/forgot-password').then((m) => m.ForgotPassword),
   },
 
-  // Ruta para el módulo de bitácora — solo Administrador y Jefe Admin
-{
-  path: 'bitacora',
-  loadComponent: () =>
-    import('./reportes/bitacora/bitacora').then(
-      (m) => m.Bitacora
-    ),
-  canActivate: [authGuard]
-},
+  // Bitácora (está fuera del layout, al inicio del archivo)
+  {
+    path: 'bitacora',
+    loadComponent: () => import('./reportes/bitacora/bitacora').then((m) => m.Bitacora),
+    canActivate: [permisoGuard],
+    data: { permiso: 'VER_BITACORA' },
+  },
 
   // Ruta para restablecer contraseña con token (sin autenticación)
   {
@@ -61,53 +59,18 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'porteria', component: PorteriaComponent, canActivate: [authGuard] },
+
+      // Dashboard: es la página de inicio y también el destino cuando falta un permiso,
+      // por eso solo pide sesión (con guard por permiso causaría un ciclo de redirecciones)
       { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] },
-      { path: 'vehiculos', component: VehiculoComponent, canActivate: [authGuard] },
-      {
-        path: 'vehiculos/mantenimientos',
-        component: MantenimientoComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'vehiculos/historico-kilometraje',
-        component: HistoricoKmComponent,
-        canActivate: [authGuard],
-      },
-      { path: 'pilotos', component: PilotoComponent, canActivate: [authGuard] },
-      { path: 'catalogos', component: CatalogoComponent, canActivate: [authGuard] },
-      { path: 'cupones/talonarios', component: TalonarioComponent, canActivate: [authGuard] },
+
+      // ── Opciones ocultas temporalmente en el menú: por ahora solo piden sesión ──
+      { path: 'porteria', component: PorteriaComponent, canActivate: [authGuard] },
+      { path: 'comisiones', component: ComisionComponent, canActivate: [authGuard] },
+      { path: 'comision-local', component: ComisionLocalComponent, canActivate: [authGuard] },
       {
         path: 'cupones/solicitudes-talonario',
         component: SolicitudTalonarioComponent,
-        canActivate: [authGuard],
-      },
-      { path: 'comisiones', component: ComisionComponent, canActivate: [authGuard] },
-      { path: 'comision-local', component: ComisionLocalComponent, canActivate: [authGuard] },
-      { path: 'seguridad/usuarios', component: SeguridadComponent, canActivate: [authGuard] },
-      { path: 'compras', component: ComprasComponent, canActivate: [authGuard] },
-      { path: 'seguridad/roles', component: SeguridadComponent, canActivate: [authGuard] },
-      { path: 'reportes-ia', component: ReporteIAComponent },
-      {
-        path: 'reportes/vehiculos',
-        component: BitacoraVehiculosComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'solicitudes-cupones',
-        component: SolicitudCuponesComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'reportes/cupones',
-        loadComponent: () =>
-          import('./reportes/reporte-cupones/reporte-cupones').then(
-            (m) => m.ReporteCuponesComponent,
-          ),
-      },
-      {
-        path: 'solicitud-combustible',
-        component: SolicitudCombustibleComponent,
         canActivate: [authGuard],
       },
       {
@@ -115,17 +78,130 @@ export const routes: Routes = [
         component: ReporteCombustibleComponent,
         canActivate: [authGuard],
       },
+
+      // ── Vehículos ──
+      {
+        path: 'vehiculos',
+        component: VehiculoComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_VEHICULOS' },
+      },
+      {
+        path: 'vehiculos/mantenimientos',
+        component: MantenimientoComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_VEHICULOS' },
+      },
+      {
+        path: 'vehiculos/historico-kilometraje',
+        component: HistoricoKmComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_VEHICULOS' },
+      },
+
+      // ── Pilotos y catálogos ──
+      {
+        path: 'pilotos',
+        component: PilotoComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_PILOTOS' },
+      },
+      {
+        path: 'catalogos',
+        component: CatalogoComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_CATALOGOS' },
+      },
+
+      // ── Cupones ──
+      {
+        path: 'cupones/talonarios',
+        component: TalonarioComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_TALONARIOS' },
+      },
+      {
+        path: 'compras',
+        component: ComprasComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'GESTIONAR_COMPRAS_TALONARIOS' },
+      },
+      {
+        path: 'solicitudes-cupones',
+        component: SolicitudCuponesComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_SOLICITUDES_CUPONES' },
+      },
+      {
+        path: 'solicitud-combustible',
+        component: SolicitudCombustibleComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_COMBUSTIBLE_VEHICULOS' },
+      },
+
+      // ── Seguridad ──
+      {
+        path: 'seguridad/usuarios',
+        component: SeguridadComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_SEGURIDAD_USUARIOS' },
+      },
+      {
+        path: 'seguridad/roles',
+        component: SeguridadComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_SEGURIDAD_ROLES' },
+      },
+
+      // ── Reportes ──
+      {
+        path: 'reportes-ia',
+        component: ReporteIAComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_REPORTES_IA' },
+      },
+      {
+        path: 'reportes/vehiculos',
+        component: BitacoraVehiculosComponent,
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_REPORTES_VEHICULOS' },
+      },
+      {
+        path: 'reportes/cupones',
+        loadComponent: () =>
+          import('./reportes/reporte-cupones/reporte-cupones').then(
+            (m) => m.ReporteCuponesComponent,
+          ),
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_REPORTE_CUPONES_SEDE' },
+      },
       {
         path: 'reportes/cupones-vehiculo',
         component: ReporteCuponesVehiculo,
-        canActivate: [authGuard],
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_REPORTE_CUPONES_VEHICULO' },
       },
-
       {
         path: 'reportes/libro-control',
         loadComponent: () =>
           import('./reportes/libro-control/libro-control').then((m) => m.LibroControl),
-        canActivate: [authGuard],
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_LIBRO_CONTROL_ALMACEN' },
+      },
+      {
+        path: 'reportes/libro-control-sedes',
+        loadComponent: () =>
+          import('./reportes/libro-control-sedes/libro-control-sedes').then(
+            (m) => m.LibroControlSedes,
+          ),
+        canActivate: [permisoGuard],
+        data: { permiso: 'VER_LIBRO_CONTROL_SEDES' },
+      },
+      {
+        path: 'folios',
+        loadComponent: () => import('./folios/control-folios').then((m) => m.ControlFolios),
+        canActivate: [permisoGuard],
+        data: { permiso: 'GESTIONAR_FOLIOS' },
       },
     ],
   },

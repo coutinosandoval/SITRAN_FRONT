@@ -9,6 +9,7 @@
       </button>
     </div>
 
+    <!-- Mensajes -->
     <div *ngIf="mensajeExito" class="alert alert-success alert-dismissible">
       <i class="bi bi-check-circle"></i> {{ mensajeExito }}
       <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
@@ -18,6 +19,7 @@
       <button type="button" class="btn-close" (click)="limpiarMensajes()"></button>
     </div>
 
+    <!-- Búsqueda -->
     <div class="card shadow-sm mb-3">
       <div class="card-body py-2">
         <div class="row align-items-center g-2">
@@ -50,6 +52,7 @@
       </div>
     </div>
 
+    <!-- Tabla -->
     <div class="card shadow-sm">
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -118,6 +121,8 @@
           </table>
         </div>
       </div>
+
+      <!-- Paginación -->
       <div
         class="card-footer d-flex justify-content-between align-items-center"
         *ngIf="totalPaginas > 1"
@@ -144,7 +149,7 @@
     </div>
   </div>
 
-  <!-- ================= FORMULARIO ================= -->
+  <!-- ================= FORMULARIO (agregar / editar) ================= -->
   <div *ngIf="mostrarFormulario">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4 class="mb-0">
@@ -166,6 +171,7 @@
         </div>
         <div class="card-body">
           <div class="row">
+            <!-- Fila 1: Placa, N° Inventario, Año -->
             <div class="col-md-4 mb-3">
               <label class="form-label">Placa <span class="text-danger">*</span></label>
               <input
@@ -202,6 +208,7 @@
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
+            <!-- Fila 2: Marca, Modelo, Color -->
             <div class="col-md-4 mb-3">
               <label class="form-label">Marca <span class="text-danger">*</span></label>
               <input
@@ -236,6 +243,7 @@
               />
             </div>
 
+            <!-- Fila 3: Tipo de vehículo, combustible, transmisión -->
             <div class="col-md-4 mb-3">
               <label class="form-label">Tipo de Vehículo <span class="text-danger">*</span></label>
               <select
@@ -243,8 +251,8 @@
                 formControlName="idTipoVehiculo"
                 [class.is-invalid]="tieneError('idTipoVehiculo')"
               >
-                <option value="">Seleccione...</option>
-                <option *ngFor="let t of catalogos.tiposVehiculo" [value]="t.id">
+                <option [ngValue]="null" disabled></option>
+                <option *ngFor="let t of catalogos.tiposVehiculo" [ngValue]="t.id">
                   {{ t.nombre }}
                 </option>
               </select>
@@ -260,9 +268,9 @@
                 formControlName="idTipoCombustible"
                 [class.is-invalid]="tieneError('idTipoCombustible')"
               >
-                <option value="">Seleccione...</option>
-                <option *ngFor="let t of catalogos.tiposCombustible" [value]="t.id">
-                  {{ t.nombre }}
+                <option [ngValue]="null" disabled></option>
+                <option *ngFor="let c of catalogos.tiposCombustible" [ngValue]="c.id">
+                  {{ c.nombre }}
                 </option>
               </select>
               <div class="invalid-feedback">Requerido.</div>
@@ -277,14 +285,15 @@
                 formControlName="idTipoTransmision"
                 [class.is-invalid]="tieneError('idTipoTransmision')"
               >
-                <option value="">Seleccione...</option>
-                <option *ngFor="let t of catalogos.tiposTransmision" [value]="t.id">
-                  {{ t.nombre }}
+                <option [ngValue]="null" disabled></option>
+                <option *ngFor="let tr of catalogos.tiposTransmision" [ngValue]="tr.id">
+                  {{ tr.nombre }}
                 </option>
               </select>
               <div class="invalid-feedback">Requerido.</div>
             </div>
 
+            <!-- Fila 4: Sede, N° Chasis, N° VIN -->
             <div class="col-md-4 mb-3">
               <label class="form-label">Sede <span class="text-danger">*</span></label>
               <select
@@ -292,8 +301,10 @@
                 formControlName="idSede"
                 [class.is-invalid]="tieneError('idSede')"
               >
-                <option value="">Seleccione...</option>
-                <option *ngFor="let s of catalogos.sedes" [value]="s.id">{{ s.nombre }}</option>
+                <option [ngValue]="null" disabled></option>
+                <option *ngFor="let s of catalogos.sedes" [ngValue]="s.id">
+                  {{ s.nombre }}
+                </option>
               </select>
               <div class="invalid-feedback">Requerido.</div>
             </div>
@@ -318,6 +329,7 @@
               />
             </div>
 
+            <!-- Fila 5: datos técnicos -->
             <div class="col-md-3 mb-3">
               <label class="form-label">Tamaño Motor (cc)</label>
               <input
@@ -361,6 +373,7 @@
         </div>
       </div>
 
+      <!-- Botones -->
       <div class="d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-secondary" (click)="volverLista()">
           <i class="bi bi-x-circle"></i> Cancelar
@@ -494,6 +507,7 @@
   </div>
 </div>
 
+<!-- Modal compartido de confirmación -->
 <app-modal
   [visible]="modalVisible"
   [titulo]="modalTitulo"

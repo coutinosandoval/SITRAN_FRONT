@@ -39,17 +39,14 @@
       <span>Pilotos</span>
     </a>
 
-    <!-- Cupones -->
+    <!-- Cupones — el grupo se muestra si el usuario tiene al menos una de sus opciones -->
     <div
       class="menu-group"
       *ngIf="
         tienePermiso('VER_TALONARIOS') ||
-        tienePermiso('SOLICITAR_CUPONES') ||
-        tienePermiso('GESTIONAR_SOLICITUDES_CUPONES') ||
-        tienePermiso('AUTORIZAR_SOLICITUDES_CUPONES') ||
         tienePermiso('GESTIONAR_COMPRAS_TALONARIOS') ||
-        tienePermiso('SOLICITAR_COMBUSTIBLE') ||
-        tienePermiso('GESTIONAR_COMBUSTIBLE')
+        tienePermiso('VER_SOLICITUDES_CUPONES') ||
+        tienePermiso('VER_COMBUSTIBLE_VEHICULOS')
       "
     >
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuCupones">
@@ -58,6 +55,7 @@
         <i class="bi bi-chevron-down ms-auto"></i>
       </a>
       <div class="collapse" id="menuCupones">
+        <!-- Talonarios -->
         <a
           *ngIf="tienePermiso('VER_TALONARIOS')"
           routerLink="/cupones/talonarios"
@@ -75,6 +73,7 @@
         >
           <i class="bi bi-file-earmark-text"></i> Solicitudes
         </a>
+        <!-- Compra de Cupones -->
         <a
           *ngIf="tienePermiso('GESTIONAR_COMPRAS_TALONARIOS')"
           routerLink="/compras"
@@ -83,21 +82,18 @@
         >
           <i class="bi bi-cart-plus"></i> Compra de Cupones
         </a>
+        <!-- Solicitudes de Cupones -->
         <a
-          *ngIf="
-            tienePermiso('SOLICITAR_CUPONES') ||
-            tienePermiso('GESTIONAR_SOLICITUDES_CUPONES') ||
-            tienePermiso('AUTORIZAR_SOLICITUDES_CUPONES')
-          "
+          *ngIf="tienePermiso('VER_SOLICITUDES_CUPONES')"
           routerLink="/solicitudes-cupones"
           routerLinkActive="active"
           class="menu-item submenu-item"
         >
           <i class="bi bi-receipt"></i> Solicitudes de Cupones
         </a>
-        <!-- Combustible Vehículos oculto temporalmente -->
+        <!-- Combustible Vehículos -->
         <a
-          *ngIf="tienePermiso('SOLICITAR_COMBUSTIBLE') || tienePermiso('GESTIONAR_COMBUSTIBLE')"
+          *ngIf="tienePermiso('VER_COMBUSTIBLE_VEHICULOS')"
           routerLink="/solicitud-combustible"
           routerLinkActive="active"
           class="menu-item submenu-item"
@@ -133,10 +129,16 @@
       <span>Facturas</span>
     </a>
 
-    <!-- Reportes -->
+    <!-- Reportes — el grupo se muestra si el usuario tiene al menos un reporte -->
     <div
       class="menu-group"
-      *ngIf="tienePermiso('VER_REPORTES_CUPONES') || tienePermiso('GESTIONAR_SOLICITUDES_CUPONES')"
+      *ngIf="
+        tienePermiso('VER_REPORTE_CUPONES_SEDE') ||
+        tienePermiso('VER_REPORTE_CUPONES_VEHICULO') ||
+        tienePermiso('VER_LIBRO_CONTROL_ALMACEN') ||
+        tienePermiso('VER_LIBRO_CONTROL_SEDES') ||
+        tienePermiso('VER_BITACORA')
+      "
     >
       <a class="menu-item menu-toggle collapsed" data-bs-toggle="collapse" href="#menuReportes">
         <i class="bi bi-bar-chart"></i>
@@ -171,27 +173,60 @@
         >
           <i class="bi bi-briefcase"></i> Comisiones
         </a>
+
+        <!-- Reporte de Cupones -->
         <a
-          *ngIf="tienePermiso('VER_REPORTES_CUPONES')"
+          *ngIf="tienePermiso('VER_REPORTE_CUPONES_SEDE')"
           routerLink="/reportes/cupones"
           routerLinkActive="active"
           class="menu-item submenu-item"
         >
           <i class="bi bi-fuel-pump"></i> Cupones
         </a>
+
+        <!-- Reporte de Cupones por Vehículo -->
         <a
-          *ngIf="tienePermiso('VER_REPORTES_CUPONES')"
+          *ngIf="tienePermiso('VER_REPORTE_CUPONES_VEHICULO')"
           routerLink="/reportes/cupones-vehiculo"
           routerLinkActive="active"
           class="menu-item submenu-item"
         >
           <i class="bi bi-truck"></i> Cupones por Vehículo
         </a>
-        <!-- Enlace a bitácora — solo Administrador y Jefe Admin -->
+
+        <!-- Libro de Control Almacén (Bodega Central, sin placas) -->
         <a
-          *ngIf="
-            tienePermiso('VER_REPORTES_GENERALES') || tienePermiso('GESTIONAR_COMPRAS_TALONARIOS')
-          "
+          *ngIf="tienePermiso('VER_LIBRO_CONTROL_ALMACEN')"
+          routerLink="/reportes/libro-control"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
+          <i class="bi bi-journal-text"></i> Libro de Control Almacén
+        </a>
+
+        <!-- Libro de Control por Sedes (con placas) -->
+        <a
+          *ngIf="tienePermiso('VER_LIBRO_CONTROL_SEDES')"
+          routerLink="/reportes/libro-control-sedes"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
+          <i class="bi bi-journal-richtext"></i> Libro de Control por Sedes
+        </a>
+
+        <!-- Control de Folios: rango autorizado, historial, reimprimir y anular -->
+        <a
+          *ngIf="tienePermiso('GESTIONAR_FOLIOS')"
+          routerLink="/folios"
+          routerLinkActive="active"
+          class="menu-item submenu-item"
+        >
+          <i class="bi bi-journal-check"></i> Control de Folios
+        </a>
+
+        <!-- Bitácora del sistema -->
+        <a
+          *ngIf="tienePermiso('VER_BITACORA')"
           routerLink="/bitacora"
           routerLinkActive="active"
           class="menu-item submenu-item"
@@ -199,6 +234,7 @@
           <i class="bi bi-journal-check"></i>
           <span>Bitácora</span>
         </a>
+
         <!-- Consumo Combustible oculto temporalmente -->
         <a
           *ngIf="false"

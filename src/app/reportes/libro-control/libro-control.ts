@@ -5,11 +5,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { AuthService } from '../../servicios/auth.service';
 import { SedeService, Sede } from '../../servicios/sede.service';
 import { environment } from '../../../environments/environment';
+import { ImprimirFolios } from '../imprimir-folios/imprimir-folios';
 
 @Component({
   selector: 'app-libro-control',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ImprimirFolios],
   templateUrl: './libro-control.html',
 })
 export class LibroControl implements OnInit {
@@ -67,30 +68,9 @@ export class LibroControl implements OnInit {
     this.fechaIni = primerDia.toISOString().split('T')[0];
     this.fechaFin = hoy.toISOString().split('T')[0];
 
-    if (this.esAdmin) {
-      // Admin — cargar todas las sedes para autobúsqueda
-      this.sedeService.obtenerSedes().subscribe({
-        next: (data) => {
-          this.sedes = data;
-        },
-      });
-    } else if (this.esBodega) {
-      // Bodega — fija sede 41
-      this.idSede = 41;
-      this.nombreSedeBusqueda = 'Bodega Central';
-    } else {
-      // Jefe/Delegado — cargar nombre de su sede
-      this.idSede = this.idSedeUsuario;
-      if (this.idSedeUsuario) {
-        this.sedeService.obtenerSedes().subscribe({
-          next: (data) => {
-            const sede = data.find((s) => s.id === this.idSedeUsuario);
-            if (sede) this.nombreSedeBusqueda = sede.nombre;
-            this.cdr.detectChanges();
-          },
-        });
-      }
-    }
+    // Libro de Control Almacén: siempre es de Bodega Central (id 41), sin elegir sede
+    this.idSede = 41;
+    this.nombreSedeBusqueda = 'Almacen';
   }
 
   // ── Autocompletado ───────────────────────────────────────

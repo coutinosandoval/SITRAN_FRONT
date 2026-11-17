@@ -176,7 +176,7 @@ export class SolicitudCombustibleComponent implements OnInit {
     this.formulario.patchValue({ solicitante: piloto.nombre });
     this.cdr.detectChanges();
   }
-}
+} 
 
   /** Confirma asignación del Jefe de Transportes — usa rangos individuales */
   confirmarAsignacionJefe(): void {

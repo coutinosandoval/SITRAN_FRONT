@@ -1,7 +1,7 @@
 <div class="container-fluid py-3">
   <!-- Encabezado -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0"><i class="bi bi-journal-text"></i> Libro de Control de Cupones</h4>
+    <h4 class="mb-0"><i class="bi bi-journal-text"></i> Libro de Control Almacén</h4>
   </div>
 
   <!-- Error -->
@@ -16,42 +16,13 @@
     </div>
     <div class="card-body" style="overflow: visible">
       <div class="row g-3">
-        <!-- Sede autobúsqueda — solo para admin con VER_REPORTES_GENERALES -->
-        <div class="col-md-3 position-relative" *ngIf="esAdmin">
-          <label class="form-label fw-semibold">Sede <span class="text-danger">*</span></label>
-          <input
-            type="text"
-            class="form-control"
-            [(ngModel)]="nombreSedeBusqueda"
-            (input)="buscarSede()"
-            (focus)="buscarSede()"
-            (blur)="ocultarSugerencias()"
-            placeholder="Buscar sede..."
-            autocomplete="off"
-          />
-          <ul
-            class="list-group position-absolute w-100 shadow-sm"
-            style="z-index: 1000; max-height: 200px; overflow-y: auto"
-            *ngIf="mostrarSugerencias"
-          >
-            <li
-              class="list-group-item list-group-item-action"
-              style="cursor: pointer"
-              *ngFor="let s of sedesFiltradas"
-              (mousedown)="seleccionarSede(s)"
-            >
-              {{ s.nombre }}
-            </li>
-          </ul>
-        </div>
-
-        <!-- Sede fija — para bodega, jefe y delegado -->
-        <div class="col-md-3" *ngIf="!esAdmin">
+        <!-- Sede fija: este libro es siempre del Almacén (Bodega Central) -->
+        <div class="col-md-3">
           <label class="form-label fw-semibold">Sede</label>
           <input
             type="text"
             class="form-control"
-            [value]="nombreSedeBusqueda || 'Mi sede'"
+            [value]="nombreSedeBusqueda || 'Almacén'"
             readonly
           />
         </div>
@@ -95,30 +66,49 @@
         <i class="bi bi-table"></i>
         Libro de Control — {{ nombreSedeBusqueda }} — Q{{ denominacion }}.00
       </h6>
-      <button class="btn btn-sm btn-success" (click)="exportarExcel()">
-        <i class="bi bi-file-earmark-excel"></i> Excel
-      </button>
+
+      <div class="d-flex gap-2">
+        <!-- Excel de consulta (sin folios) -->
+        <button class="btn btn-sm btn-success" (click)="exportarExcel()">
+          <i class="bi bi-file-earmark-excel"></i> Excel
+        </button>
+
+        <!-- Excel con folios: reserva folios del rango de la sede.
+             Solo lo ve quien tiene GESTIONAR_FOLIOS. El libro de Almacén no lleva placas. -->
+        <app-imprimir-folios
+          [idSede]="idSede"
+          [nombreSede]="nombreSedeBusqueda"
+          [denominacion]="denominacion"
+          [fechaIni]="fechaIni"
+          [fechaFin]="fechaFin"
+          [conPlacas]="false"
+        ></app-imprimir-folios>
+      </div>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-sm table-bordered table-hover mb-0">
-          <thead class="table-dark">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle">
+          <!-- Encabezado agrupado de 2 filas, igual al libro físico y al Excel -->
+          <thead class="table-dark text-center">
             <tr>
-              <th>Fecha</th>
-              <th class="text-center">Ingreso Del</th>
-              <th class="text-center">Ingreso Al</th>
-              <th class="text-center">Ingreso Q</th>
-              <th class="text-center">Ingreso Cant.</th>
-              <th class="text-center">No. Solicitud</th>
-              <th>Placa Vehículo</th>
-              <th>Piloto</th>
-              <th class="text-center">Egreso Del</th>
-              <th class="text-center">Egreso Al</th>
-              <th class="text-center">Egreso Q</th>
-              <th class="text-center">Saldo Q</th>
-              <th class="text-center">Egreso Cant.</th>
-              <th class="text-center">Existencia</th>
-              <th>Solicitante</th>
+              <th rowspan="2">FECHA</th>
+              <th colspan="2">INGRESO DE CUPONES</th>
+              <th rowspan="2">INGRESO EN Q.</th>
+              <th rowspan="2">INGRESO DE CUPONES</th>
+              <th rowspan="2">No. SOLICITUD</th>
+              <th rowspan="2">DIRECCIÓN / UNIDAD SOLICITANTE</th>
+              <th colspan="2">EGRESO DE CUPONES</th>
+              <th rowspan="2">EGRESO EN Q.</th>
+              <th rowspan="2">SALDO EN Q.</th>
+              <th rowspan="2">EGRESO DE CUPONES</th>
+              <th rowspan="2">CUPONES EN EXISTENCIA</th>
+              <th rowspan="2">SOLICITANTE</th>
+            </tr>
+            <tr>
+              <th>DEL</th>
+              <th>AL</th>
+              <th>DEL</th>
+              <th>AL</th>
             </tr>
           </thead>
           <tbody>
@@ -130,11 +120,9 @@
                 {{ r.ingresoQ > 0 ? formatoQ(r.ingresoQ) : '—' }}
               </td>
               <td class="text-center">{{ r.ingresoCantidad > 0 ? r.ingresoCantidad : '—' }}</td>
-              <td class="text-center">
-                {{ r.idSolicitud ? '#' + r.idSolicitud : '—' }}
-              </td>
-              <td>{{ r.placa || '—' }}</td>
-              <td>{{ r.piloto || '—' }}</td>
+              <td class="text-center">{{ r.idSolicitud || '—' }}</td>
+              <!-- En bodega viene la sede destino -->
+              <td>{{ r.sedeDestino || nombreSedeBusqueda || '—' }}</td>
               <td class="text-center">{{ r.egresoDel || '—' }}</td>
               <td class="text-center">{{ r.egresoAl || '—' }}</td>
               <td class="text-center text-danger fw-bold">

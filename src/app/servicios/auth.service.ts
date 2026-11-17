@@ -5,10 +5,9 @@ import { LoginRequest, LoginResponse } from '../modelos/auth.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
-
   private base = `${environment.apiUrl}/api/auth`;
 
   constructor(private http: HttpClient) {
@@ -32,14 +31,15 @@ export class AuthService {
   // Guarda el token y datos del usuario en sessionStorage
   // sessionStorage se borra automáticamente al cerrar el navegador
   guardarToken(response: LoginResponse): void {
- sessionStorage.setItem('token',          response.token);
-  sessionStorage.setItem('nombre',         response.nombre);
-  sessionStorage.setItem('usuarioSistema', response.usuarioSistema);
-  sessionStorage.setItem('roles',          JSON.stringify(response.roles));
-  sessionStorage.setItem('expiracion',     response.expiracion);
-  sessionStorage.setItem('idUnidad',       response.idUnidad?.toString() || '');
-  sessionStorage.setItem('tipoLugar',      response.tipoLugar || '');
-
+    sessionStorage.setItem('token', response.token);
+    sessionStorage.setItem('nombre', response.nombre);
+    sessionStorage.setItem('usuarioSistema', response.usuarioSistema);
+    sessionStorage.setItem('roles', JSON.stringify(response.roles));
+    sessionStorage.setItem('expiracion', response.expiracion);
+    sessionStorage.setItem('idUnidad', response.idUnidad?.toString() || '');
+    sessionStorage.setItem('idSede', response.idSede?.toString() || '');
+    sessionStorage.setItem('tipoLugar', response.tipoLugar || '');
+    sessionStorage.setItem('permisos', JSON.stringify(response.permisos || []));
   }
 
   // Elimina el token y datos del usuario
@@ -47,11 +47,17 @@ export class AuthService {
     sessionStorage.clear();
   }
 
-  // Cierra la sesión del usuario
+  // Cierra la sesión del usuario — registra en bitácora y limpia sessionStorage
   logout(): void {
+    const token = this.obtenerToken();
+    if (token) {
+      // Notificar al backend para registrar el logout en bitácora
+      this.http.post(`${this.base}/logout`, {}).subscribe({
+        error: () => {}, // Si falla el registro, igual cerramos sesión
+      });
+    }
     sessionStorage.clear();
   }
-
   // Verifica si el usuario está autenticado
   estaAutenticado(): boolean {
     const token = sessionStorage.getItem('token');
@@ -82,22 +88,67 @@ export class AuthService {
   }
 
   // Obtiene los roles del usuario autenticado
-obtenerRoles(): string[] {
-  const roles = sessionStorage.getItem('roles');
-  return roles ? JSON.parse(roles) : [];
-}
+  obtenerRoles(): string[] {
+    const roles = sessionStorage.getItem('roles');
+    return roles ? JSON.parse(roles) : [];
+  }
 
-// Verifica si el usuario tiene un rol específico
-tieneRol(rol: string): boolean {
-  return this.obtenerRoles().some(r => r.toLowerCase() === rol.toLowerCase());
-}
+  // Verifica si el usuario tiene un rol específico
+  tieneRol(rol: string): boolean {
+    return this.obtenerRoles().some((r) => r.toLowerCase() === rol.toLowerCase());
+  }
 
-obtenerIdUnidad(): number | null {
-  const val = sessionStorage.getItem('idUnidad');
-  return val ? parseInt(val) : null;
-}
+  obtenerIdUnidad(): number | null {
+    const val = sessionStorage.getItem('idUnidad');
+    return val ? parseInt(val) : null;
+  }
 
-obtenerTipoLugar(): string {
-  return sessionStorage.getItem('tipoLugar') || '';
-}
+  obtenerTipoLugar(): string {
+    return sessionStorage.getItem('tipoLugar') || '';
+  }
+
+  // Obtiene los permisos del usuario autenticado
+  obtenerPermisos(): string[] {
+    const permisos = sessionStorage.getItem('permisos');
+    return permisos ? JSON.parse(permisos) : [];
+  }
+
+  // Verifica si el usuario tiene un permiso específico
+  tienePermiso(permiso: string): boolean {
+    return this.obtenerPermisos().some((p) => p.toUpperCase() === permiso.toUpperCase());
+  }
+
+  obtenerIdSede(): number | null {
+    const val = sessionStorage.getItem('idSede');
+    return val ? parseInt(val) : null;
+  }
+  /**
+   * Abre un PDF pasando por PdfController (con token JWT).
+   * Si el PDF no existe, muestra un aviso en lugar de abrir el JSON de error.
+   */
+  abrirPdf(urlPdf: string): void {
+    const nombreArchivo = urlPdf.split('/').pop();
+
+    // Determinar la subcarpeta según la URL guardada
+    let carpeta = 'solicitudes';
+    if (urlPdf.includes('/combustible/')) carpeta = 'combustible';
+    if (urlPdf.includes('/reportes/')) carpeta = 'reportes';
+
+    const token = sessionStorage.getItem('token');
+
+    fetch(`${environment.apiUrl}/api/pdf/${carpeta}/${nombreArchivo}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        // Si el backend responde error (ej. 404), avisar en lugar de abrir el JSON
+        if (!res.ok) throw new Error('PDF no disponible');
+        return res.blob();
+      })
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+      })
+      .catch(() => alert('El documento PDF no está disponible.'));
+  }
 }

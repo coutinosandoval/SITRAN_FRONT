@@ -3,13 +3,17 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
-  Usuario, UsuarioLista, UsuarioCrear, UsuarioActualizar,
-  Rol, RolCrear, Permiso
+  Usuario,
+  UsuarioLista,
+  UsuarioCrear,
+  UsuarioActualizar,
+  Rol,
+  RolCrear,
+  Permiso,
 } from '../modelos/seguridad.model';
 
 @Injectable({ providedIn: 'root' })
 export class SeguridadService {
-
   // URL base del API de seguridad
   private apiUrl = `${environment.apiUrl}/api/seguridad`;
 
@@ -18,10 +22,15 @@ export class SeguridadService {
   // ─── USUARIOS ───
 
   // Obtener lista paginada de usuarios
-  obtenerUsuarios(pagina: number, tamano: number, estado?: string, busqueda?: string): Observable<UsuarioLista> {
+  obtenerUsuarios(
+    pagina: number,
+    tamano: number,
+    estado?: string,
+    busqueda?: string,
+  ): Observable<UsuarioLista> {
     console.log('Service: obtenerUsuarios llamado');
     let params: any = { pagina, tamano };
-    if (estado)   params['estado']   = estado;
+    if (estado) params['estado'] = estado;
     if (busqueda) params['busqueda'] = busqueda;
     return this.http.get<UsuarioLista>(`${this.apiUrl}/usuarios`, { params });
   }
@@ -91,7 +100,11 @@ export class SeguridadService {
   }
 
   // Registro público de usuario
-registro(dto: UsuarioCrear): Observable<any> {
-  return this.http.post(`${this.apiUrl}/registro`, dto);
-}
+  registro(dto: UsuarioCrear): Observable<any> {
+    return this.http.post(`${this.apiUrl}/registro`, dto);
+  }
+
+  inactivarRol(id: number): Observable<any> {
+    return this.http.patch(`${this.apiUrl}/${id}/inactivar-rol`, {});
+  }
 }

@@ -6,25 +6,22 @@ import { AuthService } from '../servicios/auth.service';
 import { LoginRequest } from '../modelos/auth.model';
 import { RouterModule } from '@angular/router';
 
-
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.html',
- 
 })
 export class LoginComponent {
-
   // Modelo que se enlaza con el formulario HTML
   request: LoginRequest = {
     usuario: '',
-    clave: ''
+    clave: '',
   };
 
   irARegistro(): void {
-  this.router.navigate(['/registro']);
-}
+    this.router.navigate(['/registro']);
+  }
 
   // Mensaje de error para mostrar al usuario
   mensajeError: string = '';
@@ -46,12 +43,11 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
   ) {}
 
   // Método que se ejecuta al hacer click en el botón Ingresar
   iniciarSesion(): void {
-
     // Limpiar mensajes anteriores
     this.mensajeError = '';
     this.mensajeBloqueado = '';
@@ -68,11 +64,17 @@ export class LoginComponent {
     // Llamar al servicio de autenticación
     this.authService.login(this.request).subscribe({
       next: (response) => {
-        // Login exitoso: guardar token y redirigir al dashboard
+        // Login exitoso: guardar token y datos del usuario
         this.authService.guardarToken(response);
         this.intentosFallidos = 0;
         this.cargando = false;
-        this.router.navigate(['/dashboard']);
+
+        // Si es primer ingreso, redirigir a cambiar contraseña obligatoriamente
+        if (response.primerIngreso === 'SI') {
+          this.router.navigate(['/cambiar-clave']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (err) => {
         // Login fallido: mostrar error y contar intento
@@ -89,7 +91,12 @@ export class LoginComponent {
         } else {
           this.mensajeError = 'Ocurrió un error al intentar iniciar sesión.';
         }
-      }
+      },
     });
+  }
+
+  // Navega a la página de recuperación de contraseña
+  irAForgotPassword(): void {
+    this.router.navigate(['/forgot-password']);
   }
 }

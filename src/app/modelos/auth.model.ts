@@ -11,11 +11,26 @@ export interface LoginResponse {
   usuarioSistema: string;
   roles: string[];
   expiracion: string;
-   idUnidad: number;
+  idUnidad: number;
   tipoLugar: string;
+  permisos: string[];
 }
 
 // Modelo que define la respuesta cuando ocurre un error
 export interface ErrorResponse {
   mensaje: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  nombre: string;
+  usuarioSistema: string;
+  roles: string[];
+  expiracion: string;
+  idUnidad: number;
+  idSede?: number; // ← agregar esta línea
+  tipoLugar: string;
+  permisos: string[];
+  // Indica si el usuario debe cambiar su contraseña al primer ingreso
+  primerIngreso?: string;
 }

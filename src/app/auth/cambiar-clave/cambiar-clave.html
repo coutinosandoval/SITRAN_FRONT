@@ -1,0 +1,76 @@
+<!-- Pantalla de cambio obligatorio de contraseña -->
+<div class="min-vh-100 d-flex align-items-center justify-content-center"
+     style="background: linear-gradient(135deg, #1F4E79, #2E75B6);">
+
+  <div class="card shadow-lg" style="width: 420px; border-radius: 12px;">
+
+    <!-- Encabezado -->
+    <div class="card-header text-center py-4"
+         style="background: #1F4E79; border-radius: 12px 12px 0 0;">
+      <h3 class="text-white mb-0 fw-bold">SITRAN</h3>
+      <small class="text-white-50">Cambio de Contraseña Requerido</small>
+    </div>
+
+    <div class="card-body p-4">
+
+      <!-- Icono y descripción -->
+      <div class="text-center mb-4">
+        <i class="bi bi-shield-exclamation" style="font-size: 3rem; color: #C55A11;"></i>
+        <h5 class="mt-2" style="color: #C55A11;">Acción requerida</h5>
+        <p class="text-muted">
+          Por seguridad, debes cambiar tu contraseña antes de continuar.
+        </p>
+      </div>
+
+      <!-- Mensaje de éxito -->
+      <div *ngIf="mensajeExito" class="alert alert-success text-center">
+        <i class="bi bi-check-circle me-2"></i>{{ mensajeExito }}
+        <p class="mb-0 mt-2 small">Redirigiendo al sistema...</p>
+      </div>
+
+      <!-- Mensaje de error -->
+      <div *ngIf="mensajeError" class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ mensajeError }}
+      </div>
+
+      <!-- Formulario -->
+      <div *ngIf="!mensajeExito">
+
+        <!-- Nueva contraseña -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nueva contraseña</label>
+          <input type="password" class="form-control"
+            [(ngModel)]="nuevaClave"
+            placeholder="Mínimo 6 caracteres"/>
+        </div>
+
+        <!-- Confirmar contraseña -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Confirmar contraseña</label>
+          <input type="password" class="form-control"
+            [(ngModel)]="confirmarClave"
+            placeholder="Repite la contraseña"
+            (keyup.enter)="cambiarClave()"/>
+        </div>
+
+        <!-- Botón guardar -->
+        <button class="btn w-100 text-white py-2 mb-3"
+          style="background: #1F4E79;"
+          (click)="cambiarClave()"
+          [disabled]="cargando">
+          <span *ngIf="cargando" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!cargando" class="bi bi-shield-check me-2"></i>
+          Guardar nueva contraseña
+        </button>
+
+        <!-- Opción de cerrar sesión -->
+        <div class="text-center">
+          <a (click)="cerrarSesion()" style="cursor:pointer; color: #666; font-size: 13px;">
+            <i class="bi bi-box-arrow-left me-1"></i> Cerrar sesión
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

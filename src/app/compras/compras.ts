@@ -1,0 +1,328 @@
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ComprasService } from '../servicios/compras.service';
+import { Compra, CompraDetalle, ComprasPaginadas } from '../modelos/compra.model';
+import { AuthService } from '../servicios/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
+
+/** Línea temporal del formulario antes de enviar */
+interface LineaFormulario {
+  denominacion: number | null;
+  cantidad: number | null;
+  numeroDel: number | null;
+  numeroAl: number | null;
+  error: string;
+}
+
+@Component({
+  selector: 'app-compras',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './compras.html',
+})
+export class ComprasComponent implements OnInit {
+  // ── Lista de compras ─────────────────────────────────────
+  compras: Compra[] = [];
+  total: number = 0;
+  pagina: number = 1;
+  porPagina: number = 10;
+  cargando: boolean = false;
+
+  // ── Detalle de una compra seleccionada ───────────────────
+  compraSeleccionada: Compra | null = null;
+  detalleRangos: CompraDetalle[] = [];
+  cargandoDetalle: boolean = false;
+
+  // ── Formulario de nueva compra ───────────────────────────
+  mostrarFormulario: boolean = false;
+  guardando: boolean = false;
+  errorGeneral: string = '';
+  exitoMensaje: string = '';
+
+  // Campos del encabezado
+  fechaCompra: string = '';
+  idExpendedor: number | null = null;
+  fechaEmision: string = '';
+  fechaVencimiento: string = '';
+  observaciones: string = '';
+
+  // Catálogo de expendedores
+  expendedores: { id: number; nombre: string }[] = [];
+
+  // Líneas del formulario (rangos)
+  lineas: LineaFormulario[] = [];
+
+  // Denominaciones disponibles
+  readonly denominaciones = [
+    { valor: 50, etiqueta: 'Q 50.00' },
+    { valor: 100, etiqueta: 'Q 100.00' },
+  ];
+
+  // Permisos
+  esCompras: boolean = false;
+
+  constructor(
+    private comprasService: ComprasService,
+    private authService: AuthService,
+    public cdr: ChangeDetectorRef,
+    private http: HttpClient,
+  ) {}
+
+  ngOnInit(): void {
+    this.esCompras = this.authService.tienePermiso('GESTIONAR_COMPRAS_TALONARIOS');
+    this.cargarCompras();
+    this.cargarExpendedores();
+    this.lineas = [this.lineaVacia()];
+  }
+
+  // ── Cargar lista ─────────────────────────────────────────
+  cargarCompras(): void {
+    this.cargando = true;
+    this.comprasService.obtenerCompras(this.pagina, this.porPagina).subscribe({
+      next: (res: ComprasPaginadas) => {
+        this.compras = res.datos;
+        this.total = res.total;
+        this.cargando = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cargando = false;
+      },
+    });
+  }
+
+  // ── Cargar expendedores ──────────────────────────────────
+  cargarExpendedores(): void {
+    this.http.get<any[]>(`${environment.apiUrl}/api/cupon/expendedores`).subscribe({
+      next: (data) => {
+        this.expendedores = data;
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // ── Paginación ───────────────────────────────────────────
+  get totalPaginas(): number {
+    return Math.ceil(this.total / this.porPagina);
+  }
+
+  irPagina(p: number): void {
+    if (p < 1 || p > this.totalPaginas) return;
+    this.pagina = p;
+    this.cargarCompras();
+  }
+
+  // ── Ver detalle de una compra ────────────────────────────
+  verDetalle(compra: Compra): void {
+    this.compraSeleccionada = compra;
+    this.cargandoDetalle = true;
+    this.detalleRangos = [];
+
+    this.comprasService.obtenerDetalle(compra.id!).subscribe({
+      next: (rangos: CompraDetalle[]) => {
+        this.detalleRangos = rangos;
+        this.cargandoDetalle = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cargandoDetalle = false;
+      },
+    });
+  }
+
+  cerrarDetalle(): void {
+    this.compraSeleccionada = null;
+    this.detalleRangos = [];
+  }
+
+  // ── Formulario nueva compra ──────────────────────────────
+  abrirFormulario(): void {
+    this.mostrarFormulario = true;
+    this.errorGeneral = '';
+    this.exitoMensaje = '';
+    this.fechaCompra = new Date().toISOString().substring(0, 10);
+    this.idExpendedor = null;
+    this.fechaEmision = '';
+    this.fechaVencimiento = '';
+    this.observaciones = '';
+    this.lineas = [this.lineaVacia()];
+  }
+
+  cerrarFormulario(): void {
+    this.mostrarFormulario = false;
+    this.lineas = [];
+    this.errorGeneral = '';
+  }
+
+  lineaVacia(): LineaFormulario {
+    return { denominacion: null, cantidad: null, numeroDel: null, numeroAl: null, error: '' };
+  }
+
+  agregarLinea(): void {
+    this.lineas = [...this.lineas, this.lineaVacia()];
+  }
+
+  eliminarLinea(index: number): void {
+    if (this.lineas.length === 1) return;
+    this.lineas = this.lineas.filter((_, i) => i !== index);
+  }
+
+  trackByIndex(index: number): number {
+    return index;
+  }
+
+  // ── Cálculos de línea ────────────────────────────────────
+
+  /** Calcula la cantidad de cupones de una línea */
+  calcularCantidad(linea: LineaFormulario): number {
+    return linea.cantidad ?? 0;
+  }
+
+  /** Calcula el monto de una línea */
+  calcularMontoLinea(linea: LineaFormulario): number {
+    return (linea.cantidad ?? 0) * (linea.denominacion ?? 0);
+  }
+
+  /** Total de cupones de todas las líneas */
+  get totalCuponesFormulario(): number {
+    return this.lineas.reduce((acc, l) => acc + this.calcularCantidad(l), 0);
+  }
+
+  /** Monto total de todas las líneas */
+  get montoTotalFormulario(): number {
+    return this.lineas.reduce((acc, l) => acc + this.calcularMontoLinea(l), 0);
+  }
+
+  /** Fuerza detección de cambios al modificar inputs */
+  actualizarLinea(linea: LineaFormulario): void {
+    if (linea.numeroDel != null && linea.cantidad != null && linea.cantidad > 0) {
+      linea.numeroAl = linea.numeroDel + linea.cantidad - 1;
+    } else {
+      linea.numeroAl = null;
+    }
+    this.lineas = [...this.lineas];
+    this.cdr.detectChanges();
+  }
+
+  // ── Validación ───────────────────────────────────────────
+
+  validarLinea(linea: LineaFormulario): boolean {
+    linea.error = '';
+    if (!linea.denominacion) {
+      linea.error = 'Seleccione una denominación.';
+      return false;
+    }
+    if (linea.numeroDel == null || linea.numeroDel <= 0) {
+      linea.error = 'Ingrese el número inicial del rango.';
+      return false;
+    }
+    if (linea.numeroAl == null || linea.numeroAl <= 0) {
+      linea.error = 'Ingrese el número final del rango.';
+      return false;
+    }
+    if (linea.numeroAl <= linea.numeroDel) {
+      linea.error = `El número final (${linea.numeroAl}) debe ser mayor al inicial (${linea.numeroDel}).`;
+      return false;
+    }
+    return true;
+  }
+
+  validarSolapamientoInterno(): string {
+    for (let i = 0; i < this.lineas.length; i++) {
+      for (let j = i + 1; j < this.lineas.length; j++) {
+        const a = this.lineas[i];
+        const b = this.lineas[j];
+        if (a.denominacion !== b.denominacion) continue;
+        if (a.numeroDel == null || a.numeroAl == null) continue;
+        if (b.numeroDel == null || b.numeroAl == null) continue;
+        if (a.numeroDel <= b.numeroAl && a.numeroAl >= b.numeroDel) {
+          return `Las líneas ${i + 1} y ${j + 1} tienen rangos solapados en Q${a.denominacion}.`;
+        }
+      }
+    }
+    return '';
+  }
+
+  // ── Guardar compra ───────────────────────────────────────
+
+  guardarCompra(): void {
+    this.errorGeneral = '';
+    this.exitoMensaje = '';
+
+    if (!this.fechaCompra) {
+      this.errorGeneral = 'La fecha de compra es obligatoria.';
+      return;
+    }
+    if (!this.idExpendedor) {
+      this.errorGeneral = 'Seleccione un expendedor.';
+      return;
+    }
+    if (!this.fechaEmision) {
+      this.errorGeneral = 'La fecha de emisión es obligatoria.';
+      return;
+    }
+    if (!this.fechaVencimiento) {
+      this.errorGeneral = 'La fecha de vencimiento es obligatoria.';
+      return;
+    }
+    if (this.fechaVencimiento <= this.fechaEmision) {
+      this.errorGeneral = 'La fecha de vencimiento debe ser mayor a la fecha de emisión.';
+      return;
+    }
+
+    let hayError = false;
+    for (const linea of this.lineas) {
+      if (!this.validarLinea(linea)) hayError = true;
+    }
+    if (hayError) return;
+
+    const errorSolape = this.validarSolapamientoInterno();
+    if (errorSolape) {
+      this.errorGeneral = errorSolape;
+      return;
+    }
+
+    this.guardando = true;
+
+    const dto = {
+      fechaCompra: this.fechaCompra,
+      idExpendedor: this.idExpendedor!,
+      fechaEmision: this.fechaEmision,
+      fechaVencimiento: this.fechaVencimiento,
+      observaciones: this.observaciones || undefined,
+      detalles: this.lineas.map((l) => ({
+        denominacion: l.denominacion!,
+        numeroDel: l.numeroDel!,
+        numeroAl: l.numeroDel! + l.cantidad! - 1,
+      })),
+    };
+
+    this.comprasService.agregarCompra(dto).subscribe({
+      next: (res: { idCompra: number; mensaje: string }) => {
+        this.guardando = false;
+        this.exitoMensaje = `Compra #${res.idCompra} registrada correctamente.`;
+        this.cerrarFormulario();
+        this.cargarCompras();
+      },
+      error: (err: any) => {
+        this.guardando = false;
+        this.errorGeneral = err?.error?.mensaje || 'Error al registrar la compra.';
+      },
+    });
+  }
+
+  // ── Helpers de presentación ──────────────────────────────
+
+  formatoQuetzales(monto: number): string {
+    return `Q ${monto.toLocaleString('es-GT', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
+  formatoFecha(fecha: string): string {
+    return new Date(fecha).toLocaleDateString('es-GT');
+  }
+}

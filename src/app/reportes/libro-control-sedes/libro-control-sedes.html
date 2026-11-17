@@ -1,0 +1,171 @@
+<div class="container-fluid py-3">
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-journal-text"></i> Libro de Control por Sedes</h4>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="mensajeError" class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle"></i> {{ mensajeError }}
+  </div>
+
+  <!-- Filtros -->
+  <div class="card shadow-sm mb-4" style="overflow: visible">
+    <div class="card-header bg-primary text-white">
+      <h6 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h6>
+    </div>
+    <div class="card-body" style="overflow: visible">
+      <div class="row g-3">
+        <!-- Sede con autobúsqueda: solo roles que pueden elegir sede -->
+        <div class="col-md-3 position-relative" *ngIf="esAdmin">
+          <label class="form-label fw-semibold">Sede <span class="text-danger">*</span></label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="nombreSedeBusqueda"
+            (input)="buscarSede()"
+            (focus)="buscarSede()"
+            (blur)="ocultarSugerencias()"
+            placeholder="Buscar sede..."
+            autocomplete="off"
+          />
+          <ul
+            class="list-group position-absolute w-100 shadow-sm"
+            style="z-index: 1000; max-height: 200px; overflow-y: auto"
+            *ngIf="mostrarSugerencias"
+          >
+            <li
+              class="list-group-item list-group-item-action"
+              style="cursor: pointer"
+              *ngFor="let s of sedesFiltradas"
+              (mousedown)="seleccionarSede(s)"
+            >
+              {{ s.nombre }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Sede fija: delegado y demás roles ven solo su sede -->
+        <div class="col-md-3" *ngIf="!esAdmin">
+          <label class="form-label fw-semibold">Sede</label>
+          <input
+            type="text"
+            class="form-control"
+            [value]="nombreSedeBusqueda || 'Mi sede'"
+            readonly
+          />
+        </div>
+
+        <!-- Denominación -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Denominación</label>
+          <select class="form-select" [(ngModel)]="denominacion">
+            <option *ngFor="let d of denominaciones" [ngValue]="d.valor">{{ d.label }}</option>
+          </select>
+        </div>
+
+        <!-- Fechas -->
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Fecha Inicio</label>
+          <input type="date" class="form-control" [(ngModel)]="fechaIni" />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-semibold">Fecha Fin</label>
+          <input type="date" class="form-control" [(ngModel)]="fechaFin" />
+        </div>
+
+        <!-- Botón generar -->
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-primary w-100" (click)="generarReporte()" [disabled]="cargando">
+            <span *ngIf="cargando" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!cargando" class="bi bi-search"></i>
+            Generar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="card shadow-sm" *ngIf="reporte.length > 0">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i class="bi bi-table"></i>
+        Libro de Control — {{ nombreSedeBusqueda }} — Q{{ denominacion }}.00
+      </h6>
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-success" (click)="exportarExcel()">
+          <i class="bi bi-file-earmark-excel"></i> Excel
+        </button>
+        <!-- Excel con folios: reserva folios del rango de la sede -->
+        <app-imprimir-folios
+          [idSede]="idSede"
+          [nombreSede]="nombreSedeBusqueda"
+          [denominacion]="denominacion"
+          [fechaIni]="fechaIni"
+          [fechaFin]="fechaFin"
+          [conPlacas]="true"
+        ></app-imprimir-folios>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered table-hover mb-0 align-middle">
+          <!-- Encabezado agrupado de 2 filas, con PLACAS VEHÍCULO -->
+          <thead class="table-dark text-center">
+            <tr>
+              <th rowspan="2">FECHA</th>
+              <th colspan="2">INGRESO DE CUPONES</th>
+              <th rowspan="2">INGRESO EN Q.</th>
+              <th rowspan="2">INGRESO DE CUPONES</th>
+              <th rowspan="2">No. SOLICITUD</th>
+              <th rowspan="2">DIRECCIÓN / UNIDAD SOLICITANTE</th>
+              <th rowspan="2">PLACAS VEHÍCULO</th>
+              <th colspan="2">EGRESO DE CUPONES</th>
+              <th rowspan="2">EGRESO EN Q.</th>
+              <th rowspan="2">SALDO EN Q.</th>
+              <th rowspan="2">EGRESO DE CUPONES</th>
+              <th rowspan="2">CUPONES EN EXISTENCIA</th>
+              <th rowspan="2">SOLICITANTE</th>
+            </tr>
+            <tr>
+              <th>DEL</th>
+              <th>AL</th>
+              <th>DEL</th>
+              <th>AL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of reporte" [ngClass]="r.tipo === 'INGRESO' ? 'table-success' : ''">
+              <td>{{ formatoFecha(r.fecha) }}</td>
+              <td class="text-center">{{ r.ingresoDel || '—' }}</td>
+              <td class="text-center">{{ r.ingresoAl || '—' }}</td>
+              <td class="text-center text-success fw-bold">
+                {{ r.ingresoQ > 0 ? formatoQ(r.ingresoQ) : '—' }}
+              </td>
+              <td class="text-center">{{ r.ingresoCantidad > 0 ? r.ingresoCantidad : '—' }}</td>
+              <td class="text-center">{{ r.idSolicitud || '—' }}</td>
+              <td>{{ r.sedeDestino || nombreSedeBusqueda || '—' }}</td>
+              <td class="text-center">{{ r.placa || '—' }}</td>
+              <td class="text-center">{{ r.egresoDel || '—' }}</td>
+              <td class="text-center">{{ r.egresoAl || '—' }}</td>
+              <td class="text-center text-danger fw-bold">
+                {{ r.egresoQ > 0 ? formatoQ(r.egresoQ) : '—' }}
+              </td>
+              <td class="text-center fw-bold">{{ formatoQ(r.saldoQ) }}</td>
+              <td class="text-center">{{ r.egresoCantidad > 0 ? r.egresoCantidad : '—' }}</td>
+              <td class="text-center fw-bold">{{ r.saldoCupones }}</td>
+              <td>{{ r.solicitante || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sin resultados -->
+  <div *ngIf="!cargando && reporte.length === 0" class="text-center py-5 text-muted">
+    <i class="bi bi-journal-text fs-1 d-block mb-2"></i>
+    Seleccione los filtros y presione Generar para ver el libro de control.
+  </div>
+</div>

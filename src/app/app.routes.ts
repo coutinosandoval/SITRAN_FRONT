@@ -13,7 +13,7 @@ import { SolicitudTalonarioComponent } from './cupones/solicitud-talonario/solic
 import { ComisionComponent } from './comisiones/comision';
 import { SeguridadComponent } from './seguridad/seguridad';
 import { RegistroComponent } from './registro/registro';
-import { ReporteIAComponent } from './reportes/reporte-ia';
+//import { ReporteIAComponent } from './reportes/reporte-ia';
 import { BitacoraVehiculosComponent } from './reportes/bitacora-vehiculos/bitacora-vehiculos';
 import { ComprasComponent } from './compras/compras';
 import { SolicitudCuponesComponent } from './cupones/solicitud-cupones/solicitud-cupones';
@@ -154,12 +154,12 @@ export const routes: Routes = [
       },
 
       // ── Reportes ──
-      {
-        path: 'reportes-ia',
-        component: ReporteIAComponent,
-        canActivate: [permisoGuard],
-        data: { permiso: 'VER_REPORTES_IA' },
-      },
+      //{
+        //path: 'reportes-ia',
+        //component: ReporteIAComponent,
+        //canActivate: [permisoGuard],
+       // data: { permiso: 'VER_REPORTES_IA' },
+      //},
       {
         path: 'reportes/vehiculos',
         component: BitacoraVehiculosComponent,
